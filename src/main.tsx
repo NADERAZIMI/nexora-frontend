@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import snapshot from './snapshot.html?raw';
 import './reference.css';
@@ -7,16 +7,13 @@ import './prototype.css';
 import './fidelity.css';
 
 /** The archived DOM is deliberately retained to preserve all source geometry. */
-function SnapshotSurface({ onNotice }: { onNotice: (message: string) => void }) {
+const SnapshotSurface = memo(function SnapshotSurface({ onNotice }: { onNotice: (message: string) => void }) {
   const surface = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const root = surface.current!;
     const slider = root.querySelector<HTMLElement>('[role="slider"]');
     slider?.setAttribute('aria-label', 'Percentage of available local mock balance');
-    root.querySelectorAll<HTMLInputElement>('input[type=text]').forEach((input, i) => {
-      input.setAttribute('aria-label', ['Search markets (local snapshot)', 'Price (USDT)', 'Total (USDT)'][i]);
-      if (i > 0) input.inputMode = 'decimal';
-    });
+    root.querySelector('input.ant-input-sm')?.setAttribute('aria-label', 'Search markets (local snapshot)');
     const setPercent = (value: number) => {
       const percent = Math.min(100, Math.max(0, Math.round(value)));
       slider!.style.left = `${percent}%`;
@@ -71,7 +68,7 @@ function SnapshotSurface({ onNotice }: { onNotice: (message: string) => void }) 
     return () => { root.removeEventListener('click', click); root.removeEventListener('keydown', key); };
   }, [onNotice]);
   return <div className="snapshot-surface" ref={surface} dangerouslySetInnerHTML={{ __html: snapshot }} />;
-}
+});
 function App() {
   const [notice, setNotice] = useState('');
   useEffect(() => {
