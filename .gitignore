@@ -1,0 +1,40 @@
+# Dependencies and build output
+node_modules/
+dist/
+.vite/
+coverage/
+
+# Local diagnostics, reference captures, and one-off scripts
+artifacts/
+scripts/
+/nexora-spot.html
+/nexora-logo.png
+/screencapture-*.png
+/codex-clipboard-*.png
+
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+.npmrc
+
+# Temporary / editor / OS files
+*.log
+*.tmp
+*.temp
+*.bak
+*.tsbuildinfo
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+# Superseded chart captures, not referenced by the current frontend
+/public/chart-0.png
+/public/chart-2.png
+/public/chart-5.png
+/public/chart-7.png
+/public/chart-9.png

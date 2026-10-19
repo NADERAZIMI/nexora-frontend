@@ -1,0 +1,57 @@
+:root {
+  --bg-primary:#080808;
+  --bg-secondary:#101014;
+  --color-primary:#3D6BFF;
+  --color-secondary:#5865F2;
+  --color-success:#16B89A;
+  --color-danger:#F05A70;
+  --text-primary:#F4F6FA;
+  --text-secondary:#929AAA;
+}
+html[data-theme=dark]{
+  --bg-primary:#080808;--bg-secondary:#101014;
+  --bg-l0:#080808;--bg-l0-gray:#080808;--bg-level-primary:#080808;
+  --bg-l1:#101014;--bg-l1-white:#101014;--bg-level-secondary:#101014;
+  --bg-2:#101014;--bg-3:#101014;--bg-4:#101014;--bg-5:#101014;
+  --bg-modal:#101014;--bg-card:#101014;--bg-tooltip:#101014;--bg-tooltips:#101014;
+  --gray-18:#080808;--gray-17:#101014;--gray-16:#101014;--gray-16-atn:#101014;
+  --gray-15:#101014;--gray-14:#101014;--gray-13:#101014;
+  --fill-default:#101014;--fill-hover:#101014;--fill-pressed:#101014;
+  --fill-higher:#101014;--fill-elevation-higher:#101014;--fill-gray:#101014;
+  --fill-opacity-container:#101014;--fill-disable:#101014;--btn-secondary-bg:#101014;
+  --blue-0:#101014;--component-background:#101014;--third-menu-bg:#101014;--third-menu-hover-bg:#101014;
+  --line-base:#303644;--divider:#303644;--border-2:#303644;
+  --gray-1-white:#F4F6FA;--gray-3:#F4F6FA;--gray-8:#929AAA;
+  --content-primary:#F4F6FA;--content-white:#F4F6FA;--text-white:#F4F6FA;--text-primary:#F4F6FA;
+  --content-secondary:#929AAA;--content-tertiary:#929AAA;--content-disable:#929AAA;
+  --text-secondary:#929AAA;--text-tertiary:#929AAA;--text-disable:#929AAA;
+  --blue-6-seed:#3D6BFF;--blue-6:#3D6BFF;--brand-default:#3D6BFF;
+  --primary-base:#3D6BFF;--primary-blue:#3D6BFF;--primary-color:#3D6BFF;--primary-6:#3D6BFF;--info:#3D6BFF;--primary-rgb:61,107,255;
+  --blue-5:#5865F2;--blue-7:#5865F2;--blue-8:#5865F2;--blue-9:#5865F2;--blue-10:#5865F2;
+  --brand-hover:#5865F2;--brand-pressed:#5865F2;--brand-loading:#5865F2;
+  --primary-hover:#5865F2;--primary-active:#5865F2;--primary-blue-hover:#5865F2;--primary-blue-active:#5865F2;
+  --primary-5:#5865F2;--primary-7:#5865F2;--info-hover:#5865F2;--info-active:#5865F2;
+  --link-color:#5865F2;--functional-blue-content:#5865F2;
+  --blue-1:#3D6BFF1a;--blue-2:#3D6BFF33;--blue-3:#3D6BFF66;--blue-4:#3D6BFF99;
+  --success-6-seed:#16B89A;--success-6:#16B89A;--success-5:#16B89A;--success-7:#16B89A;
+  --error-6-seed:#F05A70;--error-6:#F05A70;--error-5:#F05A70;--error-7:#F05A70;
+}
+html[data-theme=dark][data-upcolor=upgreen]{--up:#16B89A;--up-hover:#16B89A;--up-active:#16B89A;--up-rgb:22,184,154;--down:#F05A70;--down-hover:#F05A70;--down-active:#F05A70;--down-rgb:240,90,112}
+html,body{background-color:#080808}
+html[data-theme=dark] ._wrapper_1fdt2_2,
+html[data-theme=dark] .content-module-scss-module__HNNBWW__wrapper,
+html[data-theme=dark] ._mediaItemContent_2nteh_6,
+html[data-theme=dark] .ant-modal-content,
+html[data-theme=dark] .ant-modal-header,
+html[data-theme=dark] .ant-modal-body,
+html[data-theme=dark] .ant-modal-footer,
+[class*="__chartWrapper"],[class*="__chartContent"],.mxc-exchange-origin-kline-chart-element{background-color:#101014}
+html[data-theme=dark] .ant-tabs-v2-motion-ink-trail,
+html[data-theme=dark] .ant-tabs-v2-motion-ink-head{background-color:#F4F6FA}
+#root,.snapshot-surface{display:contents}
+/* Make the secondary backgrounds explicit at each inspected surface boundary. */
+[class*="__headlineWrapper"],
+[class*="__orderbookDealsWrapper"],
+[class*="__baBalance"],
+[class*="__feeLabelWrapper"],
+[class*="__chartType"].active{background-color:#101014}

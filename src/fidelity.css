@@ -1,0 +1,25 @@
+/* Native source geometry. No global zoom, scale, or screenshot-derived offsets. */
+.origin-kline-tooltip-wrapper{visibility:hidden}
+.reference-selected-timeframe .ant-chip{background:var(--bg-secondary);border-radius:4px}
+[data-hl-rate]{color:var(--color-success)}
+/* The archive captured a 1536px grid: 4px gutters, 890px chart, 315px side panels.
+   Below that width only the chart/combined orders width contracts; UI sizes stay native. */
+.react-grid-layout.exchange-module-scss-module__5dSXMa__gridWrapper{--native-width-deficit:max(0px,calc(1536px - 100vw))}
+.react-grid-item[class*="__gridLayoutHeadline"]{width:min(1528px,calc(100vw - 8px))!important}
+.react-grid-item[class*="__gridLayoutKline"]{width:calc(890px - var(--native-width-deficit))!important}
+.react-grid-item[class*="__gridLayoutOrderBookDeals"]{transform:translate(calc(898px - var(--native-width-deficit)),60px)!important}
+.react-grid-item[class*="__gridLayoutActions"]{transform:translate(calc(1217px - var(--native-width-deficit)),60px)!important}
+.react-grid-item[class*="__gridLayoutOrders"]{width:calc(1209px - var(--native-width-deficit))!important}
+.inner-layout{width:100%!important}
+.inner-layout>.react-grid-item:first-child{width:100%!important}
+.inner-layout>.react-grid-item:last-child{transform:translate(calc(min(1536px,100vw) - 4px),0px)!important}
+/* Fit the archived chart's drawing layers, retaining its native 57px axis and heights. */
+.mxc-exchange-origin-kline-chart-element div:has(>canvas[width="1041"]){width:calc(100% - 57px)!important}
+.mxc-exchange-origin-kline-chart-element canvas[width="1041"]{width:100%!important}
+.mxc-exchange-origin-kline-chart-element div:has(>canvas[width="71"]){left:calc(100% - 57px)!important}
+/* Let the search field absorb header width changes before any navigation clips. */
+#globalNav ._leftWrapper_1gxj8_43{flex:0 0 auto;overflow:visible!important}
+#globalNav ._normalLeftMenuWrapper_1paqa_1{flex:0 0 auto;max-width:none}
+#globalNav ._rightWrapper_1gxj8_47{flex:1 1 auto;min-width:0;justify-content:flex-end}
+#globalNav ._searchWrapper_c1ell_1{flex:1 1 332px;min-width:120px;max-width:332px}
+#globalNav ._searchInputWrapper_c1ell_12{width:100%}
