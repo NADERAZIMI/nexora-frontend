@@ -69,3 +69,6 @@ section[data-local-hide-other-pairs] .ant-checkbox-v2-checked .ant-checkbox-v2-i
 .nexora-feed-retry[hidden]{display:none!important}
 .nexora-feed-retry{align-self:flex-start;border:1px solid #3D6BFF;border-radius:4px;background:transparent;color:#F4F6FA;padding:5px 14px;margin-top:3px;cursor:pointer;font:12px Arial,sans-serif}
 .nexora-live-state{overflow-wrap:anywhere}
+
+.nexora-market-show-more[hidden]{display:none!important}
+.nexora-market-show-more{display:block;width:100%;padding:12px;border:0;border-top:1px solid #2a2c33;background:transparent;color:var(--color-primary,#3D6BFF);font:12px Arial,sans-serif;cursor:pointer;text-align:center}
