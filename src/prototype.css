@@ -375,3 +375,21 @@ font-size:13px;cursor:pointer}
 [class*="__orderbookDealsWrapper"][data-nexora-depth-state=live] [class*="__asksWrapper"] [class*="__tableRow"],
 [class*="__orderbookDealsWrapper"][data-nexora-depth-state=live] [class*="__bidsWrapper"] [class*="__tableRow"]{visibility:visible}
 [class*="__orderbookDealsWrapper"]:not([data-nexora-depth-state=live]) [class*="__newPrice"]{visibility:hidden}
+
+/* NEXORA Spot market selector */
+.nexora-spot-market-picker[hidden]{display:none!important}
+.nexora-spot-market-picker{position:fixed;z-index:2147483100;width:min(530px,calc(100vw - 8px));max-height:min(600px,calc(100vh - 100px));overflow:hidden;display:flex;flex-direction:column;padding:12px;background:#20242d;color:#f4f6fa;border:1px solid #343a46;border-radius:7px;box-shadow:0 12px 35px #000a;font:12px/1.5 Arial,sans-serif;box-sizing:border-box}
+.nexora-spot-market-picker input{flex:none;height:38px;width:100%;background:#0d0d0d;color:#f4f6fa;border:1px solid #343a46;border-radius:5px;padding:8px 12px;font:13px Arial,sans-serif}
+.nexora-spot-market-tabs{display:flex;flex:none;gap:14px;padding:10px 4px 5px}
+.nexora-spot-market-tabs button{cursor:pointer;background:transparent;border:0;border-bottom:2px solid transparent;padding:5px 0;color:#929aaa;font:12px Arial,sans-serif}
+.nexora-spot-market-tabs button[aria-pressed=true]{color:#f4f6fa;border-bottom-color:#5865f2}
+.nexora-spot-market-headings,.nexora-spot-market-row{display:grid;grid-template-columns:40% 34% 26%;gap:0;text-align:left;align-items:center}
+.nexora-spot-market-headings{flex:none;padding:8px;color:#929aaa;border-bottom:1px solid #343a46}
+.nexora-spot-market-headings span:nth-child(n+2),.nexora-spot-market-row span:nth-child(n+2){text-align:right}
+.nexora-spot-market-rows{flex:1;min-height:0;overflow:auto;scrollbar-width:thin}
+.nexora-spot-market-row{width:100%;padding:10px 8px;background:transparent;border:0;color:#f4f6fa;cursor:pointer;font:12px Arial,sans-serif}
+.nexora-spot-market-row:hover{background:#303647}
+.nexora-spot-market-row .up{color:#16b89a}
+.nexora-spot-market-row .down{color:#f05a70}
+.nexora-spot-market-state{flex:none;padding:9px 5px 0;color:#929aaa;font-size:11px}
+.nexora-spot-market-more{width:100%;padding:10px;border:0;background:#2b3342;color:#f4f6fa;cursor:pointer}
