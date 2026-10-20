@@ -1,4 +1,5 @@
 import { createInteractiveSpotChart } from './interactive-chart';
+import { attachChartTypePicker } from './chart-type-picker';
 /** Read-only MEXC public spot feed: never connects to trading/account endpoints. */
 export interface DepthLevel { price:string; qty:string }
 export interface Candle { time:number; open:number;high:number;low:number;close:number;volume:number }
@@ -118,6 +119,7 @@ export function attachReadOnlyMarketFeed(root:HTMLElement){
  };
  const topRow=document.createElement('div');topRow.className='nexora-chart-top-row';topRow.append(toolbar);
  overlay.prepend(topRow,menu);renderToolbar();renderMenu();
+ const disposeChartTypePicker=attachChartTypePicker(topRow);
  const price=book.querySelector<HTMLElement>('[class*="__newPrice"] [class*="__priceEllipsis"] > div');
  const originalPrice=price?.textContent??'';
  const originals: {node:HTMLElement;text:string}[]=[];
@@ -171,5 +173,5 @@ export function attachReadOnlyMarketFeed(root:HTMLElement){
  document.addEventListener('pointerdown',dismiss);
  // Show verified public BTC candles immediately instead of the archived static chart.
  choose(new CustomEvent('nexora:market-selected',{detail:{symbol:'BTCUSDT'}}));
- return ()=>{mounted=false;controller?.abort();if(interval!==undefined)clearInterval(interval);restore();overlay.remove();root.removeEventListener('nexora:market-selected',choose);interactive.dispose();document.removeEventListener('pointerdown',dismiss)};
+ return ()=>{mounted=false;controller?.abort();if(interval!==undefined)clearInterval(interval);restore();overlay.remove();root.removeEventListener('nexora:market-selected',choose);interactive.dispose();disposeChartTypePicker();document.removeEventListener('pointerdown',dismiss)};
 }
