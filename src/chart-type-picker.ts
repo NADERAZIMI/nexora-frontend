@@ -16,9 +16,8 @@ export function attachChartTypePicker(topRow:HTMLElement):()=>void {
  const trigger=document.createElement('button');trigger.type='button';trigger.className='nexora-chart-type-trigger';
  trigger.setAttribute('aria-label','Chart type');trigger.setAttribute('aria-haspopup','menu');trigger.setAttribute('aria-expanded','false');
  const glyph=document.createElement('span');glyph.className='nexora-chart-type-glyph';glyph.setAttribute('aria-hidden','true');
- for(let i=0;i<3;i++){const bar=document.createElement('i');glyph.append(bar)}
- const arrow=document.createElement('span');arrow.textContent='⌄';arrow.className='nexora-chart-type-chevron';
- trigger.append(glyph,arrow);
+ for(let i=0;i<2;i++){const bar=document.createElement('i');glyph.append(bar)}
+ trigger.append(glyph);
  const menu=document.createElement('div');menu.className='nexora-chart-type-menu';menu.setAttribute('role','menu');menu.setAttribute('aria-label','Choose chart type');menu.hidden=true;
  let previousGroup=0;
  const groups=[0,4,7,10,12,15,16];
