@@ -3,11 +3,8 @@ import { createRoot } from 'react-dom/client';
 import snapshot from './snapshot.html?raw';
 import { attachSpotLocalControls } from './spot-local-controls';
 import { attachOrderBookDisplay } from './orderbook-display';
-import { attachCapturedMarketPreview } from './captured-market-preview';
-import { attachReadOnlyMarketFeed } from './live-market-feed';
-import { attachSpotTokenInfo } from './spot-token-info';
-import { attachSpotTradingData } from './spot-trading-data';
 import { attachSpotHeaderLive } from './spot-header-live';
+import { attachBybitSpotTransition } from './bybit-spot-transition';
 import './reference.css';
 import './palette.css';
 import './prototype.css';
@@ -31,10 +28,7 @@ const SnapshotSurface = memo(function SnapshotSurface({ onNotice }: { onNotice: 
     const disposeHeaderLive = attachSpotHeaderLive(root);
     const disposeLocalControls = attachSpotLocalControls(root);
     const disposeOrderBookDisplay = attachOrderBookDisplay(root);
-    const disposeReadOnlyMarketFeed = attachReadOnlyMarketFeed(root);
-    const disposeTokenInfo = attachSpotTokenInfo(root);
-    const disposeTradingData = attachSpotTradingData(root);
-    const disposeCapturedMarketPreview = attachCapturedMarketPreview(root);
+    const disposeBybitTransition = attachBybitSpotTransition(root);
     const headerSearch = root.querySelector<HTMLInputElement>('#globalNav input.ant-input-sm');
     headerSearch?.setAttribute('aria-label', 'Search live Spot markets');
     const openSearch = () => {
@@ -59,7 +53,7 @@ const SnapshotSurface = memo(function SnapshotSurface({ onNotice }: { onNotice: 
       }
       if (target.closest('[class*="__symbolInfoBox"] [class*="__bigName"]')) return;
       const interval = target.closest('[class*="__favInterval"], [class*="__chartType"], [class*="__bigName"]');
-      if (interval) { onNotice('Local mock prototype: the chart and BTC/USDT market are the static saved reference.'); return; }
+      if (interval) { onNotice('NEXORA: Bybit chart integration is the next phase.'); return; }
       const action = target.closest('button,a');
       if (action) {
         event.preventDefault();
@@ -74,7 +68,7 @@ const SnapshotSurface = memo(function SnapshotSurface({ onNotice }: { onNotice: 
     };
     root.addEventListener('click', click);
     root.addEventListener('keydown', key);
-    return () => { disposeCapturedMarketPreview(); disposeHeaderLive(); disposeTradingData(); disposeTokenInfo(); disposeReadOnlyMarketFeed(); disposeOrderBookDisplay(); disposeLocalControls(); root.removeEventListener('click', click); root.removeEventListener('keydown', key); headerSearch?.removeEventListener('input', searchInput); };
+    return () => { disposeBybitTransition(); disposeHeaderLive(); disposeOrderBookDisplay(); disposeLocalControls(); root.removeEventListener('click', click); root.removeEventListener('keydown', key); headerSearch?.removeEventListener('input', searchInput); };
   }, [onNotice]);
   return <div className="snapshot-surface" ref={surface} dangerouslySetInnerHTML={{ __html: snapshot }} />;
 });
