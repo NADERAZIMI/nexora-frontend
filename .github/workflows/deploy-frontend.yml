@@ -1,0 +1,77 @@
+name: NEXORA Frontend — build and deploy Turkey VPS
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nexora-frontend-turkey
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nexora-frontend-dist
+          path: dist/
+          if-no-files-found: error
+          retention-days: 7
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: turkey-frontend
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: nexora-frontend-dist
+          path: dist/
+      - name: Verify deployment configuration
+        env:
+          SSH_KEY: ${{ secrets.NEXORA_DEPLOY_SSH_KEY }}
+          SSH_HOST: ${{ secrets.NEXORA_DEPLOY_HOST }}
+          SSH_USER: ${{ secrets.NEXORA_DEPLOY_USER }}
+          SSH_KNOWN_HOSTS: ${{ secrets.NEXORA_SSH_KNOWN_HOSTS }}
+        run: |
+          for var in SSH_KEY SSH_HOST SSH_USER SSH_KNOWN_HOSTS; do
+            if [ -z "${!var}" ]; then
+              echo "::error::Missing deployment secret: $var. Configure turkey-frontend environment."
+              exit 1
+            fi
+          done
+      - name: Configure pinned SSH host identity
+        env:
+          SSH_KEY: ${{ secrets.NEXORA_DEPLOY_SSH_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.NEXORA_SSH_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+      - name: Deploy only inside dedicated NEXORA directory
+        env:
+          HOST: ${{ secrets.NEXORA_DEPLOY_HOST }}
+          USER: ${{ secrets.NEXORA_DEPLOY_USER }}
+          PORT: ${{ vars.NEXORA_SSH_PORT || '22' }}
+          RELEASE: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          case "$RELEASE" in *[!a-f0-9]*|'') exit 1;; esac
+          SSH_OPTS="-i $HOME/.ssh/id_ed25519 -p $PORT -o StrictHostKeyChecking=yes -o BatchMode=yes"
+          ssh $SSH_OPTS "$USER@$HOST" "mkdir -p ~/nexora-frontend/releases/$RELEASE"
+          rsync -az --delete -e "ssh -i $HOME/.ssh/id_ed25519 -p $PORT -o StrictHostKeyChecking=yes -o BatchMode=yes" dist/ "$USER@$HOST:nexora-frontend/releases/$RELEASE/"
+          ssh $SSH_OPTS "$USER@$HOST" "cd ~/nexora-frontend && ln -sfn releases/$RELEASE next && mv -Tf next current"
