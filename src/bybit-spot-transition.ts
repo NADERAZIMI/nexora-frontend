@@ -53,16 +53,12 @@ export function attachBybitSpotTransition(root:HTMLElement):()=>void{
   if(loaded||loading)return;
   controller?.abort();controller=new AbortController();const signal=controller.signal;loading=true;state.textContent='Loading NEXORA Spot markets…';
   try{
-   let cursor='',all:Instrument[]=[];
-   for(let page=0;page<8;page++){
-    const query=new URLSearchParams({category:'spot',limit:'1000'});if(cursor)query.set('cursor',cursor);
-    const response=await fetch('https://api.bybit.com/v5/market/instruments-info?'+query,{signal,credentials:'omit'});
-    if(!response.ok)throw Error('Market catalog HTTP '+response.status);
-    const data=await response.json() as Page;
-    if(data.retCode!==0||!Array.isArray(data.result?.list))throw Error('Invalid market catalog');
-    all.push(...data.result.list.filter(m=>safe(m.symbol)&&safe(m.baseCoin)&&safe(m.quoteCoin)&&m.status==='Trading'));
-    const next=data.result?.nextPageCursor||'';if(!next||next===cursor)break;cursor=next;
-   }
+   // Bybit Spot instruments-info does not support cursor or limit pagination.
+   const response=await fetch('https://api.bybit.com/v5/market/instruments-info?category=spot',{signal,credentials:'omit'});
+   if(!response.ok)throw Error('Market catalog HTTP '+response.status);
+   const data=await response.json() as Page;
+   if(data.retCode!==0||!Array.isArray(data.result?.list))throw Error('Invalid market catalog');
+   const all=data.result.list.filter(m=>safe(m.symbol)&&safe(m.baseCoin)&&safe(m.quoteCoin)&&m.status==='Trading');
    if(signal.aborted||disposed)return;
    instruments=[...new Map(all.map(m=>[m.symbol,m])).values()].sort((a,b)=>a.symbol.localeCompare(b.symbol));
    if(!instruments.length)throw Error('No active Spot instruments returned');
