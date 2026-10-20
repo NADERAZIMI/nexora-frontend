@@ -1,5 +1,7 @@
-# NEXORA frontend — clean restart
+# NEXORA frontend
 
-The single self-contained `index.html` is based on the user's Bybit Spot SingleFile reference with NEXORA's theme overrides.
+Clean React 19 + TypeScript + Vite rewrite of the Bybit-inspired NEXORA Spot interface. Replaces the saved SingleFile HTML snapshot, rather than injecting its DOM. Components include market header, chart area, order-book container, spot order form and order history. Uses the NEXORA dark color palette and embedded NEXORA logo.
 
-This is an **offline visual snapshot**. Live exchange chart, Bybit network streams, login and trading are not yet implemented. All prior frontend source has been removed from this tree. The workflow publishes only this page to the isolated NEXORA frontend directory.
+This initial React conversion contains **no live API/WebSocket connections or trade execution**. Order Book and chart intentionally display waiting states. Next step: read-only Bybit Spot WebSocket order-book integration.
+
+Development: `npm ci && npm run dev` | Production: `npm run build`.

@@ -13,14 +13,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Validate standalone HTML
-        run: |
-          set -euo pipefail
-          test -s index.html
-          grep -qi '<html' index.html
-          grep -qi 'nexora-identity-theme' index.html
-          mkdir -p dist
-          cp index.html dist/index.html
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run build
       - uses: actions/upload-artifact@v4
         with:
           name: nexora-frontend-dist
