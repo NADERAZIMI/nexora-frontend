@@ -5,6 +5,7 @@ import {TokenIcon} from './TokenIcon';
 import {useTokenOverview} from './useTokenOverview';
 import DataPanel from './DataPanel';
 import MarketsPage from './MarketsPage';
+import SpotProChart from './SpotProChart';
 import FeedPanel from './FeedPanel';
 import { createRoot } from 'react-dom/client';
 import './styles.css';
@@ -106,7 +107,7 @@ function TokenInfoPanel({pair}:{pair:SpotPair}){
  </div>;
 }
 const tabs=['Chart','Info','Data','Feed','Trade Analysis'] as const;
-function ChartPanel({pair}:{pair:SpotPair}){const [tab,setTab]=useState<(typeof tabs)[number]>('Chart');const [frame,setFrame]=useState('1h');return <section className="panel chart"><div className="tabs">{tabs.map(x=><button key={x} onClick={()=>setTab(x)} className={tab===x?'active':''}>{x}</button>)}<span className="paneltools">⚙　⛶</span></div>{tab==='Feed'?<FeedPanel symbol={pair.symbol}/>:tab==='Data'?<DataPanel symbol={pair.symbol}/>:tab==='Info'?<TokenInfoPanel pair={pair}/>:tab==='Chart'?<><div className="chart-toolbar"><span className="active-blue">Trading Chart</span><div className="timeframes">{['1m','5m','15m','30m','1h','4h','1d','1w'].map(x=><button key={x} onClick={()=>setFrame(x)} className={frame===x?'on':''}>{x}</button>)}</div><span className="muted">Indicators　⌄</span></div><div className="chart-area"><div className="chart-grid"/><div className="chart-message"><span className="chart-icon">▥</span><b>Chart ready for market-data integration</b><p>React chart container · {frame} · {pair.base}/{pair.quote}</p><small>No simulated candles or prices are displayed.</small></div><span className="axis axis-top">Price ({pair.quote})</span><span className="axis axis-bottom">Time (UTC)</span></div></>:<div className="waiting">{tab} panel · React component ready for live data</div>}</section>}
+function ChartPanel({pair}:{pair:SpotPair}){const [tab,setTab]=useState<(typeof tabs)[number]>('Chart');const [frame,setFrame]=useState('1h');return <section className="panel chart"><div className="tabs">{tabs.map(x=><button key={x} onClick={()=>setTab(x)} className={tab===x?'active':''}>{x}</button>)}<span className="paneltools">⚙　⛶</span></div>{tab==='Feed'?<FeedPanel symbol={pair.symbol}/>:tab==='Data'?<DataPanel symbol={pair.symbol}/>:tab==='Info'?<TokenInfoPanel pair={pair}/>:tab==='Chart'?<><div className="chart-toolbar"><span className="active-blue">Trading Chart</span><div className="timeframes">{['1m','5m','15m','30m','1h','4h','1d','1w'].map(x=><button key={x} onClick={()=>setFrame(x)} className={frame===x?'on':''}>{x}</button>)}</div><span className="muted">Indicators　⌄</span></div><div className="chart-area"><SpotProChart pair={pair} frame={frame}/></div></>:<div className="waiting">{tab} panel · React component ready for live data</div>}</section>}
 function OrderBook({pair,book}:{pair:SpotPair;book:BookState}){
  const [mode,setMode]=useState('Order Book');
  const [stepMultiplier,setStepMultiplier]=useState(1);
