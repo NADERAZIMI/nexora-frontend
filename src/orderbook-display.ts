@@ -17,6 +17,63 @@ export function attachOrderBookDisplay(root: HTMLElement) {
   }));
   if (!book || !asks || !bids || !header || !body || controls.some(control => !control.element)) return () => {};
 
+  // The archived BTC snapshot verifies only 0.01. Other ticks cannot be
+  // offered until the selected instrument's metadata and depth are available.
+  const precisionTrigger = book.querySelector<HTMLElement>('[class*="__settingWrapper"] [class*="__drop"]');
+  const capturedPrecision = precisionTrigger?.querySelector('span')?.textContent?.trim() ?? '';
+  let precisionMenu: HTMLElement | null = null;
+  let precisionOpen = false;
+  const closePrecision = (restoreFocus = false) => {
+    precisionOpen = false;
+    if (precisionMenu) precisionMenu.hidden = true;
+    precisionTrigger?.setAttribute('aria-expanded', 'false');
+    if (restoreFocus) precisionTrigger?.focus();
+  };
+  const togglePrecision = (event: Event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    precisionOpen = !precisionOpen;
+    if (precisionMenu) precisionMenu.hidden = !precisionOpen;
+    precisionTrigger?.setAttribute('aria-expanded', String(precisionOpen));
+  };
+  const precisionKey = (event: KeyboardEvent) => {
+    if (event.key === 'Escape') { closePrecision(true); return; }
+    if (event.key === 'Enter' || event.key === ' ') togglePrecision(event);
+  };
+  const outsidePrecision = (event: MouseEvent) => {
+    if (precisionOpen && precisionTrigger && !precisionTrigger.contains(event.target as Node) && !precisionMenu?.contains(event.target as Node)) closePrecision();
+  };
+  if (precisionTrigger && capturedPrecision) {
+    const host = precisionTrigger.parentElement!;
+    host.style.position = host.style.position || 'relative';
+    precisionTrigger.setAttribute('role', 'button');
+    precisionTrigger.setAttribute('tabindex', '0');
+    precisionTrigger.setAttribute('aria-label', 'Order Book price precision');
+    precisionTrigger.setAttribute('aria-haspopup', 'menu');
+    precisionTrigger.setAttribute('aria-expanded', 'false');
+    precisionMenu = document.createElement('div');
+    precisionMenu.hidden = true;
+    precisionMenu.setAttribute('role', 'menu');
+    precisionMenu.setAttribute('aria-label', 'Price precision options');
+    precisionMenu.style.cssText = 'position:absolute;right:0;top:100%;z-index:50;min-width:180px;padding:6px 0;background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--text-secondary);border-radius:4px;box-shadow:0 4px 12px #0008;';
+    const choice = document.createElement('button');
+    choice.type = 'button';
+    choice.setAttribute('role', 'menuitemradio');
+    choice.setAttribute('aria-checked', 'true');
+    choice.textContent = capturedPrecision;
+    choice.style.cssText = 'display:block;width:100%;padding:8px 12px;border:0;text-align:left;color:var(--text-primary);background:transparent;cursor:pointer;font:inherit;';
+    choice.addEventListener('click', event => { event.stopPropagation(); closePrecision(true); });
+    const note = document.createElement('div');
+    note.textContent = 'More levels require instrument data';
+    note.style.cssText = 'padding:8px 12px;color:var(--text-secondary);font-size:11px;white-space:nowrap;';
+    note.setAttribute('role', 'note');
+    precisionMenu.append(choice, note);
+    host.append(precisionMenu);
+    precisionTrigger.addEventListener('click', togglePrecision);
+    precisionTrigger.addEventListener('keydown', precisionKey);
+    document.addEventListener('click', outsidePrecision);
+  }
+
   const alignContent = () => {
     const parent = body.offsetParent;
     if (!(parent instanceof HTMLElement)) return;
@@ -61,5 +118,5 @@ export function attachOrderBookDisplay(root: HTMLElement) {
   });
   const savedMode = book.dataset.localOrderbookMode;
   select(savedMode === 'buy' || savedMode === 'sell' ? savedMode : 'combined');
-  return () => { resize.disconnect(); cleanup.forEach(dispose => dispose()); };
+  return () => { closePrecision(); precisionTrigger?.removeEventListener('click', togglePrecision); precisionTrigger?.removeEventListener('keydown', precisionKey); document.removeEventListener('click', outsidePrecision); precisionMenu?.remove(); resize.disconnect(); cleanup.forEach(dispose => dispose()); };
 }
