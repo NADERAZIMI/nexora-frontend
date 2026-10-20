@@ -253,7 +253,7 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
     }catch(e){console.warn('[NEXORA] Market picker price refresh unavailable',e)}
     finally{priceRefreshBusy=false}
   };
-  const priceRefreshTimer=window.setInterval(()=>{void refreshVisiblePrices()},8000);
+  const priceRefreshTimer=window.setInterval(()=>{void refreshVisiblePrices()},2000);
   let loadController:AbortController|null=null;
   let liveLoading=false;
   async function loadLive() {
