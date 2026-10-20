@@ -27,7 +27,7 @@
     "src/orderbook-display.ts": "6f56e491b75077b21565b4179031bab4078027ba7c8dca2d625f9aa8a2277dfd",
     "src/price-precision.ts": "94b49af3bf14235c5ac20776b6e719c4f53cf18a3d200f36e523a6fc29c2c1e1",
     "src/captured-market-catalog.ts": "3791cb0d65b7c236e478f69a37c88dd2bb974f6d85acbab99924e920bb0fb566",
-    "src/captured-market-preview.ts": "3ff5548f43fdd67b7ce0446d903b437ddb1fc3b0cb60e725411a780431e583f4",
+    "src/captured-market-preview.ts": "533da0027ab93240d39a8c69d482829ff774ef8899862ab0c3f2be349bc247d1",
     "src/live-market-feed.ts": "384e62b9cd2f90e36f27a788e9caa823e46a5d3afc35048dd02c99ea18f91989",
     "src/mexc-public-markets.ts": "5649bf1a2c95c3cd0de5ed384b7c3e453bd001d7a6bcdb35099b7700e0391289"
   },
