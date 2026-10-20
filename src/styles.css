@@ -77,3 +77,10 @@
 .orderbook.depth-layout-split .depthblock .book-row .book-number:last-child{display:none}
 .orderbook.depth-layout-split .depthblock .book-row .book-number:nth-child(3){text-align:right}
 .orderbook.depth-layout-bids .depthblock,.orderbook.depth-layout-asks .depthblock{flex:1}
+
+/* Reference icon proportions: colored block on the left and fine depth lines on the right. */
+.depth-modes{gap:10px}
+.depth-layout-button{width:25px;height:27px;padding:1px;background:transparent!important;border:0!important}
+.depth-layout-button.selected{box-shadow:inset 0 -2px 0 #5865F2}
+.depth-layout-svg{display:block;flex:none;width:22px;height:20px}
+.orderbook .obtools{justify-content:space-between;padding-inline:10px}
