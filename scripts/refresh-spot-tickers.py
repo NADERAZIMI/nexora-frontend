@@ -16,8 +16,9 @@ for origin in ("https://api.bybit.com","https://api.bytick.com"):
             try:
                 symbol=str(x["symbol"])
                 price=float(x["lastPrice"]);change=float(x["price24hPcnt"]);turnover=float(x["turnover24h"])
-                if not symbol.isalnum() or price<=0 or not all(map(__import__('math').isfinite,(price,change,turnover))):continue
-                tickers[symbol]={"lastPrice":price,"change":change,"turnover":turnover}
+                high=float(x["highPrice24h"]);low=float(x["lowPrice24h"]);volume=float(x["volume24h"])
+                if not symbol.isalnum() or price<=0 or not all(map(__import__('math').isfinite,(price,change,turnover,high,low,volume))) or high<=0 or low<=0:continue
+                tickers[symbol]={"lastPrice":price,"change":change,"turnover":turnover,"high":high,"low":low,"volume":volume}
             except (KeyError,TypeError,ValueError):continue
         if len(tickers)<100:raise ValueError("Insufficient valid tickers")
         DEST.parent.mkdir(parents=True,exist_ok=True)
