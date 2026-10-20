@@ -17,15 +17,17 @@
     "public/reference-btc-volume-axis.png": "b32eb55409ffa3b99d4ed38b55f3ba0e266f1564d3d087d0f94d18911e8e9ae2",
     "public/reference-btc-volume.png": "78181749cee8a9a12d513c9e88cba1707c702d77d3a9bf8cad2ed1597ae04c5b",
     "src/fidelity.css": "2b1f0137bea24d3378c7301e2a50e5d936d2cd995391d16d334f25b2177fdcc2",
-    "src/main.tsx": "22629050fd150a4a355708382c00cd58d5d82909cf86f895b72988bdcdd11613",
+    "src/main.tsx": "313535a1599994f2a261981ba1708103a95c359ea117b53062a704bc66657431",
     "src/palette.css": "1c3d95509331246188c74a55e792542040e4ed12a98721de6a0be355c498a775",
-    "src/prototype.css": "e1905e89e09581b883b63d48521e6f52ec636afe4567bf8a92a0f6cb177a5b77",
+    "src/prototype.css": "7ba8a13542f9387d9150ad6b7e6a5fa1b965e27705bb51c0b453996ff642b281",
     "src/reference.css": "aaa1e46672300d6c410465cd1a0f26d7b567939ac01a04bb3bcb226a5935fa76",
     "src/snapshot.html": "11181f22d37a7c00ca90d665e2e9cab429d0787087dd112fce2aa0f91aa8f8b9",
     "src/vite-env.d.ts": "424faf9241dd699dda995b367ed36665732da1e6ec1f33b2fd40394488ecac92",
     "src/spot-local-controls.ts": "943646fc4634cd794050bde3d777dc20a2890705649cfddd0c7d933cf4b7dfd8",
     "src/orderbook-display.ts": "6f56e491b75077b21565b4179031bab4078027ba7c8dca2d625f9aa8a2277dfd",
-    "src/price-precision.ts": "94b49af3bf14235c5ac20776b6e719c4f53cf18a3d200f36e523a6fc29c2c1e1"
+    "src/price-precision.ts": "94b49af3bf14235c5ac20776b6e719c4f53cf18a3d200f36e523a6fc29c2c1e1",
+    "src/captured-market-catalog.ts": "3791cb0d65b7c236e478f69a37c88dd2bb974f6d85acbab99924e920bb0fb566",
+    "src/captured-market-preview.ts": "8ec771c91d7d5222f0d5588f3d287371b601954c9c0e9957f26a7598299f3c28"
   },
   "phase02cReviewedFrom": "1acc95bdb3a45053d9117e6282b81f833ef268ad",
   "phase02dReviewedFrom": "99410fea21c1e77edd0540b7c3acf35b379b5ae0",
@@ -33,5 +35,6 @@
   "phase02eHotfixReviewedFrom": "d424a86b3f82b50e7372ad151b9869693cf964fb",
   "orderbookMidPriceHotfixFrom": "e2ae233e9c81a6b28daf32251883efca4ccfefff",
   "phase02fAReviewedFrom": "abde06d43f6e412171fd4acd473df143ff06b708",
-  "phase02fBReviewedFrom": "c4d13a58996c478eead2f24329661364ad9d0d25"
+  "phase02fBReviewedFrom": "c4d13a58996c478eead2f24329661364ad9d0d25",
+  "phase02gAReviewedFrom": "d0dd93b86a6ec1826b36b074a230af4a2d1ef950"
 }
