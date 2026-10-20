@@ -49,6 +49,7 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
   filterBar.textContent = 'All     Main';
   const choices = document.createElement('div');
   choices.className = 'nexora-market-preview-choices';
+  choices.hidden = true; // Never show archived sample markets while live API loads.
   let selected = 'BTC_USDT';
   let liveMarkets:MexcSpotMarket[] = [];
   let liveLoaded=false;
@@ -133,9 +134,9 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
     }
     showMore.hidden=liveFiltered.length<=visibleLimit;
     showMore.textContent='Show more markets ('+Math.min(visibleLimit,liveFiltered.length)+' / '+liveFiltered.length+')';
-    const noResults = buttons.every(x => x.button.hidden) && liveRows.children.length===0;
+    const noResults = liveLoaded && liveRows.children.length===0;
     empty.hidden = !noResults;
-    empty.textContent = liveLoaded ? 'No NEXORA Spot pairs match this filter' : 'No saved sample pairs match this filter';
+    empty.textContent = 'No NEXORA Spot pairs match this filter';
     sortButtons.forEach((button,i) => button.setAttribute('aria-pressed', String(i === (sortKey === 'pair' ? 0 : 1))));
   }
   function comparePrice(a:string,b:string) {
@@ -148,8 +149,8 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
   }
   const empty = document.createElement('div');
   empty.className = 'nexora-market-preview-empty';
-  empty.textContent = 'No captured spot markets in this category';
-  empty.hidden = true;
+  empty.textContent = 'Loading NEXORA Spot markets…';
+  empty.hidden = false;
   search.addEventListener('input', () => {visibleLimit=120;refresh()});
   showMore.addEventListener('click',event=>{event.stopPropagation();visibleLimit+=120;refresh()});
   panel.append(search, tabs, filterBar, columns, liveRows, showMore, choices, empty);
@@ -211,6 +212,8 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
     if(liveLoaded||liveLoading)return;
     loadController=new AbortController();liveLoading=true;
     panel.setAttribute('aria-busy','true');
+    empty.hidden=false;
+    empty.textContent='Loading NEXORA Spot markets…';
     try {
       liveMarkets=await getMexcSpotMarkets(loadController.signal);
       liveLoaded=true;
@@ -236,7 +239,7 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
     root.dispatchEvent(new CustomEvent('nexora:market-selected',{detail:{symbol:id.replace('_','')}}));
     refresh();
   }
-  show('BTC_USDT');
+  // Preserve the initial saved BTC heading without exposing offline sample rows.
   arrow?.setAttribute('role','button');
   arrow?.setAttribute('tabindex','0');
   arrow?.setAttribute('aria-label','Open spot market selector');
