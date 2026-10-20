@@ -219,15 +219,15 @@ body *::-webkit-scrollbar-corner,html::-webkit-scrollbar-corner,body::-webkit-sc
 .market-type-tabs,.market-filter-tabs{scrollbar-width:none}
 
 /* Compact Bybit-style live spot summary. Green/red are positive/negative 24h moves. */
-.marketbar{gap:20px;min-height:60px;padding:8px 17px;align-items:center;white-space:nowrap;overflow:visible}
+.marketbar{gap:20px;min-height:66px;padding:10px 17px;align-items:center;white-space:nowrap;overflow:visible}
 .marketbar .pair-label{padding-right:15px;gap:9px}
-.marketbar .pair-label strong{font-size:15px;font-weight:700}
-.marketbar .pair-label small{font-size:10px}
-.marketbar .price strong{font-size:20px;font-weight:700;line-height:1.15;font-variant-numeric:tabular-nums}
-.marketbar .price small{font-size:11px;color:#F4F6FA;margin-top:3px}
+.marketbar .pair-label strong{font-size:17px;font-weight:700}
+.marketbar .pair-label small{font-size:11px}
+.marketbar .price strong{font-size:23px;font-weight:700;line-height:1.15;font-variant-numeric:tabular-nums}
+.marketbar .price small{font-size:12px;color:#F4F6FA;margin-top:3px}
 .marketbar .marketstat{flex-shrink:0}
-.marketbar .marketstat small{font-size:10px;color:#717987;margin-top:0}
-.marketbar .marketstat strong{font-size:12px;margin-top:5px;font-weight:650;white-space:nowrap;font-variant-numeric:tabular-nums}
+.marketbar .marketstat small{font-size:11px;color:#717987;margin-top:0}
+.marketbar .marketstat strong{font-size:14px;margin-top:5px;font-weight:650;white-space:nowrap;font-variant-numeric:tabular-nums}
 .marketbar .market-up,.marketbar .market-up strong{color:#16B89A}
 .marketbar .market-down,.marketbar .market-down strong{color:#F05A70}
 .marketbar .market-flat,.marketbar .market-flat strong{color:#F4F6FA}
