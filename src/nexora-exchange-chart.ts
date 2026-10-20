@@ -4,7 +4,7 @@ type Series={setData:(bars:unknown[])=>void;update:(bar:unknown)=>void;createPri
 type Chart={addSeries:(type:unknown,opts?:object,paneIndex?:number)=>Series;removeSeries:(s:Series)=>void;timeScale:()=>{fitContent:()=>void};applyOptions:(opts:object)=>void;remove:()=>void;subscribeClick?:(callback:(param:{point?:{x:number;y:number}})=>void)=>void;unsubscribeClick?:(callback:(param:{point?:{x:number;y:number}})=>void)=>void};
 type Lib={createChart:(node:HTMLElement,opts:object)=>Chart;CandlestickSeries:unknown;HistogramSeries:unknown;LineSeries:unknown};
 declare global{interface Window{LightweightCharts?:Lib}}
-const sources=['https://cdn.jsdelivr.net/npm/lightweight-charts@5.0.9/dist/lightweight-charts.standalone.production.js','https://unpkg.com/lightweight-charts@5.0.9/dist/lightweight-charts.standalone.production.js'];
+const sources=['/vendor/lightweight-charts.standalone.production.js','https://cdn.jsdelivr.net/npm/lightweight-charts@5.0.9/dist/lightweight-charts.standalone.production.js','https://unpkg.com/lightweight-charts@5.0.9/dist/lightweight-charts.standalone.production.js'];
 let scriptPromise:Promise<Lib>|undefined;
 function library():Promise<Lib>{
  if(window.LightweightCharts?.createChart)return Promise.resolve(window.LightweightCharts);
