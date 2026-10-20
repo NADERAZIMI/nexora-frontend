@@ -9,6 +9,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@klinecharts/pro": "0.1.1",
+    "klinecharts": "9.8.12",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },
