@@ -91,7 +91,7 @@ export function attachNexoraExchangeChart(wrapper:HTMLElement,root:HTMLElement):
      if(last&&b.time===last.time)data[data.length-1]=b;else data.push(b);
      candles!.update(b);if(volume&&visible.has('Volume'))volume.update({time:b.time,value:b.volume,color:b.close>=b.open?'#16b89a70':'#f05a7070'});
     }
-    paint();message(symbol+' · '+frame.value+' · Live');
+    paint();if(data.length>0)message(symbol+' · '+frame.value+' · Live ('+data.length+' candles)');
    }catch{/* Ignore malformed public messages. */}
   };
   current.onclose=()=>{if(!disposed&&ws===current&&thisJob===job){ws=null;retry=window.setTimeout(openSocket,3000)}};
@@ -128,7 +128,7 @@ export function attachNexoraExchangeChart(wrapper:HTMLElement,root:HTMLElement):
    if(!bars.length)throw Error('No market candles available');
    data=bars;candles?.setData(data);paint();chart?.timeScale().fitContent();message(symbol+' · '+frame.value+' · '+bars.length+' historical candles');
    openSocket();
-  }catch(err){if(disposed||job!==sequence)return;message('Cannot load public candles: '+(err instanceof Error?err.message:String(err)),true)}
+  }catch(err){if(disposed||job!==sequence)return;message('Historical candles unavailable; waiting for live Bybit candles. '+(err instanceof Error?err.message:String(err)),true);openSocket()}
  };
  const observer=new ResizeObserver(()=>{if(chart&&plot.clientWidth&&plot.clientHeight)chart.applyOptions({width:plot.clientWidth,height:plot.clientHeight})});
  const mount=async()=>{
