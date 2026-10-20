@@ -301,3 +301,7 @@ font-size:13px;cursor:pointer}
 .nexora-chart-type-item:hover{background:#2b303a}.nexora-chart-type-item.is-selected{background:#e7e7e9;color:#171a20;border-radius:3px}
 .nexora-chart-type-item-icon{display:inline-flex;align-items:center;justify-content:center;width:17px;flex:0 0 17px;font-size:14px;opacity:.7}
 .nexora-chart-type-divider{border-top:1px solid #383b44;margin:5px 8px}
+
+/* Keep the chart-type menu anchored beneath its own button, above canvas. */
+.nexora-chart-top-row{overflow:visible}
+.nexora-chart-type-menu{position:absolute;top:34px;left:0;margin-top:0}
