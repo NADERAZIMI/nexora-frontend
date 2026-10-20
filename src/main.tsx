@@ -5,6 +5,7 @@ import { attachSpotLocalControls } from './spot-local-controls';
 import { attachOrderBookDisplay } from './orderbook-display';
 import { attachSpotHeaderLive } from './spot-header-live';
 import { attachBybitSpotTransition } from './bybit-spot-transition';
+import { attachBybitSpotOrderbook } from './bybit-spot-orderbook';
 import './reference.css';
 import './palette.css';
 import './prototype.css';
@@ -29,6 +30,7 @@ const SnapshotSurface = memo(function SnapshotSurface({ onNotice }: { onNotice: 
     const disposeLocalControls = attachSpotLocalControls(root);
     const disposeOrderBookDisplay = attachOrderBookDisplay(root);
     const disposeBybitTransition = attachBybitSpotTransition(root);
+    const disposeBybitOrderbook = attachBybitSpotOrderbook(root);
     const headerSearch = root.querySelector<HTMLInputElement>('#globalNav input.ant-input-sm');
     headerSearch?.setAttribute('aria-label', 'Search live Spot markets');
     const openSearch = () => {
@@ -68,7 +70,7 @@ const SnapshotSurface = memo(function SnapshotSurface({ onNotice }: { onNotice: 
     };
     root.addEventListener('click', click);
     root.addEventListener('keydown', key);
-    return () => { disposeBybitTransition(); disposeHeaderLive(); disposeOrderBookDisplay(); disposeLocalControls(); root.removeEventListener('click', click); root.removeEventListener('keydown', key); headerSearch?.removeEventListener('input', searchInput); };
+    return () => { disposeBybitOrderbook(); disposeBybitTransition(); disposeHeaderLive(); disposeOrderBookDisplay(); disposeLocalControls(); root.removeEventListener('click', click); root.removeEventListener('keydown', key); headerSearch?.removeEventListener('input', searchInput); };
   }, [onNotice]);
   return <div className="snapshot-surface" ref={surface} dangerouslySetInnerHTML={{ __html: snapshot }} />;
 });
