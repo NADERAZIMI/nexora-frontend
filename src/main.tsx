@@ -13,7 +13,7 @@ const display='—';
 function MarketBar({pair,onSelect,pairs,source,tickers,pricesReady}:{pair:SpotPair;onSelect:(pair:SpotPair)=>void;pairs:SpotPair[];source:'loading'|'live'|'fallback';tickers:Record<string,MarketTicker>;pricesReady:boolean}){
  const [open,setOpen]=useState(false),[search,setSearch]=useState('');
  const [category,setCategory]=useState<'Favorites'|'Crypto'|'TradFi'>('Crypto');
- const [quote,setQuote]=useState('USDT');
+ const [quote,setQuote]=useState('All');
  const [sort,setSort]=useState<'default'|'price'|'change'|'volume'>('default');
  const [favorites,setFavorites]=useState<string[]>([]);
  const matched=useFilteredPairs(pairs,search);
@@ -36,7 +36,7 @@ function MarketBar({pair,onSelect,pairs,source,tickers,pricesReady}:{pair:SpotPa
  <div className="market-filter-tabs"><button className="market-quote" onClick={()=>setQuote(quote==='USDT'?'All':'USDT')}>{quote}⌄</button><button className={quote==='All'?'active':''} onClick={()=>setQuote('All')}>All</button><button disabled>New</button><button disabled>0 Fees</button><button disabled>Margin Trading</button></div>
  <div className="market-table-head"><button onClick={()=>setSort('default')}>Name ↕</button><button onClick={()=>setSort('price')}>Price ↕</button><button onClick={()=>setSort('change')}>24H % ↕</button><button onClick={()=>setSort('volume')}>Volume ↕</button></div>
  <div className="market-catalog-status">{source==='live'?'Bybit Spot pairs':source==='loading'?'Loading market catalog…':'Popular pairs (live catalog unavailable)'} · {pricesReady?'Live price data':'Price feed unavailable'} · {found.length}</div>
- <div className="market-items">{category==='TradFi'?<div className="market-noresults">TradFi markets are not part of Bybit Spot catalog</div>:ordered.slice(0,400).map(p=>{
+ <div className="market-items">{category==='TradFi'?<div className="market-noresults">TradFi markets are not part of Bybit Spot catalog</div>:ordered.map(p=>{
  const tick=tickers[p.symbol],active=p.symbol===pair.symbol,star=favorites.includes(p.symbol);
  return <div className={'market-table-row '+(active?'active':'')} key={p.symbol}>
  <button className={'market-star '+(star?'saved':'')} title={star?'Remove favorite':'Add favorite'} aria-label={'Favorite '+p.symbol} onClick={()=>setFavorites(prev=>star?prev.filter(x=>x!==p.symbol):[...prev,p.symbol])}>{star?'★':'☆'}</button>
