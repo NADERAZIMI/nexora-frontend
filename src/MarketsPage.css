@@ -100,3 +100,10 @@ html[data-nx-theme="light"] .markets-period-picker button.active{background:var(
 .markets-quote-tabs{gap:19px;overflow-x:auto;scrollbar-width:thin;max-width:100%;padding-bottom:2px}
 .markets-quote-tabs button{flex:0 0 auto;white-space:nowrap}
 .markets-filterbar{max-width:100%;min-width:0}
+
+/* Clearly separate an indicative NEXORA/BTC conversion from listed trading pairs. */
+.markets-nexora-reference td{background:#101014}
+.markets-nexora-reference .markets-pair-cell{flex-wrap:wrap}
+.markets-nexora-reference .markets-pair-cell small{color:#929AAA;font-size:10px;white-space:nowrap}
+.markets-reference-label{display:inline-block;color:#929AAA;font-size:11px;white-space:nowrap}
+html[data-nx-theme="light"] .markets-nexora-reference td{background:var(--nx-surface)}
