@@ -121,3 +121,10 @@ section[data-local-hide-other-pairs] .ant-checkbox-v2-checked .ant-checkbox-v2-i
 .nexora-market-preview-tabs::-webkit-scrollbar{display:none}
 /* Selecting a real public market must not dim its successfully loaded book. */
 [data-local-market-data-unavailable=true] [class*="__orderbookDealsWrapper"]{opacity:1}
+
+/* Stable Spot selector layout and genuine 24h price movement colors. */
+.nexora-market-preview{overflow:hidden;contain:layout style}
+.nexora-market-preview-choices{overflow-y:auto;overflow-x:hidden;overflow-anchor:none;scrollbar-gutter:stable;overscroll-behavior:contain}
+.nexora-market-preview-choices button span.nexora-change-positive{color:#16B89A}
+.nexora-market-preview-choices button span.nexora-change-negative{color:#F05A70}
+.nexora-market-preview-choices button span.nexora-change-neutral{color:#929AAA}
