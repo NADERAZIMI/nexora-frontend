@@ -1,5 +1,6 @@
 import { getMexcSpotMarkets, type MexcSpotMarket } from './mexc-public-markets';
 import { formatPrice } from './price-precision';
+import { getCoinProfile } from './coingecko-info';
 import { CAPTURED_MARKETS, capturedMarketDisplay } from './captured-market-catalog';
 
 export function attachCapturedMarketPreview(root: HTMLElement): () => void {
@@ -11,6 +12,31 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
   const subname = anchor?.querySelector<HTMLElement>('[class*="__fullName"]');
   const arrow = anchor?.querySelector<HTMLElement>('[class*="__arrowBox"]');
   if (!heading || !anchor) return () => {};
+  const headerIcon=root.querySelector<HTMLImageElement>('[class*="__symbolAvatarWrapper"] img');
+  const icons=new Map<string,string>();
+  let iconController:AbortController|null=null;
+  const applyIcon=(base:string,src:string)=>{
+    if(!src)return;
+    icons.set(base,src);
+    for(const row of liveRows.querySelectorAll<HTMLButtonElement>('button')){
+      if(row.dataset.base!==base)continue;
+      const img=row.querySelector<HTMLImageElement>('.nexora-market-logo');
+      const fallback=row.querySelector<HTMLElement>('.nexora-market-logo-fallback');
+      if(img){img.src=src;img.hidden=false;}
+      if(fallback)fallback.hidden=true;
+    }
+  };
+  const selectIcon=(base:string)=>{
+    iconController?.abort();iconController=new AbortController();const signal=iconController.signal;
+    if(headerIcon){headerIcon.hidden=true;headerIcon.removeAttribute('src');}
+    const cached=icons.get(base);
+    if(cached&&headerIcon){headerIcon.src=cached;headerIcon.hidden=false;return;}
+    void getCoinProfile(base,signal).then(profile=>{
+      if(signal.aborted||!profile?.image)return;
+      applyIcon(base,profile.image);
+      if(headerIcon){headerIcon.src=profile.image;headerIcon.hidden=false;}
+    }).catch(()=>{});
+  };
   heading.setAttribute('role', 'button');
   heading.setAttribute('tabindex', '0');
   heading.setAttribute('aria-label', 'Inspect captured market examples');
@@ -106,6 +132,7 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
     for(const market of liveFiltered.slice(0,visibleLimit)) {
       const row=document.createElement('button'); row.type='button';
       row.setAttribute('aria-label',market.symbol+'/'+market.quote);
+      row.dataset.base=market.symbol;
       const cells=[market.symbol+'/'+market.quote,market.price?formatPrice(market.price):'—',market.change24h===null?'—':(market.change24h>0?'+':'')+market.change24h.toFixed(2)+'%'];
       for(const [index,value] of cells.entries()) {
         const span=document.createElement('span');
@@ -117,11 +144,12 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
           logo.loading='lazy';
           logo.decoding='async';
           // Public icon asset; unknown/new tokens fall back to a neutral token avatar.
-          logo.src='https://cdn.jsdelivr.net/npm/cryptocurrency-icons@0.18.1/svg/color/'+market.symbol.toLowerCase()+'.svg';
+          logo.src=icons.get(market.symbol)||'';
+          logo.hidden=!icons.has(market.symbol);
           const fallback=document.createElement('span');
           fallback.className='nexora-market-logo-fallback';
           fallback.textContent=market.symbol.slice(0,1);
-          fallback.hidden=true;
+          fallback.hidden=icons.has(market.symbol);
           logo.addEventListener('error',()=>{logo.hidden=true;fallback.hidden=false},{once:true});
           span.append(logo,fallback,document.createTextNode(value));
         }else{span.textContent=value;}
@@ -196,6 +224,7 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
     const label=market.symbol+'/'+market.quote;
     if(titleNode) titleNode.textContent=label;
     if(subname) subname.textContent='NEXORA Spot · public ticker';
+    selectIcon(market.symbol);
     root.dataset.localSelectedMarket=market.id;
     root.dataset.localMarketDataUnavailable='true';
     // Public market data can populate the chart/depth; forms stay unavailable.
@@ -277,6 +306,7 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
     btcOnlyPanels.forEach(panel => { delete panel.dataset.nexoraUnavailable; delete panel.dataset.nexoraUnavailableLabel; });
     marketStatus.remove();
     loadController?.abort();
+    iconController?.abort();
     panel.remove();
   };
 }
