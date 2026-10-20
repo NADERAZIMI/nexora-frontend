@@ -1,3 +1,4 @@
+import { attachNexoraExchangeChart } from './nexora-exchange-chart';
 /** Read-only Spot analytics from Bybit V5 public WebSocket. Separate from headline/depth sockets. */
 type Tick={symbol?:string;lastPrice?:string;price24hPcnt?:string;highPrice24h?:string;lowPrice24h?:string;volume24h?:string;turnover24h?:string;prevPrice24h?:string};
 type Candle={start?:number;open?:string;high?:string;low?:string;close?:string;volume?:string;turnover?:string;confirm?:boolean};
@@ -15,6 +16,7 @@ export function attachSpotChartTabs(root:HTMLElement):()=>void{
  const names=['Chart','Overview','Data','Feed','Trade Analysis'] as const;
  const buttons=names.map((name,i)=>{const b=document.createElement('button');b.type='button';b.textContent=name;b.setAttribute('role','tab');b.setAttribute('aria-selected',String(i===0));b.tabIndex=i===0?0:-1;nav.append(b);return b});
  const view=document.createElement('section');view.className='nexora-chart-tab-content';view.setAttribute('role','tabpanel');chart.append(view);
+ const disposeExchangeChart=attachNexoraExchangeChart(chart,root);
  const oldPlaceholder=chart.querySelector<HTMLElement>('.nexora-bybit-chart-pending');
  if(oldPlaceholder)oldPlaceholder.style.display='none';
  let active=0,symbol='BTCUSDT',base='BTC',quote='USDT',ticker:Tick|null=null;
@@ -91,5 +93,5 @@ export function attachSpotChartTabs(root:HTMLElement):()=>void{
  });
  const onMarket=(event:Event)=>{const d=(event as CustomEvent<{symbol?:string;base?:string;quote?:string;category?:string}>).detail;if(!d?.symbol||d.category&&d.category!=='spot')return;if(!/^[A-Z0-9]{3,30}$/.test(d.symbol))return;symbol=d.symbol;base=d.base||symbol;quote=d.quote||'USDT';ticker=null;trades=[];latest=[];candles.clear();lastUpdate=0;render();connect()};
  header.prepend(nav);root.addEventListener('nexora:market-selected',onMarket);render();connect();
- return()=>{disposed=true;closeSocket();if(redraw!==undefined)clearTimeout(redraw);handlers.forEach(x=>x());root.removeEventListener('nexora:market-selected',onMarket);nav.remove();view.remove();original.style.display=oldDisplay;if(oldPlaceholder)oldPlaceholder.style.display=''};
+ return()=>{disposed=true;closeSocket();if(redraw!==undefined)clearTimeout(redraw);handlers.forEach(x=>x());root.removeEventListener('nexora:market-selected',onMarket);nav.remove();view.remove();disposeExchangeChart();original.style.display=oldDisplay;if(oldPlaceholder)oldPlaceholder.style.display=''};
 }
