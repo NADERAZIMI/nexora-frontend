@@ -1,7 +1,7 @@
 import { createInteractiveSpotChart } from './interactive-chart';
 /** Read-only MEXC public spot feed: never connects to trading/account endpoints. */
 export interface DepthLevel { price:string; qty:string }
-export interface Candle { time:number; open:number;high:number;low:number;close:number }
+export interface Candle { time:number; open:number;high:number;low:number;close:number;volume:number }
 const TIMEFRAMES=['1m','3m','5m','10m','15m','30m','60m','2h','4h','6h','8h','12h','1d','2d','3d','5d','1W','1M'] as const;
 type Timeframe=typeof TIMEFRAMES[number];
 const derived:Partial<Record<Timeframe,{source:string;minutes:number}>>={
@@ -18,8 +18,8 @@ function aggregateCandles(rows:Candle[],periodMinutes:number):Candle[]{
  for(const bar of ordered){
   const start=Math.floor(bar.time/period)*period;
   const prev=result[result.length-1];
-  if(prev&&prev.time===start){prev.high=Math.max(prev.high,bar.high);prev.low=Math.min(prev.low,bar.low);prev.close=bar.close;}
-  else result.push({time:start,open:bar.open,high:bar.high,low:bar.low,close:bar.close});
+  if(prev&&prev.time===start){prev.high=Math.max(prev.high,bar.high);prev.low=Math.min(prev.low,bar.low);prev.close=bar.close;prev.volume+=bar.volume;}
+  else result.push({time:start,open:bar.open,high:bar.high,low:bar.low,close:bar.close,volume:bar.volume});
  }
  return result;
 }
@@ -42,7 +42,7 @@ export async function fetchMarketFrame(symbol:string, signal:AbortSignal, timefr
  const levels=(rows:unknown[]):DepthLevel[]=>rows.filter((row):row is [string,string]=>Array.isArray(row)&&valid(row[0])&&valid(row[1])).slice(0,9).map(row=>({price:row[0],qty:row[1]}));
  const asks=depth&&typeof depth==='object'&&'asks' in depth&&Array.isArray(depth.asks)?levels(depth.asks):[];
  const bids=depth&&typeof depth==='object'&&'bids' in depth&&Array.isArray(depth.bids)?levels(depth.bids):[];
- const candles:Candle[]=Array.isArray(klines)?klines.filter((row):row is [number,string,string,string,string]=>Array.isArray(row)&&typeof row[0]==='number'&&row.slice(1,5).every(valid)).map(row=>({time:row[0],open:Number(row[1]),high:Number(row[2]),low:Number(row[3]),close:Number(row[4])})).filter(x=>Object.values(x).every(Number.isFinite)&&x.low>0):[];
+ const candles:Candle[]=Array.isArray(klines)?klines.filter((row):row is [number,string,string,string,string,string]=>Array.isArray(row)&&typeof row[0]==='number'&&row.slice(1,6).every(valid)).map(row=>({time:row[0],open:Number(row[1]),high:Number(row[2]),low:Number(row[3]),close:Number(row[4]),volume:Number(row[5])})).filter(x=>Object.values(x).every(Number.isFinite)&&x.low>0):[];
  const preparedCandles=conversion?aggregateCandles(candles,conversion.minutes):candles;
  const ticker=tickerResult.status==='fulfilled'?tickerResult.value:null;
  const lastPrice=ticker&&typeof ticker==='object'&&'price' in ticker&&valid(ticker.price)?ticker.price:'';
