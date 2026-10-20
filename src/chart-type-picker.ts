@@ -1,5 +1,6 @@
+import { isDirectChartType } from './chart-renderers';
 /** Visual-only chart-type selector. Rendering modes are intentionally not changed in this phase. */
-export function attachChartTypePicker(topRow:HTMLElement):()=>void {
+export function attachChartTypePicker(topRow:HTMLElement,onChange:(type:string)=>void):()=>void {
  const TYPES=[
   ['Bars','Bars'],['Candles','Candles'],['Hollow candles','Hollow candles'],['Volume candles','Volume candles'],
   ['Line','Line'],['Line with markers','Line with markers'],['Step line','Step line'],
@@ -11,7 +12,7 @@ export function attachChartTypePicker(topRow:HTMLElement):()=>void {
  ] as const;
  const key='nexora-spot-chart-type';
  let current='Candles';
- try{const saved=localStorage.getItem(key);if(saved&&TYPES.some(t=>t[0]===saved))current=saved}catch{}
+ try{const saved=localStorage.getItem(key);if(saved&&isDirectChartType(saved))current=saved}catch{}
  const wrap=document.createElement('div');wrap.className='nexora-chart-type-picker';
  const trigger=document.createElement('button');trigger.type='button';trigger.className='nexora-chart-type-trigger';
  trigger.setAttribute('aria-label','Chart type');trigger.setAttribute('aria-haspopup','menu');trigger.setAttribute('aria-expanded','false');
@@ -28,8 +29,9 @@ export function attachChartTypePicker(topRow:HTMLElement):()=>void {
   const text=document.createElement('span');text.textContent=label;
   item.append(icon,text);
   item.dataset.chartType=id;
+  if(!isDirectChartType(id)){item.disabled=true;item.title='Requires additional market data or a dedicated transformation engine';item.setAttribute('aria-disabled','true');}
   item.addEventListener('click',e=>{e.stopPropagation();current=id;try{localStorage.setItem(key,id)}catch{}
-   renderSelection();setOpen(false);
+   renderSelection();onChange(id);setOpen(false);
   });
   menu.append(item);
  });
@@ -45,6 +47,6 @@ export function attachChartTypePicker(topRow:HTMLElement):()=>void {
  wrap.append(trigger,menu);
  const afterTimeframes=topRow.querySelector('.nexora-chart-timeframes');
  if(afterTimeframes)afterTimeframes.insertAdjacentElement('afterend',wrap);else topRow.append(wrap);
- renderSelection();
+ renderSelection();onChange(current);
  return ()=>{document.removeEventListener('pointerdown',outside);document.removeEventListener('keydown',keydown);wrap.remove()};
 }
