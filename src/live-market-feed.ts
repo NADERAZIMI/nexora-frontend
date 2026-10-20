@@ -1,7 +1,7 @@
 /** Read-only MEXC public spot feed: never connects to trading/account endpoints. */
 export interface DepthLevel { price:string; qty:string }
 export interface Candle { time:number; open:number;high:number;low:number;close:number }
-const TIMEFRAMES=['1m','5m','15m','30m','60m','4h','1d'] as const;
+const TIMEFRAMES=['1m','5m','15m','30m','60m','4h','1d','1W','1M'] as const;
 type Timeframe=typeof TIMEFRAMES[number];
 const valid=(v:unknown):v is string=>typeof v==='string' && /^\d+(?:\.\d+)?$/.test(v);
 export async function fetchMarketFrame(symbol:string, signal:AbortSignal, timeframe:Timeframe='1m'):Promise<{asks:DepthLevel[];bids:DepthLevel[];candles:Candle[];lastPrice:string}> {
@@ -36,15 +36,64 @@ export function attachReadOnlyMarketFeed(root:HTMLElement){
  const canvas=document.createElement('canvas');canvas.setAttribute('aria-label','NEXORA spot candlestick chart');
  const state=document.createElement('div');state.className='nexora-live-state';const retry=document.createElement('button');retry.type='button';retry.className='nexora-feed-retry';retry.textContent='Retry';retry.hidden=true;retry.addEventListener('click',()=>{void refresh()});overlay.append(label,canvas,state,retry);chart.append(overlay);
  const toolbar=document.createElement('div');toolbar.className='nexora-chart-timeframes';toolbar.setAttribute('aria-label','Chart timeframe');
- const chartButtons=new Map<Timeframe,HTMLButtonElement>();
- let timeframe:Timeframe='1m',latestCandles:Candle[]=[];
- for(const tf of TIMEFRAMES){
-  const button=document.createElement('button');button.type='button';button.textContent=tf==='60m'?'1H':tf;
-  button.dataset.timeframe=tf;button.setAttribute('aria-pressed',String(tf===timeframe));
-  button.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();if(timeframe===tf)return;timeframe=tf;scale=1;chartButtons.forEach((b,key)=>b.setAttribute('aria-pressed',String(key===tf)));void refresh()});
-  chartButtons.set(tf,button);toolbar.append(button);
- }
- overlay.prepend(toolbar);
+ const LABELS:Record<Timeframe,string>={'1m':'1m','5m':'5m','15m':'15m','30m':'30m','60m':'1H','4h':'4H','1d':'1D','1W':'1W','1M':'1M'};
+ const DEFAULT_PINNED:Timeframe[]=['1m','5m','15m','30m','60m','4h','1d'];
+ const saved=(()=>{try{const raw=JSON.parse(localStorage.getItem('nexora-spot-pinned-timeframes')||'[]') as unknown;return Array.isArray(raw)?TIMEFRAMES.filter(t=>raw.includes(t)):[]}catch{return []}})();
+ let pinned:Timeframe[]=saved.length?saved:DEFAULT_PINNED.slice();
+ let timeframe:Timeframe='15m',latestCandles:Candle[]=[],editing=false;
+ const menu=document.createElement('div');menu.className='nexora-timeframe-menu';menu.hidden=true;
+ const persist=()=>{try{localStorage.setItem('nexora-spot-pinned-timeframes',JSON.stringify(pinned))}catch{/* optional browser preference */}};
+ const selectTimeframe=(tf:Timeframe)=>{
+  if(timeframe!==tf){timeframe=tf;scale=1;void refresh();}
+  renderToolbar();renderMenu();
+ };
+ const renderToolbar=()=>{
+  toolbar.replaceChildren();
+  for(const tf of pinned){
+   const button=document.createElement('button');button.type='button';button.textContent=LABELS[tf];button.dataset.timeframe=tf;
+   button.setAttribute('aria-pressed',String(tf===timeframe));
+   button.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();selectTimeframe(tf)});
+   toolbar.append(button);
+  }
+  const toggle=document.createElement('button');toggle.type='button';toggle.className='nexora-timeframe-toggle';
+  toggle.textContent='▴';toggle.setAttribute('aria-label','Choose and edit chart timeframes');
+  toggle.setAttribute('aria-expanded',String(!menu.hidden));
+  toggle.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();menu.hidden=!menu.hidden;renderToolbar();renderMenu()});
+  toolbar.append(toggle);
+ };
+ const renderMenu=()=>{
+  menu.replaceChildren();
+  const top=document.createElement('div');top.className='nexora-timeframe-menu-top';
+  const title=document.createElement('span');title.textContent='Pinned';
+  const edit=document.createElement('button');edit.type='button';edit.textContent=editing?'Done':'Edit';
+  edit.addEventListener('click',event=>{event.stopPropagation();editing=!editing;renderMenu()});
+  top.append(title,edit);menu.append(top);
+  const pinnedGrid=document.createElement('div');pinnedGrid.className='nexora-timeframe-grid';menu.append(pinnedGrid);
+  for(const tf of pinned){
+   const btn=document.createElement('button');btn.type='button';btn.className=tf===timeframe?'is-active':'';
+   btn.textContent=(editing?'− ':'')+LABELS[tf];btn.setAttribute('aria-label',(editing?'Unpin ':'Select ')+LABELS[tf]);
+   btn.addEventListener('click',event=>{
+    event.stopPropagation();
+    if(editing){if(pinned.length>1){pinned=pinned.filter(t=>t!==tf);persist();renderToolbar();renderMenu();}}
+    else{selectTimeframe(tf);menu.hidden=true;renderToolbar();}
+   });
+   pinnedGrid.append(btn);
+  }
+  const subtitle=document.createElement('div');subtitle.className='nexora-timeframe-subtitle';subtitle.textContent='Available';menu.append(subtitle);
+  const grid=document.createElement('div');grid.className='nexora-timeframe-grid';menu.append(grid);
+  for(const tf of TIMEFRAMES.filter(t=>!pinned.includes(t))){
+   const btn=document.createElement('button');btn.type='button';btn.textContent=(editing?'+ ':'')+LABELS[tf];
+   btn.addEventListener('click',event=>{
+    event.stopPropagation();
+    if(editing){pinned=TIMEFRAMES.filter(t=>pinned.includes(t)||t===tf);persist();renderToolbar();renderMenu();}
+    else{selectTimeframe(tf);menu.hidden=true;renderToolbar();}
+   });grid.append(btn);
+  }
+  const unavailable=document.createElement('p');unavailable.className='nexora-timeframe-hint';
+  unavailable.textContent='Other reference intervals are not supported by the current MEXC Spot candle feed.';
+  menu.append(unavailable);
+ };
+ overlay.prepend(toolbar,menu);renderToolbar();renderMenu();
  const price=book.querySelector<HTMLElement>('[class*="__newPrice"] [class*="__priceEllipsis"] > div');
  const originalPrice=price?.textContent??'';
  const originals: {node:HTMLElement;text:string}[]=[];
@@ -76,7 +125,7 @@ export function attachReadOnlyMarketFeed(root:HTMLElement){
   retry.hidden=true;state.textContent='Loading '+selected+' live market data…';
 
   try{
-   const frame=await fetchMarketFrame(selected,signal);if(signal.aborted||!mounted)return;
+   const frame=await fetchMarketFrame(selected,signal,timeframe);if(signal.aborted||!mounted)return;
    const paintSide=(side:'asks'|'bids',levels:DepthLevel[])=>{
     const rows=Array.from(book.querySelectorAll<HTMLElement>('[class*="__'+side+'Wrapper"] [class*="__tableRow"]'));
     rows.forEach((row,i)=>{const data=levels[i];row.style.visibility=data?'visible':'hidden';if(!data)return;
@@ -107,9 +156,11 @@ export function attachReadOnlyMarketFeed(root:HTMLElement){
  const zoom=(event:WheelEvent)=>{if(overlay.hidden)return;event.preventDefault();scale=Math.max(.5,Math.min(5,scale*(event.deltaY<0?1.15:.87)));paint(latestCandles);};
  root.addEventListener('nexora:market-selected',choose);
  canvas.addEventListener('wheel',zoom,{passive:false});
+ const dismiss=(event:PointerEvent)=>{if(!menu.hidden&&!menu.contains(event.target as Node)&&!toolbar.contains(event.target as Node)){menu.hidden=true;renderToolbar()}};
+ document.addEventListener('pointerdown',dismiss);
  const resize=()=>{if(!overlay.hidden&&latestCandles.length)paint(latestCandles)};
  window.addEventListener('resize',resize);
  // Show verified public BTC candles immediately instead of the archived static chart.
  choose(new CustomEvent('nexora:market-selected',{detail:{symbol:'BTCUSDT'}}));
- return ()=>{mounted=false;controller?.abort();if(interval!==undefined)clearInterval(interval);restore();overlay.remove();root.removeEventListener('nexora:market-selected',choose);canvas.removeEventListener('wheel',zoom);window.removeEventListener('resize',resize)};
+ return ()=>{mounted=false;controller?.abort();if(interval!==undefined)clearInterval(interval);restore();overlay.remove();root.removeEventListener('nexora:market-selected',choose);canvas.removeEventListener('wheel',zoom);window.removeEventListener('resize',resize);document.removeEventListener('pointerdown',dismiss)};
 }
