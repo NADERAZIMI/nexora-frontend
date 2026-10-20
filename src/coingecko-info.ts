@@ -5,7 +5,7 @@ export type CoinProfile={
  description:string; homepage:string; explorer:string; twitter:string; telegram:string; reddit:string; github:string;
 };
 const IDS:Readonly<Record<string,string>>={
- BTC:'bitcoin',ETH:'ethereum',SOL:'solana',BNB:'binancecoin',XRP:'ripple',
+ '1INCH':'1inch',BTC:'bitcoin',ETH:'ethereum',SOL:'solana',BNB:'binancecoin',XRP:'ripple',
  DOGE:'dogecoin',ADA:'cardano',AVAX:'avalanche-2',DOT:'polkadot',LINK:'chainlink',
  LTC:'litecoin',BCH:'bitcoin-cash',TRX:'tron',SHIB:'shiba-inu',PEPE:'pepe',
  UNI:'uniswap',XLM:'stellar',SHIDO:'shido-2',USDT:'tether',USDC:'usd-coin',
