@@ -24,7 +24,7 @@ export function useSpotMarkets(){
     try{
      let cursor='';const all:SpotPair[]=[];let pages=0;
      do{
-      const qs=new URLSearchParams({category:'spot',limit:'1000'});if(cursor)qs.set('cursor',cursor);
+      const qs=new URLSearchParams({category:'spot'});
       const response=await fetch(host+'?'+qs,{signal:abort.signal,cache:'no-store',credentials:'omit'});
       if(!response.ok)throw Error('HTTP '+response.status);
       const json=await response.json() as Response;
@@ -34,7 +34,7 @@ export function useSpotMarkets(){
        if(!/^[A-Z0-9]{3,32}$/.test(item.symbol))continue;
        all.push({symbol:item.symbol,base:item.baseCoin,quote:item.quoteCoin});
       }
-      cursor=json.result.nextPageCursor||'';
+      cursor='';
       pages++;
      }while(cursor&&pages<12);
      if(all.length<20)throw Error('Incomplete catalog');
