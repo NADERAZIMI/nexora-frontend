@@ -26,5 +26,8 @@ with tarfile.open(fileobj=io.BytesIO(archive),mode="r:gz") as tar:
         (out/name).write_bytes(data)
         count+=1
 if count<15:raise SystemExit(f"ERROR: insufficient validated token images: {count}")
+for essential in ["btc","eth","usdt","sol","xrp"]:
+    if not (out/(essential+".png")).is_file():
+        print("Icon absent from upstream set:",essential)
 (out/"manifest.json").write_text(json.dumps({"symbols":sorted(p.stem.upper() for p in out.glob("*.png"))},separators=(",",":")),encoding="utf-8")
 print(f"Cached {count} distinct token logos locally for {len(symbols)} unique assets; other assets use a letter placeholder")
