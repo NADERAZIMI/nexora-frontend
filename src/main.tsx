@@ -30,9 +30,9 @@ function MarketBar({pair,onSelect,pairs,source,tickers,pricesReady,book}:{pair:S
  });
  const formatPrice=(v:number)=>v.toLocaleString('en-US',{maximumFractionDigits:v>=1?4:8});
  const formatVolume=(v:number)=>v>=1e9?(v/1e9).toFixed(2)+'B':v>=1e6?(v/1e6).toFixed(2)+'M':v>=1000?(v/1000).toFixed(2)+'K':v.toFixed(2);
- const selectedTicker=tickers[pair.symbol];
+ const selectedTicker=book.ticker;
  const trade=book.trades[0];
- const livePrice=trade?.price;
+ const livePrice=trade?.price??selectedTicker?.lastPrice;
  const lastClass=trade?(trade.side==='Buy'?'market-up':'market-down'):'market-flat';
  const marketPrice=(v:number|undefined)=>v===undefined||!Number.isFinite(v)?'—':formatPrice(v);
  const signedChange=selectedTicker?(selectedTicker.change>=0?'+':'')+(selectedTicker.change*100).toFixed(2)+'%':'—';
@@ -135,8 +135,7 @@ function OrderBook({pair,book}:{pair:SpotPair;book:BookState}){
    <span className="book-number">{qtyText(r.amount)}</span>
    <span className="book-number">{qtyText(r.total)}</span>
  </div>);
- const bestAsk=book.asks[0]?.price,bestBid=book.bids[0]?.price;
- const last=book.trades[0],mid=last?.price??bestBid??null;
+ const last=book.trades[0],mid=last?.price??book.ticker?.lastPrice??null;
  const askQty=book.asks.reduce((n,x)=>n+x.amount,0),bidQty=book.bids.reduce((n,x)=>n+x.amount,0);
  const buyPercent=bidQty+askQty?Math.round(100*bidQty/(bidQty+askQty)):0;
  return <section className={'panel orderbook depth-layout-'+layout}>
