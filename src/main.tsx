@@ -50,6 +50,24 @@ function MarketBar({pair,onSelect,pairs,source,tickers,pricesReady}:{pair:SpotPa
  </div>}
  </div><div className="price"><strong>{tickers[pair.symbol]?formatPrice(tickers[pair.symbol].lastPrice):display}</strong><small>Last price</small></div>{[['24h Change',tickers[pair.symbol]?(tickers[pair.symbol].change*100).toFixed(2)+'%':display],['24h High',display],['24h Low',display],['24h Volume ('+pair.base+')',display],['24h Turnover ('+pair.quote+')',tickers[pair.symbol]?formatVolume(tickers[pair.symbol].turnover):display]].map(([k,v])=><div className="marketstat" key={k}><small>{k}</small><strong>{v}</strong></div>)}<span className="marketstate"><i/>{pricesReady?'Live Bybit tickers':'Public market data'}</span></section>
 }
+type FundraisingPerson={name:string;subtitle:string;avatar:string;links:{name:string;url:string}[]};
+const bitcoinFundraising:{team:FundraisingPerson[];investors:FundraisingPerson[]}={
+ team:[{name:'Luke Dashjr',subtitle:'Bitcoin Core Developer',avatar:'LD',links:[{name:'X',url:'https://x.com/LukeDashjr'},{name:'in',url:'https://www.linkedin.com/search/results/all/?keywords=Luke%20Dashjr'}]}],
+ investors:[{name:'Pantera Capital',subtitle:'United States · Bitcoin investor',avatar:'P',links:[{name:'Website',url:'https://panteracapital.com/'},{name:'X',url:'https://x.com/PanteraCapital'}]}]
+};
+function FundraisingPanel({base}:{base:string}){
+ const data=base==='BTC'?bitcoinFundraising:null;
+ return <div className="fundraising-content">
+ {(['team','investors'] as const).map(group=><section className="fundraising-section" key={group}>
+  <h3>{group==='team'?'Team':'Investors'}</h3>
+  {data?.[group]?.length?data[group].map(p=><div className="fundraising-person" key={p.name}>
+    <span className={'fundraising-avatar '+(group==='investors'?'investor':'')}>{p.avatar}</span>
+    <div className="fundraising-identity"><strong>{p.name}</strong><small>{p.subtitle}</small></div>
+    <div className="fundraising-socials">{p.links.map(x=><a key={x.url} href={x.url} target="_blank" rel="noopener noreferrer" aria-label={p.name+' '+x.name} title={x.name}>{x.name==='Website'?'◎':x.name==='X'?'𝕏':x.name}</a>)}</div>
+  </div>):<p className="fundraising-unknown">Verified {base} {group==='team'?'team':'investor'} details are not available.</p>}
+ </section>)}
+ </div>;
+}
 const overviewSections=['Info','Fundraising','Tokenomics','Network'] as const;
 function OverviewPanel({pair}:{pair:SpotPair}){
  const [section,setSection]=useState<(typeof overviewSections)[number]>('Info');
@@ -67,7 +85,7 @@ function OverviewPanel({pair}:{pair:SpotPair}){
    <h3>Explore</h3><div className="overview-links">{labelLinks(info?.explorers).map(x=><a href={x.url} target="_blank" rel="noopener noreferrer" key={x.url}>{x.label}</a>)}</div>
    <h3>Socials</h3><div className="overview-links">{link(info?.socials?.github,'GitHub')}{link(info?.socials?.twitter,'X')}{link(info?.socials?.reddit,'Reddit')}</div>
    <h3>Official Links</h3><div className="overview-links">{link(info?.homepage,'◎ Website')}{link(info?.whitepaper,'▤ Whitepaper')}</div></div>
-  </div>:<div className="overview-empty"><h3>{section}</h3><p>Verified {pair.base} {section.toLowerCase()} data is not connected yet. No estimated values are shown.</p></div>}
+  </div>:section==='Fundraising'?<FundraisingPanel base={pair.base}/>:<div className="overview-empty"><h3>{section}</h3><p>Verified {pair.base} {section.toLowerCase()} data is not connected yet. No estimated values are shown.</p></div>}
  </div>;
 }
 const tabs=['Chart','Overview','Data','Feed','Trade Analysis'] as const;
