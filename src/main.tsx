@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import {useSpotMarkets,useFilteredPairs,type SpotPair} from './spot-markets';
 import {useSpotTickers,type MarketTicker} from './spot-tickers';
 import {TokenIcon} from './TokenIcon';
+import {useTokenOverview} from './useTokenOverview';
 import { createRoot } from 'react-dom/client';
 import './styles.css';
 import {useBybitSpotBook} from './useBybitSpotBook';
@@ -49,8 +50,28 @@ function MarketBar({pair,onSelect,pairs,source,tickers,pricesReady}:{pair:SpotPa
  </div>}
  </div><div className="price"><strong>{tickers[pair.symbol]?formatPrice(tickers[pair.symbol].lastPrice):display}</strong><small>Last price</small></div>{[['24h Change',tickers[pair.symbol]?(tickers[pair.symbol].change*100).toFixed(2)+'%':display],['24h High',display],['24h Low',display],['24h Volume ('+pair.base+')',display],['24h Turnover ('+pair.quote+')',tickers[pair.symbol]?formatVolume(tickers[pair.symbol].turnover):display]].map(([k,v])=><div className="marketstat" key={k}><small>{k}</small><strong>{v}</strong></div>)}<span className="marketstate"><i/>{pricesReady?'Live Bybit tickers':'Public market data'}</span></section>
 }
+const overviewSections=['Info','Fundraising','Tokenomics','Network'] as const;
+function OverviewPanel({pair}:{pair:SpotPair}){
+ const [section,setSection]=useState<(typeof overviewSections)[number]>('Info');
+ const [expanded,setExpanded]=useState(false);
+ const {info,status}=useTokenOverview(pair.base);
+ const number=(n:number|undefined)=>n===undefined?'—':n.toLocaleString('en-US',{maximumFractionDigits:2});
+ const dollars=(n:number|undefined)=>n===undefined?'—':'$'+number(n);
+ const labelLinks=(values:string[]|undefined)=>values?.map(url=>{try{return {url,label:new URL(url).hostname.replace(/^www\./,'')};}catch{return null;}}).filter((x):x is {url:string;label:string}=>Boolean(x))||[];
+ const link=(url:string|undefined,title:string)=>url?<a href={url} target="_blank" rel="noopener noreferrer">{title}</a>:null;
+ return <div className="overview-panel">
+  <div className="overview-subtabs">{overviewSections.map(x=><button type="button" key={x} className={section===x?'active':''} onClick={()=>setSection(x)}>{x}</button>)}</div>
+  {section==='Info'?<div className="overview-info-grid">
+   <div className="overview-token-details"><h3>Token details</h3><div className="overview-data-row"><span>Market Cap</span><strong>{dollars(info?.marketCap)}</strong></div><div className="overview-data-row"><span><abbr title="Fully Diluted Valuation">FDV</abbr></span><strong>{dollars(info?.fdv)}</strong></div><hr/><div className="overview-data-row"><span>Circulating Supply</span><strong>{number(info?.circulating)}</strong></div><div className="overview-data-row"><span>Total Supply</span><strong>{number(info?.total)}</strong></div><div className="overview-data-row"><span>Max. Supply</span><strong>{number(info?.max)}</strong></div>{status==='unavailable'&&<p className="overview-status">Public token metadata unavailable</p>}</div>
+   <div className="overview-token-about"><h3>About {pair.base}</h3>{info?.description?<><p className={expanded?'overview-description expanded':'overview-description'}>{info.description}</p><button className="overview-show-more" type="button" onClick={()=>setExpanded(v=>!v)}>{expanded?'Show Less ⌃':'Show More ⌄'}</button></>:<p className="overview-description muted">{status==='loading'?'Loading public token details…':'Description unavailable'}</p>}
+   <h3>Explore</h3><div className="overview-links">{labelLinks(info?.explorers).map(x=><a href={x.url} target="_blank" rel="noopener noreferrer" key={x.url}>{x.label}</a>)}</div>
+   <h3>Socials</h3><div className="overview-links">{link(info?.socials?.github,'GitHub')}{link(info?.socials?.twitter,'X')}{link(info?.socials?.reddit,'Reddit')}</div>
+   <h3>Official Links</h3><div className="overview-links">{link(info?.homepage,'◎ Website')}{link(info?.whitepaper,'▤ Whitepaper')}</div></div>
+  </div>:<div className="overview-empty"><h3>{section}</h3><p>Verified {pair.base} {section.toLowerCase()} data is not connected yet. No estimated values are shown.</p></div>}
+ </div>;
+}
 const tabs=['Chart','Overview','Data','Feed','Trade Analysis'] as const;
-function ChartPanel({pair}:{pair:SpotPair}){const [tab,setTab]=useState<(typeof tabs)[number]>('Chart');const [frame,setFrame]=useState('1h');return <section className="panel chart"><div className="tabs">{tabs.map(x=><button key={x} onClick={()=>setTab(x)} className={tab===x?'active':''}>{x}</button>)}<span className="paneltools">⚙　⛶</span></div>{tab==='Chart'?<><div className="chart-toolbar"><span className="active-blue">Trading Chart</span><div className="timeframes">{['1m','5m','15m','30m','1h','4h','1d','1w'].map(x=><button key={x} onClick={()=>setFrame(x)} className={frame===x?'on':''}>{x}</button>)}</div><span className="muted">Indicators　⌄</span></div><div className="chart-area"><div className="chart-grid"/><div className="chart-message"><span className="chart-icon">▥</span><b>Chart ready for market-data integration</b><p>React chart container · {frame} · {pair.base}/{pair.quote}</p><small>No simulated candles or prices are displayed.</small></div><span className="axis axis-top">Price ({pair.quote})</span><span className="axis axis-bottom">Time (UTC)</span></div></>:<div className="waiting">{tab} panel · React component ready for live data</div>}</section>}
+function ChartPanel({pair}:{pair:SpotPair}){const [tab,setTab]=useState<(typeof tabs)[number]>('Chart');const [frame,setFrame]=useState('1h');return <section className="panel chart"><div className="tabs">{tabs.map(x=><button key={x} onClick={()=>setTab(x)} className={tab===x?'active':''}>{x}</button>)}<span className="paneltools">⚙　⛶</span></div>{tab==='Overview'?<OverviewPanel pair={pair}/>:tab==='Chart'?<><div className="chart-toolbar"><span className="active-blue">Trading Chart</span><div className="timeframes">{['1m','5m','15m','30m','1h','4h','1d','1w'].map(x=><button key={x} onClick={()=>setFrame(x)} className={frame===x?'on':''}>{x}</button>)}</div><span className="muted">Indicators　⌄</span></div><div className="chart-area"><div className="chart-grid"/><div className="chart-message"><span className="chart-icon">▥</span><b>Chart ready for market-data integration</b><p>React chart container · {frame} · {pair.base}/{pair.quote}</p><small>No simulated candles or prices are displayed.</small></div><span className="axis axis-top">Price ({pair.quote})</span><span className="axis axis-bottom">Time (UTC)</span></div></>:<div className="waiting">{tab} panel · React component ready for live data</div>}</section>}
 function OrderBook({pair}:{pair:SpotPair}){
  const [mode,setMode]=useState('Order Book');
  const [step,setStep]=useState('0.1');
