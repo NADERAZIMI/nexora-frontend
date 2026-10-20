@@ -12,14 +12,15 @@ export function attachArchivedDepth(root:HTMLElement) {
     if(!cells.some(x=>x.node===node))cells.push({node,original:node.textContent??''});
   };
   const rows=(side:'asks'|'bids')=>Array.from(book.querySelectorAll<HTMLElement>('[class*="__'+side+'Wrapper"] [class*="__tableRow"]'));
-  const price=book.querySelector<HTMLElement>('[class*="__newPrice"] [class*="__bigPrice"] [class*="__priceEllipsis"]');
+  const price=book.querySelector<HTMLElement>('[class*="__newPrice"] [class*="__bigPrice"] [class*="__priceEllipsis"] > div') ?? book.querySelector<HTMLElement>('[class*="__newPrice"] [class*="__bigPrice"] [class*="__priceEllipsis"]');
   const precision=book.querySelector<HTMLElement>('[class*="__settingWrapper"] [class*="__drop"] > span');
   const unit=book.querySelector<HTMLElement>('[class*="__tableHeader"] h2[class*="__vol"] [class*="__ellipsisLabel"]');
   remember(price);remember(precision);remember(unit);
   const originalRows={asks:rows('asks'),bids:rows('bids')};
   const captured=['asks','bids'] as const;
   for(const side of captured)for(const row of originalRows[side])for(const key of ['price','vol','amount']){
-    remember(row.querySelector<HTMLElement>('[class*="__orderbookItem"] > [class*="__'+key+'"]'));
+    const parent=row.querySelector<HTMLElement>('[class*="__orderbookItem"] > [class*="__'+key+'"]');
+    remember(key==='price'?parent:(parent?.querySelector<HTMLElement>('span')??parent));
   }
   const restore=()=>cells.forEach(x=>{x.node.textContent=x.original});
   const select=(id:string)=>{
