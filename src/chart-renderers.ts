@@ -1,4 +1,4 @@
-import type { Candle } from './live-market-feed';
+import type { Candle } from './chart-types';
 export const DIRECT_CHART_TYPES=['Bars','Candles','Hollow candles','Volume candles','Line','Line with markers','Step line','Area','HLC area','Baseline','Columns','High-low','Heikin Ashi'] as const;
 export type DirectChartType=typeof DIRECT_CHART_TYPES[number];
 export function isDirectChartType(s:string):s is DirectChartType{return (DIRECT_CHART_TYPES as readonly string[]).includes(s)}
