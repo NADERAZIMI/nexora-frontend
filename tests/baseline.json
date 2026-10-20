@@ -19,7 +19,7 @@
     "src/fidelity.css": "2b1f0137bea24d3378c7301e2a50e5d936d2cd995391d16d334f25b2177fdcc2",
     "src/main.tsx": "6b15328c6b0bb3292bc7f547350a94ed3b7f6145f5cf8a638b85e48cbf03b024",
     "src/palette.css": "1c3d95509331246188c74a55e792542040e4ed12a98721de6a0be355c498a775",
-    "src/prototype.css": "628d6f322301f1303abf940fe1261f97de2502ce63493789fd2ebdb088dad3cf",
+    "src/prototype.css": "7a40e1d714c26d25cbe4540cd162d66581473494e738c92f64f2f9000e6b85e1",
     "src/reference.css": "aaa1e46672300d6c410465cd1a0f26d7b567939ac01a04bb3bcb226a5935fa76",
     "src/snapshot.html": "11181f22d37a7c00ca90d665e2e9cab429d0787087dd112fce2aa0f91aa8f8b9",
     "src/vite-env.d.ts": "424faf9241dd699dda995b367ed36665732da1e6ec1f33b2fd40394488ecac92",
@@ -27,7 +27,7 @@
     "src/orderbook-display.ts": "6f56e491b75077b21565b4179031bab4078027ba7c8dca2d625f9aa8a2277dfd",
     "src/price-precision.ts": "94b49af3bf14235c5ac20776b6e719c4f53cf18a3d200f36e523a6fc29c2c1e1",
     "src/captured-market-catalog.ts": "3791cb0d65b7c236e478f69a37c88dd2bb974f6d85acbab99924e920bb0fb566",
-    "src/captured-market-preview.ts": "11dee66b0e8fb05ae411bfa8d00b22e7169d713acb7b18e3b5aee36e7a75ae9b"
+    "src/captured-market-preview.ts": "0dadfcd4eb19e1635086c9b1e4df1f5902e47e02a5c782925a013965bdf5a7ac"
   },
   "phase02cReviewedFrom": "1acc95bdb3a45053d9117e6282b81f833ef268ad",
   "phase02dReviewedFrom": "99410fea21c1e77edd0540b7c3acf35b379b5ae0",
@@ -36,5 +36,6 @@
   "orderbookMidPriceHotfixFrom": "e2ae233e9c81a6b28daf32251883efca4ccfefff",
   "phase02fAReviewedFrom": "abde06d43f6e412171fd4acd473df143ff06b708",
   "phase02fBReviewedFrom": "c4d13a58996c478eead2f24329661364ad9d0d25",
-  "phase02gAReviewedFrom": "d0dd93b86a6ec1826b36b074a230af4a2d1ef950"
+  "phase02gAReviewedFrom": "d0dd93b86a6ec1826b36b074a230af4a2d1ef950",
+  "phase02gBReviewedFrom": "716bfb5230a6e73a10acd6cf0f4c564e12678f7e"
 }
