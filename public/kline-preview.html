@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NEXORA · KLineChart Preview</title>
+<style>
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#0d0d0d;color:#e5e9f1;font:14px system-ui,Arial,sans-serif}
+header{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:14px 20px;background:#14161c;border-bottom:1px solid #30343e}
+.brand{font-weight:800;letter-spacing:.1em;color:#5865f2;margin-right:10px}a{color:#9eabff;text-decoration:none}
+label{font-size:12px;color:#aeb6c7}input,select,button{background:#20242d;border:1px solid #343b4a;border-radius:5px;color:#f4f6fa;padding:8px 10px;font:inherit}
+input{width:155px;text-transform:uppercase}button{cursor:pointer}button:hover{border-color:#5865f2}button.active{background:#5865f2;border-color:#5865f2}
+.container{padding:14px 18px}.bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}.bar small{margin-left:auto;color:#8994a7}
+#chart{width:100%;height:min(70vh,740px);min-height:420px;border:1px solid #2a303c;background:#0d0d0d}
+#status{min-height:24px;margin:9px 0;color:#93a1b7;font-size:12px}#status.error{color:#f05a70}
+.info{max-width:1000px;color:#8c96a8;font-size:12px;line-height:1.7}
+@media(max-width:600px){header{padding:10px}.container{padding:8px}#chart{min-height:360px;height:65vh}}
+</style></head><body>
+<header><strong class="brand">NEXORA</strong><strong>KLineChart trial</strong><span>·</span><span>Read-only Spot data</span><a href="/" style="margin-left:auto">Back to existing Spot</a></header>
+<main class="container">
+<div class="bar">
+<label for="symbol">Pair</label><input id="symbol" value="BTCUSDT" maxlength="30" spellcheck="false" autocomplete="off">
+<button id="load">Load market</button>
+<label for="period">Timeframe</label><select id="period"><option value="1m">1m</option><option value="5m">5m</option><option value="15m" selected>15m</option><option value="30m">30m</option><option value="60m">1H</option><option value="4h">4H</option><option value="1d">1D</option><option value="1W">1W</option><option value="1M">1M</option></select>
+<button id="ma">MA</button><button id="ema">EMA</button><button id="volume">Volume</button>
+<small>Powered by KLineChart · MEXC public market feed</small>
+</div>
+<div id="status" role="status">Loading chart library…</div><div id="chart" aria-label="Interactive cryptocurrency chart"></div>
+<p class="info">Independent evaluation page. The existing Spot chart and frontend stay unchanged. All candles are retrieved from the existing read-only MEXC proxy. The chart library is loaded from a pinned third-party CDN for this trial. No account credentials or trading endpoints are used.</p>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/klinecharts@10.1.0/dist/umd/klinecharts.min.js" crossorigin="anonymous"></script>
+<script>
+(()=>{
+ const el=id=>document.getElementById(id);
+ const status=(message,error=false)=>{el('status').textContent=message;el('status').classList.toggle('error',error)};
+ if(!window.klinecharts?.init){status('KLineChart library could not load. Check CDN access.',true);return}
+ const lib=window.klinecharts;
+ let chart;
+ try{chart=lib.init('chart',{locale:'en-US',styles:'dark',timezone:'UTC'})}catch(error){status('Chart initialization failed: '+error.message,true);return}
+ if(!chart){status('Chart initialization returned no chart instance.',true);return}
+ const PERIODS={'1m':{span:1,type:'minute'},'5m':{span:5,type:'minute'},'15m':{span:15,type:'minute'},'30m':{span:30,type:'minute'},'60m':{span:1,type:'hour'},'4h':{span:4,type:'hour'},'1d':{span:1,type:'day'},'1W':{span:1,type:'week'},'1M':{span:1,type:'month'}};
+ let symbol='BTCUSDT',period='15m',generation=0;
+ const validate=value=>/^[A-Z0-9]{3,30}$/.test(value);
+ function apply(){
+  const value=el('symbol').value.trim().toUpperCase();
+  if(!validate(value)){status('Enter a valid Spot symbol such as BTCUSDT or ETHUSDT.',true);return}
+  symbol=value;period=el('period').value;generation++;
+  status('Requesting '+symbol+' · '+period+' candles…');
+  try{
+   chart.setSymbol({ticker:symbol,pricePrecision:8,volumePrecision:2});
+   chart.setPeriod(PERIODS[period]);
+  }catch(error){status('Chart period/symbol error: '+error.message,true)}
+ }
+ try{
+  chart.setDataLoader({
+   getBars:async({callback,type})=>{
+    const requestedSymbol=symbol,requestedPeriod=period,run=generation;
+    try{
+     const u='/mexc-public/api/v3/klines?symbol='+encodeURIComponent(requestedSymbol)+'&interval='+encodeURIComponent(requestedPeriod)+'&limit=500';
+     const response=await fetch(u,{credentials:'omit',cache:'no-store'});
+     if(!response.ok)throw Error('Public candles HTTP '+response.status);
+     const data=await response.json();
+     if(!Array.isArray(data))throw Error('Unexpected candle payload');
+     const bars=data.filter(r=>Array.isArray(r)&&r.length>=6).map(r=>({
+      timestamp:Number(r[0]),open:Number(r[1]),high:Number(r[2]),low:Number(r[3]),close:Number(r[4]),volume:Number(r[5])
+     })).filter(b=>Object.values(b).every(Number.isFinite)&&b.timestamp>0&&b.high>=b.low&&b.low>0).sort((a,b)=>a.timestamp-b.timestamp);
+     if(run!==generation)return callback([],false);
+     callback(bars,false);
+     status(bars.length+' actual '+requestedSymbol+' candles · '+requestedPeriod+' · '+(type||'initial')+' load');
+    }catch(error){callback([],false);if(run===generation)status('MEXC candle request failed: '+error.message,true)}
+   }
+  });
+  apply();
+ }catch(error){status('Data loader could not initialize: '+error.message,true)}
+ el('load').addEventListener('click',apply);
+ el('symbol').addEventListener('keydown',e=>{if(e.key==='Enter')apply()});
+ el('period').addEventListener('change',apply);
+ const active=new Set();
+ for(const [id,name] of [['ma','MA'],['ema','EMA'],['volume','VOL']]){
+  el(id).addEventListener('click',()=>{
+   try{
+    if(active.has(id)){const found=chart.getIndicators?.({name});if(Array.isArray(found))for(const item of found)chart.removeIndicator?.({id:item.id});active.delete(id)}
+    else{chart.createIndicator(name,id==='volume'?false:true);active.add(id)}
+    el(id).classList.toggle('active',active.has(id));
+   }catch(error){status(name+' indicator: '+error.message,true)}
+  });
+ }
+ const observer=new ResizeObserver(()=>chart.resize?.());observer.observe(el('chart'));
+ window.addEventListener('pagehide',()=>{observer.disconnect();lib.dispose?.('chart')},{once:true});
+})();
+</script></body></html>
