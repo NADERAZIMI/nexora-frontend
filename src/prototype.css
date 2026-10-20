@@ -367,3 +367,11 @@ font-size:13px;cursor:pointer}
 /* Native Bybit book restores captured controls, header, midpoint and bid/ask spacing. */
 .nexora-bybit-native-status{position:absolute;right:6px;top:44px;font-size:10px;color:#929aaa;pointer-events:none;z-index:2}
 [data-nexora-depth-state=live] .nexora-bybit-native-status{display:none}
+
+/* Hide stale captured depth rows from the very first paint, including refresh.
+   Native header, controls and midpoint remain in their original positions. */
+[class*="__orderbookDealsWrapper"] [class*="__asksWrapper"] [class*="__tableRow"],
+[class*="__orderbookDealsWrapper"] [class*="__bidsWrapper"] [class*="__tableRow"]{visibility:hidden}
+[class*="__orderbookDealsWrapper"][data-nexora-depth-state=live] [class*="__asksWrapper"] [class*="__tableRow"],
+[class*="__orderbookDealsWrapper"][data-nexora-depth-state=live] [class*="__bidsWrapper"] [class*="__tableRow"]{visibility:visible}
+[class*="__orderbookDealsWrapper"]:not([data-nexora-depth-state=live]) [class*="__newPrice"]{visibility:hidden}
