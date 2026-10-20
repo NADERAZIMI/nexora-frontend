@@ -81,22 +81,36 @@ export function getCoinGeckoMarketImages(signal?:AbortSignal):Promise<Map<string
  if(imageCache&&Date.now()-imageCache.at<3600000)return Promise.resolve(imageCache.images);
  if(imageTask)return imageTask;
  imageTask=(async()=>{
-  const pages=await Promise.allSettled([1,2].map(async page=>{
-   const response=await fetch('/coingecko-public/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page='+page+'&sparkline=false',{signal,credentials:'omit',headers:{Accept:'application/json'}});
-   if(!response.ok)throw new Error('CoinGecko market icons HTTP '+response.status);
-   return await response.json() as unknown;
-  }));
+  // Walk farther than the first 500 ranked coins. Avoid a request burst on Demo.
   const images=new Map<string,string>(),ambiguous=new Set<string>();
-  for(const page of pages)if(page.status==='fulfilled'&&Array.isArray(page.value)){
-   for(const item of page.value as {symbol?:unknown;image?:unknown}[]){
-    if(typeof item.symbol!=='string'||typeof item.image!=='string')continue;
-    const symbol=item.symbol.toUpperCase(),src=url(item.image);
-    if(!src||ambiguous.has(symbol))continue;
-    if(images.has(symbol)){images.delete(symbol);ambiguous.add(symbol);}
-    else images.set(symbol,src);
+  let completed=0;
+  for(let page=1;page<=12;page++){
+   if(signal?.aborted)break;
+   try{
+    const response=await fetch('/coingecko-public/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page='+page+'&sparkline=false',{signal,credentials:'omit',headers:{Accept:'application/json'}});
+    if(!response.ok){
+     // Respect the provider quota: retain previously collected pages.
+     if(response.status===429)break;
+     if(page===1)throw new Error('CoinGecko market icons HTTP '+response.status);
+     break;
+    }
+    const data=await response.json() as unknown;
+    if(!Array.isArray(data)||data.length===0)break;
+    completed++;
+    for(const item of data as {symbol?:unknown;image?:unknown}[]){
+     if(typeof item.symbol!=='string'||typeof item.image!=='string')continue;
+     const symbol=item.symbol.toUpperCase(),src=url(item.image);
+     if(!src||ambiguous.has(symbol))continue;
+     if(images.has(symbol)){images.delete(symbol);ambiguous.add(symbol);}
+     else images.set(symbol,src);
+    }
+    if(data.length<250)break;
+   }catch(error){
+    if(page===1)throw error;
+    break;
    }
   }
-  if(!pages.some(x=>x.status==='fulfilled'))throw new Error('Market icon feeds unavailable');
+  if(completed===0)throw new Error('Market icon feeds unavailable');
   imageCache={at:Date.now(),images};return images;
  })().finally(()=>{imageTask=null});
  return imageTask;
