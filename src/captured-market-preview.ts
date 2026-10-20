@@ -208,8 +208,9 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
       refresh();
     } catch(error) {
       if(loadController.signal.aborted)return;
-      headingLine.textContent='Offline examples · MEXC public API unavailable';
-      warning.textContent='Could not reach MEXC. Check connectivity or regional API access.';
+      headingLine.textContent='MEXC API error';
+      warning.textContent=error instanceof Error?error.message:String(error);
+      console.error('[NEXORA market catalog]',error);
     } finally {liveLoading=false}
   }
   function show(id: 'BTC_USDT' | 'SHIDO_USDT' | 'WOJAK_USDT') {
