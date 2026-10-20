@@ -5,7 +5,7 @@ const valid=(v:unknown):v is string=>typeof v==='string' && /^\d+(?:\.\d+)?$/.te
 export async function fetchMarketFrame(symbol:string, signal:AbortSignal):Promise<{asks:DepthLevel[];bids:DepthLevel[];candles:Candle[]}> {
  if(!/^[A-Z0-9]{3,30}$/.test(symbol))throw Error('Invalid market symbol');
  const base='/mexc-public/api/v3/';
- const get=async(path:string)=>{const r=await fetch(base+path,{signal,credentials:'omit'});if(!r.ok)throw Error('MEXC market feed HTTP '+r.status);return r.json() as Promise<unknown>};
+ const get=async(path:string)=>{const r=await fetch(base+path,{signal,credentials:'omit'});if(!r.ok)throw Error('MEXC '+r.status+' '+r.statusText+' ('+path.split('?')[0]+')');const data=await r.json() as unknown;if(data&&typeof data==='object'&&'code' in data&&data.code!==200&&data.code!==0)throw Error('MEXC API '+String(data.code));return data};
  const [depth,klines]=await Promise.all([get('depth?symbol='+symbol+'&limit=20'),get('klines?symbol='+symbol+'&interval=1m&limit=120')]);
  if(!depth||typeof depth!=='object'||!('asks' in depth)||!('bids' in depth)||!Array.isArray(depth.asks)||!Array.isArray(depth.bids))throw Error('Invalid depth data');
  const levels=(rows:unknown[]):DepthLevel[]=>rows.filter((row):row is [string,string]=>Array.isArray(row)&&valid(row[0])&&valid(row[1])).slice(0,9).map(row=>({price:row[0],qty:row[1]}));
@@ -20,7 +20,7 @@ export function attachReadOnlyMarketFeed(root:HTMLElement){
  const overlay=document.createElement('div');overlay.className='nexora-live-chart';overlay.hidden=true;
  const label=document.createElement('div');label.className='nexora-live-chart-label';
  const canvas=document.createElement('canvas');canvas.setAttribute('aria-label','MEXC 1-minute candlestick chart (read-only)');
- const state=document.createElement('div');state.className='nexora-live-state';overlay.append(label,canvas,state);chart.append(overlay);
+ const state=document.createElement('div');state.className='nexora-live-state';const retry=document.createElement('button');retry.type='button';retry.className='nexora-feed-retry';retry.textContent='Retry';retry.hidden=true;retry.addEventListener('click',()=>{void refresh()});overlay.append(label,canvas,state,retry);chart.append(overlay);
  const price=book.querySelector<HTMLElement>('[class*="__newPrice"] [class*="__priceEllipsis"] > div');
  const originalPrice=price?.textContent??'';
  const originals: {node:HTMLElement;text:string}[]=[];
@@ -49,7 +49,7 @@ export function attachReadOnlyMarketFeed(root:HTMLElement){
  };
  const refresh=async()=>{
   controller?.abort();controller=new AbortController();const signal=controller.signal;
-  state.textContent='Loading MEXC public market data…';
+  retry.hidden=true;state.textContent='Loading MEXC public market data…';
   try{
    const frame=await fetchMarketFrame(selected,signal);if(signal.aborted||!mounted)return;
    const paintSide=(side:'asks'|'bids',levels:DepthLevel[])=>{
@@ -64,8 +64,9 @@ export function attachReadOnlyMarketFeed(root:HTMLElement){
    paintSide('asks',frame.asks);paintSide('bids',frame.bids);
    if(price&&frame.candles.length)price.textContent=frame.candles.at(-1)!.close.toString();
    paint(frame.candles);
+   retry.hidden=true;
    state.textContent='Public MEXC data · 1m candles · depth snapshot · no trading';
-  }catch(e){if(signal.aborted||!mounted)return;state.textContent='Live market unavailable — check network or API region';}
+  }catch(e){if(signal.aborted||!mounted)return;const message=e instanceof Error?e.message:String(e);state.textContent='MEXC feed failed: '+message;retry.hidden=false;console.warn('[NEXORA public market feed]',message);}
  };
  const choose=(event:Event)=>{
    const id=(event as CustomEvent<{symbol:string}>).detail?.symbol;
