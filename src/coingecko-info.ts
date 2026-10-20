@@ -22,8 +22,8 @@ type Payload={name?:unknown;image?:{small?:unknown};market_cap_rank?:unknown;des
 export async function getCoinProfile(base:string,signal:AbortSignal):Promise<CoinProfile|null>{
  const id=IDS[base.toUpperCase()];if(!id)return null;
  const hit=cache.get(id);if(hit&&Date.now()-hit.at<3600000)return hit.value;
- // CoinGecko keyless access is best-effort; the Demo API key is needed for reliable availability.
- const response=await fetch('https://api.coingecko.com/api/v3/coins/'+encodeURIComponent(id)+'?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false&sparkline=false',{signal,headers:{Accept:'application/json'},credentials:'omit'});
+ // The NEXORA reverse proxy attaches the configured Demo API key.
+ const response=await fetch('/coingecko-public/api/v3/coins/'+encodeURIComponent(id)+'?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false&sparkline=false',{signal,headers:{Accept:'application/json'},credentials:'omit'});
  if(!response.ok)throw new Error('CoinGecko metadata unavailable (HTTP '+response.status+')');
  const d=await response.json() as Payload;
  const m=d.market_data,l=d.links;
