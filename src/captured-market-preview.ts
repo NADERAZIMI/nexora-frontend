@@ -23,9 +23,6 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
   const headingLine = document.createElement('div');
   headingLine.className = 'nexora-market-preview-title';
   headingLine.textContent = 'Spot markets · Captured samples (not live)';
-  const sample = document.createElement('div');
-  sample.className = 'nexora-market-preview-value';
-  sample.setAttribute('aria-live', 'polite');
   const search = document.createElement('input');
   search.className = 'nexora-market-preview-search';
   search.type = 'search';
@@ -80,9 +77,6 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
     choices.append(button);
     return { id: market.id, button };
   });
-  const warning = document.createElement('div');
-  warning.className = 'nexora-market-preview-warning';
-  warning.textContent = 'Price examples only. The order book remains the saved BTC/USDT snapshot.';
   const sortButtons: HTMLButtonElement[] = [];
   for (const [key, text] of [['pair', 'Pair ↕'], ['price', 'Price ↕'], ['none', 'Change']] as const) {
     const button = document.createElement('button'); button.type = 'button';
@@ -140,7 +134,7 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
   empty.hidden = true;
   search.addEventListener('input', () => {visibleLimit=120;refresh()});
   showMore.addEventListener('click',event=>{event.stopPropagation();visibleLimit+=120;refresh()});
-  panel.append(headingLine, search, tabs, filterBar, columns, liveRows, showMore, choices, empty, sample, warning);
+  panel.append(headingLine, search, tabs, filterBar, columns, liveRows, showMore, choices, empty);
   // The archived headline sits inside transformed, clipped layout wrappers.
   // Portal the menu to body so it overlays the chart instead of being clipped.
   document.body.append(panel);
@@ -185,7 +179,6 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
     if(subname) subname.textContent='MEXC Spot · public ticker';
     root.dataset.localSelectedMarket=market.id;
     root.dataset.localMarketDataUnavailable='true';
-    sample.textContent=label+': '+(market.price?formatPrice(market.price):'Price unavailable')+' '+market.quote+' (MEXC public price)';
     // Public market data can populate the chart/depth; forms stay unavailable.
     for(const panel of btcOnlyPanels) {
       const liveVisual=panel.matches('[class*="__chartWrapper"],[class*="__orderbookDealsWrapper"]');
@@ -206,18 +199,16 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
       liveLoaded=true;
       headingLine.textContent='Live MEXC Spot catalog · '+liveMarkets.length+' pairs';
       choices.hidden=true;
-      warning.textContent='Complete public MEXC Spot catalog · choose All or filter by quote asset · prices may be unavailable for some pairs. Read-only test feed.';
       refresh();
     } catch(error) {
       if(loadController.signal.aborted)return;
       headingLine.textContent='MEXC API error — reopen to retry';
-      warning.textContent=error instanceof Error?error.message:String(error);
+      headingLine.textContent='MEXC API error: '+(error instanceof Error?error.message:String(error));
       console.error('[NEXORA market catalog]',error);
     } finally {liveLoading=false}
   }
   function show(id: 'BTC_USDT' | 'SHIDO_USDT' | 'WOJAK_USDT') {
     const item = capturedMarketDisplay(id);
-    sample.textContent = item.label + ': ' + item.formattedPrice + ' USDT | displayed precision: ' + item.formattedPrecision;
     selected = id;
     buttons.forEach(choice => choice.button.setAttribute('aria-pressed', String(choice.id === id)));
     if (titleNode) titleNode.textContent = item.label;
