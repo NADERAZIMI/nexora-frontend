@@ -7,7 +7,7 @@ export default defineConfig({
         target: 'https://api.bybit.com',
         changeOrigin: true,
         secure: true,
-        rewrite: path => path.replace(/^\\/bybit-public/, ''),
+        rewrite: path => path.replace(/^\/bybit-public/, ''),
       },
       '/mexc-public': {
         target: 'https://api.mexc.com',
