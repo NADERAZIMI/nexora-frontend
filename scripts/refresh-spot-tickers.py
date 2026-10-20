@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Refresh read-only Bybit Spot tickers to a same-origin JSON file atomically."""
 import json,os,pathlib,tempfile,urllib.request
-ROOT=pathlib.Path(__file__).resolve().parents[1]
+ROOT=pathlib.Path(__file__).resolve().parents[2]
 DEST=ROOT/"shared"/"spot-tickers.json"
 errors=[]
 for origin in ("https://api.bybit.com","https://api.bytick.com"):
