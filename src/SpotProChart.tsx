@@ -10,6 +10,7 @@ type Candle={timestamp:number;open:number;high:number;low:number;close:number;vo
 const periods:Period[]=[{multiplier:1,timespan:'minute',text:'1m'},{multiplier:5,timespan:'minute',text:'5m'},{multiplier:15,timespan:'minute',text:'15m'},{multiplier:30,timespan:'minute',text:'30m'},{multiplier:1,timespan:'hour',text:'1h'},{multiplier:4,timespan:'hour',text:'4h'},{multiplier:1,timespan:'day',text:'1D'},{multiplier:1,timespan:'week',text:'1W'}];
 const interval=(p:Period)=>p.timespan==='minute'?String(p.multiplier):p.timespan==='hour'?String(p.multiplier*60):p.timespan==='day'?'D':p.timespan==='week'?'W':'M';
 const symbolInfo=(pair:SpotPair):SymbolInfo=>({ticker:pair.symbol,name:pair.base+'/'+pair.quote,shortName:pair.base+'/'+pair.quote,exchange:'Bybit',market:'crypto',priceCurrency:pair.quote,type:'spot'});
+const bucket=(ms:number,p:Period)=>{if(p.timespan==='day'){const d=new Date(ms);return Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate())}if(p.timespan==='week'){const d=new Date(ms);return Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate()-(d.getUTCDay()+6)%7)}const n=p.multiplier*(p.timespan==='hour'?3600000:60000);return Math.floor(ms/n)*n};
 const validSymbol=(s:string)=>/^[A-Z0-9]{2,32}$/.test(s);
 const finite=(c:Candle)=>Object.values(c).every(Number.isFinite)&&c.timestamp>0&&c.open>0&&c.high>=c.low&&c.low>0&&c.close>0&&c.volume>=0;
 function candle(raw:unknown):Candle|null{
@@ -20,7 +21,11 @@ function candle(raw:unknown):Candle|null{
 class BybitChartDatafeed{
  private sockets=new Map<string,WebSocket>();
  private closed=false;
- constructor(private pairs:SpotPair[]){}
+ private livePrice:number|null;
+ private candles=new Map<string,Candle>();
+ private listeners=new Map<string,(c:Candle)=>void>();
+ constructor(private pairs:SpotPair[],price:number|null){this.livePrice=price}
+ updateLivePrice(price:number|null){if(price===null||price<=0||price===this.livePrice)return;this.livePrice=price;for(const [key,last] of this.candles){const cb=this.listeners.get(key);const p=periods.find(x=>interval(x)===key.split('/')[1]);if(!cb||!p||last.timestamp!==bucket(Date.now(),p))continue;const next={...last,close:price,high:Math.max(last.high,price),low:Math.min(last.low,price)};this.candles.set(key,next);cb(next)}}
  searchSymbols(search=''):Promise<SymbolInfo[]>{
   const q=search.toUpperCase().trim();
   return Promise.resolve(this.pairs.filter(p=>p.symbol.includes(q)).slice(0,80).map(symbolInfo));
@@ -51,7 +56,7 @@ class BybitChartDatafeed{
     // Reject stale static snapshots; the WebSocket provides the current candle.
     if(url.startsWith('/')&&(!data.generatedAt||Date.now()-data.generatedAt>36*60*60*1000))continue;
     const rows=list.map(candle).filter((c):c is Candle=>c!==null).sort((a,b)=>a.timestamp-b.timestamp);
-    if(rows.length>0)return rows;
+    if(rows.length>0){const key=symbol.ticker+'/'+interval(period),last=rows[rows.length-1];if(last.timestamp===bucket(Date.now(),period)&&this.livePrice!==null)rows[rows.length-1]={...last,close:this.livePrice,high:Math.max(last.high,this.livePrice),low:Math.min(last.low,this.livePrice)};this.candles.set(key,rows[rows.length-1]);return rows;}
    }catch{/* Try next real-data source. */}finally{clearTimeout(timeout)}
   }
   return [];
@@ -60,6 +65,7 @@ class BybitChartDatafeed{
   if(this.closed||!validSymbol(symbol.ticker))return;
   this.unsubscribe(symbol,period);
   const key=symbol.ticker+'/'+interval(period);
+  this.listeners.set(key,callback);
   const topic='kline.'+interval(period)+'.'+symbol.ticker;
   const ws=new WebSocket('wss://stream.bybit.com/v5/public/spot');
   this.sockets.set(key,ws);
@@ -71,26 +77,28 @@ class BybitChartDatafeed{
     if(message.topic!==topic||!Array.isArray(message.data))return;
     for(const d of message.data){
      const c=candle([d.start,d.open,d.high,d.low,d.close,d.volume,d.turnover]);
-     if(c)callback(c);
+     if(c){this.candles.set(key,c);callback(c)}
     }
    }catch{/* invalid stream message */}
   };
   ws.onclose=()=>{if(this.sockets.get(key)===ws)this.sockets.delete(key)};
  }
  unsubscribe(symbol:SymbolInfo,period:Period){
-  const key=symbol.ticker+'/'+interval(period);const ws=this.sockets.get(key);
+  const key=symbol.ticker+'/'+interval(period);this.listeners.delete(key);this.candles.delete(key);const ws=this.sockets.get(key);
   if(ws){this.sockets.delete(key);ws.onclose=null;ws.close()}
  }
- dispose(){this.closed=true;for(const ws of this.sockets.values()){ws.onclose=null;ws.close()}this.sockets.clear()}
+ dispose(){this.closed=true;this.listeners.clear();this.candles.clear();for(const ws of this.sockets.values()){ws.onclose=null;ws.close()}this.sockets.clear()}
 }
-export default function SpotProChart({pair,frame}:{pair:SpotPair;frame:string}){
+export default function SpotProChart({pair,frame,livePrice}:{pair:SpotPair;frame:string;livePrice:number|null}){
  const container=useRef<HTMLDivElement>(null);
  const [error,setError]=useState<string|null>(null);
+ const feedRef=useRef<BybitChartDatafeed|null>(null);
+ useEffect(()=>{feedRef.current?.updateLivePrice(livePrice)},[livePrice]);
  useEffect(()=>{
   const node=container.current;if(!node)return;
   let chart:KLineChartPro|null=null;
   let disposed=false;
-  const datafeed=new BybitChartDatafeed([pair]);
+  const datafeed=new BybitChartDatafeed([pair],livePrice);feedRef.current=datafeed;
   const init=async()=>{try{
    const {KLineChartPro}=await import('@klinecharts/pro');
    if(disposed)return;
@@ -101,7 +109,7 @@ export default function SpotProChart({pair,frame}:{pair:SpotPair;frame:string}){
   void init();
   const obs=new MutationObserver(()=>{try{chart?.setTheme(document.documentElement.dataset.nxTheme==='light'?'light':'dark')}catch{/* chart already unmounted */}});
   obs.observe(document.documentElement,{attributes:true,attributeFilter:['data-nx-theme']});
-  return()=>{disposed=true;obs.disconnect();datafeed.dispose();node.replaceChildren();chart=null};
+  return()=>{disposed=true;obs.disconnect();datafeed.dispose();if(feedRef.current===datafeed)feedRef.current=null;node.replaceChildren();chart=null};
  },[pair.symbol,frame]);
  return <div className="nexora-pro-chart">{error&&<div className="nexora-chart-error" role="alert">{error}</div>}<div ref={container} className="nexora-pro-chart-container"/></div>;
 }
