@@ -160,7 +160,7 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
   const setDataAvailability = (id: string, label: string) => {
     const unavailable = id !== 'BTC_USDT';
     for (const panel of btcOnlyPanels) {
-      if (unavailable) {
+      if (unavailable && panel.matches('[class*="__actionWrapper"]')) {
         panel.dataset.nexoraUnavailable = 'true';
         panel.dataset.nexoraUnavailableLabel = label + ' market data not connected';
       } else {
@@ -169,7 +169,7 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
       }
     }
     marketStatus.hidden = !unavailable;
-    marketStatus.textContent = unavailable ? label + ' selected — price sample only; trading, chart and order book unavailable' : '';
+    marketStatus.textContent = unavailable ? label + ' selected — MEXC public chart and depth (test only); trading disabled' : '';
   };
   function selectLive(market:MexcSpotMarket) {
     selected=market.id;
