@@ -363,3 +363,7 @@ font-size:13px;cursor:pointer}
 .nexora-bybit-book-live[data-mode=buy] .asks,.nexora-bybit-book-live[data-mode=sell] .bids{display:none}
 .nexora-bybit-book-live[data-mode=buy] .bids,.nexora-bybit-book-live[data-mode=sell] .asks{flex:1}
 .nexora-bybit-book-live[data-state=connecting] .nexora-bybit-book-layout{opacity:.25}
+
+/* Native Bybit book restores captured controls, header, midpoint and bid/ask spacing. */
+.nexora-bybit-native-status{position:absolute;right:6px;top:44px;font-size:10px;color:#929aaa;pointer-events:none;z-index:2}
+[data-nexora-depth-state=live] .nexora-bybit-native-status{display:none}
