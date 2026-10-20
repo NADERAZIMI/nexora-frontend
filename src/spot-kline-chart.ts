@@ -13,7 +13,7 @@ const libraryUrl='https://cdn.jsdelivr.net/npm/klinecharts@10.1.0/dist/umd/kline
 let libraryPromise:Promise<KLib>|undefined;
 function loadLibrary():Promise<KLib>{
  if(window.klinecharts?.init)return Promise.resolve(window.klinecharts);
- if(!libraryPromise)libraryPromise=new Promise((resolve,reject)=>{
+ if(!libraryPromise)libraryPromise=new Promise<KLib>((resolve,reject)=>{
   const script=document.createElement('script');script.src=libraryUrl;script.async=true;script.crossOrigin='anonymous';
   script.onload=()=>window.klinecharts?.init?resolve(window.klinecharts):reject(new Error('KLineChart unavailable'));
   script.onerror=()=>reject(new Error('KLineChart CDN unavailable'));document.head.append(script);
