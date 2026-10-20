@@ -24,16 +24,6 @@ const SnapshotSurface = memo(function SnapshotSurface({ onNotice }: { onNotice: 
         onNotice(`Local mock prototype: ${tab.textContent?.trim()} contents are not included in the saved HTML.`);
         return;
       }
-      const side = target.closest<HTMLElement>('[class*="__buyBtn"],[class*="__sellBtn"]');
-      if (side && ['Buy', 'Sell'].includes(side.textContent?.trim() || '')) {
-        const sell = side.textContent?.trim() === 'Sell';
-        root.querySelectorAll<HTMLElement>('[class*="__buyBtn"],[class*="__sellBtn"]').forEach(el => {
-          if (['Buy', 'Sell'].includes(el.textContent?.trim() || '')) el.classList.toggle('index-module-scss-module__fsa5Rq__active', el === side);
-        });
-        const form = root.querySelector<HTMLElement>('[class*="__buyWrapper"]');
-        if (form) form.dataset.localSide = sell ? 'sell' : 'buy';
-        return;
-      }
       const interval = target.closest('[class*="__favInterval"], [class*="__chartType"], [class*="__bigName"]');
       if (interval) { onNotice('Local mock prototype: the chart and BTC/USDT market are the static saved reference.'); return; }
       const action = target.closest('button,a');

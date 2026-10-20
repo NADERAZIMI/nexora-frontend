@@ -1,6 +1,43 @@
+/** Bind only the two captured side controls; never infer actions from label text. */
+function attachSideSelection(form: HTMLElement | null) {
+  const group = form?.closest('[class*="__actionBox"]')?.querySelector<HTMLElement>('[class*="__dirBtnWrapper"]');
+  const buy = group?.querySelector<HTMLElement>(':scope > [class*="__buyBtn"]');
+  const sell = group?.querySelector<HTMLElement>(':scope > [class*="__sellBtn"]');
+  if (!form || !group || !buy || !sell) return () => {};
+
+  const controls = [['buy', buy], ['sell', sell]] as const;
+  const activeClass = 'index-module-scss-module__fsa5Rq__active';
+  const select = (side: 'buy' | 'sell') => {
+    form.dataset.localSide = side;
+    for (const [value, control] of controls) {
+      control.classList.toggle(activeClass, value === side);
+      control.setAttribute('aria-pressed', String(value === side));
+    }
+  };
+  group.setAttribute('role', 'group');
+  group.setAttribute('aria-label', 'Order side');
+  const cleanup = controls.map(([side, control]) => {
+    control.dataset.localOrderSide = side;
+    control.setAttribute('role', 'button');
+    control.tabIndex = 0;
+    const click = () => select(side);
+    const key = (event: KeyboardEvent) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      if (!event.repeat) select(side);
+    };
+    control.addEventListener('click', click);
+    control.addEventListener('keydown', key);
+    return () => { control.removeEventListener('click', click); control.removeEventListener('keydown', key); };
+  });
+  select(form.dataset.localSide === 'sell' ? 'sell' : 'buy');
+  return () => { cleanup.forEach(dispose => dispose()); };
+}
+
 /** Local DOM state only: no balances, orders or account services are introduced. */
 export function attachSpotLocalControls(root: HTMLElement) {
   const form = root.querySelector<HTMLElement>('[class*="__buyWrapper"]');
+  const disposeSideSelection = attachSideSelection(form);
   const rail = form?.querySelector<HTMLElement>('.ant-slider-v2');
   const handle = rail?.querySelector<HTMLElement>('[role="slider"]');
   const track = rail?.querySelector<HTMLElement>('.ant-slider-v2-track');
@@ -79,6 +116,7 @@ export function attachSpotLocalControls(root: HTMLElement) {
   syncCheckbox();
   checkbox?.addEventListener('change', syncCheckbox);
   return () => {
+    disposeSideSelection();
     if (rail) {
       if (activePointer !== null && rail.hasPointerCapture(activePointer)) rail.releasePointerCapture(activePointer);
       rail.style.touchAction = previousTouchAction;

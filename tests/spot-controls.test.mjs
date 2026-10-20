@@ -63,6 +63,8 @@ async function pageFor(t, options = {}) {
 }
 async function notice(page) { await page.locator(selectors.notice).waitFor(); return page.locator(selectors.notice).innerText(); }
 async function percent(page, value) {
+  // Native touch input may be delivered after the CDP command resolves.
+  await page.waitForFunction(expected => document.querySelector('[role="slider"]')?.getAttribute('aria-valuenow') === String(expected), value);
   assert.equal(await page.locator(selectors.slider).getAttribute('aria-valuenow'), String(value));
   assert.equal(await page.locator(selectors.slider).evaluate(el => el.style.left), `${value}%`);
   assert.equal(await page.locator('.ant-slider-v2-track').evaluate(el => el.style.width), `${value}%`);
@@ -106,6 +108,110 @@ test('Buy/Sell changes highlighting and deposit color, retaining the same Buy fo
   await buy.click(); assert.equal(await active(buy), true); assert.equal(await active(sell), false);
   assert.equal(await page.locator(selectors.form).getAttribute('data-local-side'), 'buy');
   assert.equal(await page.locator('[data-testid="spot-trade-orderBuyBtn"]').innerText(), 'Deposit');
+});
+test('Buy/Sell mouse, Enter and Space keep exactly one accessible and visual selection with input persistence', async t => {
+  const page = await pageFor(t), group = page.getByRole('group', { name: 'Order side' });
+  const buy = group.getByRole('button', { name: 'Buy', exact: true });
+  const sell = group.getByRole('button', { name: 'Sell', exact: true });
+  const state = async side => {
+    assert.equal(await group.getByRole('button', { pressed: true }).count(), 1);
+    assert.equal(await group.locator(`.${activeClass}`).count(), 1);
+    for (const [name, control] of [['buy',buy],['sell',sell]]) {
+      assert.equal(await control.getAttribute('aria-pressed'), String(name === side));
+      assert.equal(await control.getAttribute('data-local-order-side'), name);
+      assert.equal(await control.getAttribute('tabindex'), '0');
+      assert.equal(await control.evaluate((el, active) => el.classList.contains(active), activeClass), name === side);
+    }
+    assert.equal(await page.locator(selectors.form).getAttribute('data-local-side'), side);
+  };
+  await state('buy');
+  await page.locator(selectors.price).fill('82196.59125'); await page.locator(selectors.total).fill('125.0625');
+  const priceNode = await page.locator(selectors.price).elementHandle();
+  const totalNode = await page.locator(selectors.total).elementHandle();
+  for (const [side, method] of [['sell','click'],['sell','Enter'],['buy','Space'],['buy','click'],['sell','Space'],['buy','Enter']]) {
+    const control = side === 'buy' ? buy : sell;
+    if (method === 'click') await control.click();
+    else { await control.focus(); await control.press(method); assert.equal(await control.evaluate(el => el === document.activeElement), true); }
+    await state(side);
+    assert.equal(await page.locator(selectors.price).inputValue(), '82196.59125');
+    assert.equal(await page.locator(selectors.total).inputValue(), '125.0625');
+    assert.equal(await priceNode.evaluate(el => el === document.querySelector('[data-testid="spot-trade-buyPrice"]')), true);
+    assert.equal(await totalNode.evaluate(el => el === document.querySelector('[data-testid="spot-trade-buyTotal"]')), true);
+    assert.equal(await page.locator(selectors.notice).count(), 0);
+  }
+  // Both controls participate in the existing document's normal Tab order.
+  await buy.focus(); await page.keyboard.press('Tab'); assert.equal(await sell.evaluate(el => el === document.activeElement), true);
+  await page.keyboard.press('Shift+Tab'); assert.equal(await buy.evaluate(el => el === document.activeElement), true);
+  const beforeScroll = await page.evaluate(() => scrollY); await buy.press('Space');
+  assert.equal(await page.evaluate(() => scrollY), beforeScroll);
+});
+test('side selection preserves Phase 02C state, existing form geometry, appearance and Deposit action', async t => {
+  const page = await pageFor(t), group = page.getByRole('group', { name: 'Order side' });
+  const geometry = () => page.locator('[class*="__dirBtnWrapper"],[data-local-order-side],[class*="__chartWrapper"],[class*="__orderbookDealsWrapper"],[class*="__actionWrapper"],input[type="number"],.ant-slider-v2').evaluateAll(els => els.map(el => {
+    const r = el.getBoundingClientRect(), c = getComputedStyle(el);
+    return { x:r.x,y:r.y,width:r.width,height:r.height,font:c.font,padding:c.padding,border:c.borderWidth,borderRadius:c.borderRadius };
+  }));
+  const before = await geometry();
+  // Check the added semantics do not activate a layout-changing reference CSS rule.
+  const semanticsGeometry = await group.evaluate(el => {
+    const nodes = [el, ...el.querySelectorAll('[data-local-order-side]')];
+    const rects = () => nodes.map(node => { const r = node.getBoundingClientRect(); return [r.x,r.y,r.width,r.height]; });
+    const before = rects();
+    const attributes = nodes.map(node => ['role','tabindex','aria-label','aria-pressed'].map(name => [name,node.getAttribute(name)]));
+    nodes.forEach(node => ['role','tabindex','aria-label','aria-pressed'].forEach(name => node.removeAttribute(name)));
+    const without = rects();
+    nodes.forEach((node,i) => attributes[i].forEach(([name,value]) => { if (value !== null) node.setAttribute(name,value); }));
+    return { before, without };
+  });
+  assert.deepEqual(semanticsGeometry.before, semanticsGeometry.without);
+  const initialColors = await group.locator('[data-local-order-side]').evaluateAll(els => els.map(el => ({ bg:getComputedStyle(el).backgroundColor,color:getComputedStyle(el).color })));
+  await page.locator(selectors.slider).focus(); await page.keyboard.press('End'); await percent(page, 100);
+  await page.locator(selectors.checkbox).check();
+  await page.locator(selectors.price).fill('12.875'); await page.locator(selectors.total).fill('6.125');
+  await group.getByRole('button', { name: 'Sell', exact: true }).press('Enter');
+  assert.equal(await page.locator(selectors.slider).getAttribute('aria-valuenow'), '100');
+  assert.equal(await page.locator(selectors.checkbox).isChecked(), true);
+  assert.equal(await page.locator('section[data-local-hide-other-pairs]').getAttribute('data-local-hide-other-pairs'), 'true');
+  assert.equal(await page.locator(selectors.total).inputValue(), '6.125');
+  await page.locator('[data-testid="spot-trade-orderBuyBtn"]').click(); assert.match(await notice(page), /Deposit has no connected service/);
+  await page.getByRole('button', { name: 'Dismiss notice' }).click();
+  assert.equal(await group.getByRole('button', { name: 'Sell', pressed: true }).count(), 1);
+  await group.getByRole('button', { name: 'Buy', exact: true }).press('Space');
+  assert.deepEqual(await geometry(), before);
+  assert.deepEqual(await group.locator('[data-local-order-side]').evaluateAll(els => els.map(el => ({ bg:getComputedStyle(el).backgroundColor,color:getComputedStyle(el).color }))), initialColors);
+  assert.equal(await page.locator(selectors.price).inputValue(), '12.875'); assert.equal(await page.locator(selectors.total).inputValue(), '6.125');
+  // Existing slider interaction still writes mock zero after switching; checkbox still toggles.
+  await page.locator(selectors.slider).press('Home'); await percent(page, 0);
+  assert.equal(await page.locator(selectors.price).inputValue(), '12.875');
+  await page.locator(selectors.checkbox).press('Space'); assert.equal(await page.locator(selectors.checkbox).isChecked(), false);
+  assert.equal(await page.locator('input[type="number"]').count(), 2);
+  assert.equal(await page.locator('[data-testid="spot-trade-orderBuyBtn"]').innerText(), 'Deposit');
+});
+test('side handlers use scoped element identity and detach/rebind without affecting unrelated controls', async t => {
+  const page = await pageFor(t);
+  const result = await page.evaluate(async () => {
+    const { attachSpotLocalControls } = await import('/src/spot-local-controls.ts');
+    // Detached clone of existing DOM: no new form is rendered or user state changed.
+    const root = document.createElement('div');
+    root.append(document.querySelector('[class*="__actionBox"]').cloneNode(true));
+    const dispose = attachSpotLocalControls(root);
+    const form = root.querySelector('[class*="__buyWrapper"]');
+    const buy = root.querySelector('[data-local-order-side="buy"]');
+    const sell = root.querySelector('[data-local-order-side="sell"]');
+    // Label changes must not determine event identity; nested clicks still work.
+    sell.innerHTML = '<span>Localized label</span>'; sell.firstChild.click();
+    const afterNestedClick = form.dataset.localSide;
+    const unrelated = document.createElement('div'); unrelated.className = 'unrelated__sellBtn'; unrelated.textContent = 'Sell'; root.append(unrelated);
+    buy.click(); unrelated.click(); const afterUnrelated = form.dataset.localSide;
+    dispose(); sell.click(); sell.dispatchEvent(new KeyboardEvent('keydown', { key:'Enter',bubbles:true }));
+    const afterDispose = form.dataset.localSide;
+    const disposeAgain = attachSpotLocalControls(root);
+    sell.dispatchEvent(new KeyboardEvent('keydown', { key:' ',bubbles:true,cancelable:true }));
+    const afterRebind = form.dataset.localSide; disposeAgain();
+    return { afterNestedClick,afterUnrelated,afterDispose,afterRebind };
+  });
+  assert.deepEqual(result, { afterNestedClick:'sell',afterUnrelated:'buy',afterDispose:'buy',afterRebind:'sell' });
+  assert.equal(await page.locator(selectors.form).getAttribute('data-local-side'), 'buy');
 });
 test('slider midpoint click and keyboard clamp, resetting only Total to zero', async t => {
   const page = await pageFor(t), slider = page.locator(selectors.slider), rail = page.locator(selectors.rail);
