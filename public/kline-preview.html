@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>NEXORA · KLineChart Preview</title>
+<title>NEXORA Spot</title>
 <style>
 :root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#0d0d0d;color:#e5e9f1;font:14px system-ui,Arial,sans-serif}
 header{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:14px 20px;background:#14161c;border-bottom:1px solid #30343e}
@@ -27,9 +27,9 @@ body.embedded #chart{flex:1;min-height:180px;height:auto;border:0;width:100%}
 body.embedded #status{margin:0;padding:3px 10px;min-height:17px;font-size:10px}
 body.embedded{overflow:hidden}
 </style></head><body>
-<header><strong class="brand">NEXORA</strong><strong>Professional Spot Chart · Preview</strong><span>·</span><span>Read-only Spot data</span><a href="/" style="margin-left:auto">Back to existing Spot</a></header>
+<header><strong class="brand">NEXORA</strong><strong>Spot Chart</strong><span>·</span><span>NEXORA Spot</span><a href="/" style="margin-left:auto">Back to NEXORA Spot</a></header>
 <main class="container">
-<div class="market-row"><label for="symbol">Market</label><input id="symbol" value="BTCUSDT" maxlength="30" spellcheck="false" autocomplete="off"><button id="load">Load</button><span>Public Spot candles</span></div>
+<div class="market-row"><label for="symbol">Market</label><input id="symbol" value="BTCUSDT" maxlength="30" spellcheck="false" autocomplete="off"><button id="load">Load</button><span>NEXORA Spot</span></div>
 <div class="bar chart-toolbar">
 <div class="period-buttons" id="period-buttons"><button data-period="1m">1m</button><button data-period="5m">5m</button><button data-period="15m" class="active">15m</button><button data-period="30m">30m</button><button data-period="60m">1H</button><button data-period="4h">4H</button><button data-period="1d">1D</button></div>
 <div class="separator"></div><button id="ma" class="active" title="MA 5 / 10 / 20">MA</button><button id="ema" title="EMA">EMA</button>
@@ -38,8 +38,8 @@ body.embedded{overflow:hidden}
 <button id="trend" title="Draw trend segment">╱</button><button id="reset" title="Scroll to latest candles">⟳</button>
 <div class="chart-mode"><button class="active">Original</button><button disabled title="Future mode">TradingView</button><button disabled title="Future mode">Depth</button></div>
 </div>
-<div id="status" role="status">Loading chart library…</div><div id="chart" aria-label="Interactive cryptocurrency chart"></div>
-<p class="info">Independent evaluation page. The existing Spot chart and frontend stay unchanged. All candles are retrieved from the existing read-only MEXC proxy. The chart library is loaded from a pinned third-party CDN for this trial. No account credentials or trading endpoints are used.</p>
+<div id="status" role="status">NEXORA</div><div id="chart" aria-label="Interactive cryptocurrency chart"></div>
+<p class="info">NEXORA Spot chart · public market data only.</p>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/klinecharts@10.1.0/dist/umd/klinecharts.min.js" crossorigin="anonymous"></script>
 <script>
@@ -81,7 +81,7 @@ body.embedded{overflow:hidden}
   const value=el('symbol').value.trim().toUpperCase();
   if(!/^[A-Z0-9]{3,30}$/.test(value)){status('Enter a valid market (example BTCUSDT).',true);return}
   symbol=value;generation++;
-  status('Loading '+symbol+' · '+period+' market candles…');
+  status('NEXORA');
   try{chart.setSymbol({ticker:symbol,pricePrecision:symbol.startsWith('BTC')?2:8,volumePrecision:2});chart.setPeriod(PERIODS[period]);chart.resetData?.()}
   catch(error){status('Market change failed: '+error.message,true)}
  }
@@ -103,7 +103,7 @@ body.embedded{overflow:hidden}
      .sort((a,b)=>a.timestamp-b.timestamp).filter((b,i,arr)=>i===0||b.timestamp!==arr[i-1].timestamp);
     if(run!==generation)return callback([],{forward:false,backward:false});
     callback(bars,{forward:type==='forward'&&bars.length>=500,backward:false});
-    status('NEXORA · '+requestedSymbol+' · '+requestedPeriod+' · '+bars.length+' MEXC candles');
+    status('NEXORA');
    }catch(error){callback([],{forward:false,backward:false});if(run===generation)status('Candle load failed: '+error.message,true)}
   }});
   configureIndicators();
@@ -119,7 +119,7 @@ body.embedded{overflow:hidden}
  for(const button of el('period-buttons').querySelectorAll('button[data-period]')){
   button.addEventListener('click',()=>{
    period=button.dataset.period;for(const other of el('period-buttons').querySelectorAll('button'))other.classList.toggle('active',other===button);
-   generation++;try{chart.setPeriod(PERIODS[period]);chart.resetData?.();status('Loading '+symbol+' · '+period+' candles…')}catch(error){status(error.message,true)}
+   generation++;try{chart.setPeriod(PERIODS[period]);chart.resetData?.();status('NEXORA')}catch(error){status(error.message,true)}
   });
  }
  el('ma').addEventListener('click',()=>indicator('ma','MA',{calcParams:[5,10,20]},'candle_pane',true));
@@ -128,7 +128,7 @@ body.embedded{overflow:hidden}
  el('macd').addEventListener('click',()=>indicator('macd','MACD',{},'macd_pane',false));
  el('rsi').addEventListener('click',()=>indicator('rsi','RSI',{},'rsi_pane',false));
  el('boll').addEventListener('click',()=>indicator('boll','BOLL',{},'candle_pane',true));
- el('trend').addEventListener('click',()=>{try{chart.createOverlay('segment');status('Click two points on chart to draw trend segment')}catch(error){status(error.message,true)}});
+ el('trend').addEventListener('click',()=>{try{chart.createOverlay('segment');status('NEXORA')}catch(error){status(error.message,true)}});
  el('reset').addEventListener('click',()=>chart.scrollToRealTime?.());
  const observer=new ResizeObserver(()=>chart.resize());observer.observe(el('chart'));
  window.addEventListener('pagehide',()=>{observer.disconnect();lib.dispose?.('chart')},{once:true});
