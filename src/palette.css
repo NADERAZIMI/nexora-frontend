@@ -86,7 +86,6 @@ input[data-testid="spot-trade-buyTotal"]::-webkit-outer-spin-button{
 :root{--nexora-canvas:#000000;--nexora-surface:#121212;--nexora-field:#0D0D0D}
 html,body,#root{background-color:var(--nexora-canvas)!important}
 html[data-theme=dark] .snapshot-surface,
-html[data-theme=dark] [class*="__gridWrapper"],
 html[data-theme=dark] [class*="__chartWrapper"],
 html[data-theme=dark] [class*="__orderbookDealsWrapper"],
 html[data-theme=dark] [class*="__actionWrapper"],
@@ -105,4 +104,19 @@ html[data-theme=dark] .ant-input-affix-wrapper,
 html[data-theme=dark] [class*="__inputWrapper"],
 html[data-theme=dark] .nexora-spot-market-picker input{
   background-color:var(--nexora-field)!important;
+}
+
+/* Expose the true-black foundation between the existing grid panes.
+   Do not recolor input boxes or alter the grid measurements. */
+html[data-theme=dark] .react-grid-layout.exchange-module-scss-module__5dSXMa__gridWrapper{
+  background-color:var(--nexora-canvas)!important;
+}
+html[data-theme=dark] .react-grid-layout.exchange-module-scss-module__5dSXMa__gridWrapper > .react-grid-item{
+  background-color:var(--nexora-surface)!important;
+}
+html[data-theme=dark] [class*="__gridLayoutOrders"],
+html[data-theme=dark] [class*="__gridLayoutKline"],
+html[data-theme=dark] [class*="__gridLayoutOrderBookDeals"],
+html[data-theme=dark] [class*="__gridLayoutActions"]{
+  background-color:var(--nexora-surface)!important;
 }
