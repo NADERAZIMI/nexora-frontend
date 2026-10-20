@@ -92,16 +92,27 @@ const tabs=['Chart','Overview','Data','Feed','Trade Analysis'] as const;
 function ChartPanel({pair}:{pair:SpotPair}){const [tab,setTab]=useState<(typeof tabs)[number]>('Chart');const [frame,setFrame]=useState('1h');return <section className="panel chart"><div className="tabs">{tabs.map(x=><button key={x} onClick={()=>setTab(x)} className={tab===x?'active':''}>{x}</button>)}<span className="paneltools">⚙　⛶</span></div>{tab==='Overview'?<OverviewPanel pair={pair}/>:tab==='Chart'?<><div className="chart-toolbar"><span className="active-blue">Trading Chart</span><div className="timeframes">{['1m','5m','15m','30m','1h','4h','1d','1w'].map(x=><button key={x} onClick={()=>setFrame(x)} className={frame===x?'on':''}>{x}</button>)}</div><span className="muted">Indicators　⌄</span></div><div className="chart-area"><div className="chart-grid"/><div className="chart-message"><span className="chart-icon">▥</span><b>Chart ready for market-data integration</b><p>React chart container · {frame} · {pair.base}/{pair.quote}</p><small>No simulated candles or prices are displayed.</small></div><span className="axis axis-top">Price ({pair.quote})</span><span className="axis axis-bottom">Time (UTC)</span></div></>:<div className="waiting">{tab} panel · React component ready for live data</div>}</section>}
 function OrderBook({pair}:{pair:SpotPair}){
  const [mode,setMode]=useState('Order Book');
- const [step,setStep]=useState('0.1');
+ const [stepMultiplier,setStepMultiplier]=useState(1);
  const [layout,setLayout]=useState<'both'|'split'|'bids'|'asks'>('both');
  const book=useBybitSpotBook(pair.symbol);
- const priceText=(n:number)=>n.toLocaleString('en-US',{minimumFractionDigits:1,maximumFractionDigits:1});
- const qtyText=(n:number)=>n.toFixed(6);
+ // Infer the finest displayed exchange tick from actual order-book price levels.
+ const prices=[...book.asks,...book.bids].map(x=>x.price).filter(x=>Number.isFinite(x)&&x>0).sort((a,b)=>a-b);
+ const gaps=prices.slice(1).map((p,i)=>p-prices[i]).filter(d=>d>1e-12);
+ const refPrice=book.trades[0]?.price??book.bids[0]?.price??book.asks[0]?.price??1;
+ const inferredTick=gaps.length?Math.min(...gaps):Math.pow(10,Math.floor(Math.log10(refPrice))-3);
+ const tickBase=Math.pow(10,Math.floor(Math.log10(Math.max(1e-12,inferredTick))+1e-7));
+ const step=tickBase*stepMultiplier;
+ const precision=Math.min(12,Math.max(0,-Math.floor(Math.log10(step)+1e-7)));
+ const rawPrecision=Math.min(12,Math.max(precision,-Math.floor(Math.log10(tickBase)+1e-7)));
+ const priceText=(n:number,digits=precision)=>n.toLocaleString('en-US',{minimumFractionDigits:digits,maximumFractionDigits:digits});
+ const qtyText=(n:number)=>n.toLocaleString('en-US',{maximumFractionDigits:8});
+ const stepLabel=(n:number)=>n.toLocaleString('en-US',{useGrouping:false,maximumFractionDigits:12});
  const aggregate=(levels:typeof book.asks,ask:boolean)=>{
-   const tick=Number(step);
+   const tick=step;
    const byPrice=new Map<number,number>();
    for(const level of levels){
-     const key=Math.round((ask?Math.ceil((level.price-1e-9)/tick):Math.floor((level.price+1e-9)/tick))*tick*100)/100;
+     const units=ask?Math.ceil(level.price/tick-1e-7):Math.floor(level.price/tick+1e-7);
+     const key=Number((units*tick).toFixed(precision));
      byPrice.set(key,(byPrice.get(key)||0)+level.amount);
    }
    let cumulative=0;
@@ -126,10 +137,10 @@ function OrderBook({pair}:{pair:SpotPair}){
 {value==='both'?<><rect x="1" y="2" width="8" height="6" rx=".7" fill="#F05A70"/><rect x="1" y="10" width="8" height="6" rx=".7" fill="#16B89A"/></>:<rect x="1" y="2" width="8" height="14" rx=".7" fill={value==='bids'?'#16B89A':value==='asks'?'#F05A70':'#41464e'}/>}
 {value==='split'?<><rect x="1" y="2" width="8" height="6" fill="#F05A70"/><rect x="1" y="10" width="8" height="6" fill="#16B89A"/></>:null}
 <path d="M11 3H21 M11 6H21 M11 9H21 M11 12H21 M11 15H21" stroke="#5f6269" strokeWidth="1.4"/>
-</svg></button>)}</div><select aria-label="Price precision" value={step} onChange={e=>setStep(e.target.value)}>{['0.1','0.5','1','5','10'].map(x=><option value={x} key={x}>{x}</option>)}</select></div>
+</svg></button>)}</div><select aria-label="Price precision" value={stepMultiplier} onChange={e=>setStepMultiplier(Number(e.target.value))}>{[1,10,100,1000].map(x=><option value={x} key={x}>{stepLabel(tickBase*x)}</option>)}</select></div>
   <div className="obhead book-columns"><span>Price ({pair.quote})</span><span>Qty ({pair.base})</span><span>Total ({pair.base})</span></div>
   {layout!=='bids'&&<div className={'depthblock '+(layout==='split'?'split-asks':'')}><div className="book-rows">{book.synchronized?drawRows([...asks].reverse(),'ask'):<div className="depth-placeholder">{book.error||'Waiting for Bybit snapshot…'}</div>}</div></div>}
-  <div className={'midprice '+(last?.side==='Buy'?'up':'down')}><span>{mid!==null?priceText(mid):display}</span><small>{mid!==null?'≈ '+mid.toLocaleString('en-US',{style:'currency',currency:'USD',minimumFractionDigits:2}):'USDT'}</small></div>
+  <div className={'midprice '+(last?.side==='Buy'?'up':'down')}><span>{mid!==null?priceText(mid,rawPrecision):display}</span><small>{mid!==null?'≈ '+priceText(mid,rawPrecision)+' '+pair.quote:'USDT'}</small></div>
   {layout!=='asks'&&<div className={'depthblock '+(layout==='split'?'split-bids':'')}><div className="book-rows">{book.synchronized?drawRows(bids,'bid'):<div className="depth-placeholder">{book.error||'Waiting for Bybit snapshot…'}</div>}</div></div>}
   <div className="book-ratio" aria-label="Displayed depth buy sell proportions"><div className="ratio-buy" style={{width:buyPercent+'%'}}>B&nbsp; {book.synchronized?buyPercent+'%':'—'}</div><div className="ratio-sell" style={{width:(100-buyPercent)+'%'}}>{book.synchronized?(100-buyPercent)+'%':'—'} &nbsp;S</div></div>
  </>:<div className="recent-trades"><div className="obhead book-columns"><span>Price ({pair.quote})</span><span>Qty ({pair.base})</span><span>Time</span></div>{book.trades.length?book.trades.slice(0,35).map(t=><div className={'book-row '+(t.side==='Buy'?'bid':'ask')} key={t.id}><span className="book-number book-price">{priceText(t.price)}</span><span className="book-number">{qtyText(t.amount)}</span><span className="book-number">{new Date(t.timestamp).toLocaleTimeString('en-GB')}</span></div>):<div className="waiting">Waiting for public trades…</div>}</div>}
