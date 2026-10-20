@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {useSpotMarkets,useFilteredPairs,type SpotPair} from './spot-markets';
+import {useSpotTickers,type MarketTicker} from './spot-tickers';
 import { createRoot } from 'react-dom/client';
 import './styles.css';
 import {useBybitSpotBook} from './useBybitSpotBook';
@@ -8,16 +9,44 @@ type BookSide='buy'|'sell';
 function Brand(){return <div className="brand"><img src={LOGO} alt="NEXORA" /><strong>NEXORA</strong></div>}
 function Header(){return <header className="topbar"><Brand/><nav className="toplinks"><button className="selected">Trade</button><button>Markets</button><button>Spot</button><button>Futures</button><button>Assets</button><button>Orders</button></nav><div className="topright"><span className="muted">English / USD</span><button className="outline">Log In</button><button className="primary">Sign Up</button></div></header>}
 const display='—';
-function MarketBar({pair,onSelect,pairs,source}:{pair:SpotPair;onSelect:(pair:SpotPair)=>void;pairs:SpotPair[];source:'loading'|'live'|'fallback'}){
+function MarketBar({pair,onSelect,pairs,source,tickers,pricesReady}:{pair:SpotPair;onSelect:(pair:SpotPair)=>void;pairs:SpotPair[];source:'loading'|'live'|'fallback';tickers:Record<string,MarketTicker>;pricesReady:boolean}){
  const [open,setOpen]=useState(false),[search,setSearch]=useState('');
- const found=useFilteredPairs(pairs,search);
+ const [category,setCategory]=useState<'Favorites'|'Crypto'|'TradFi'>('Crypto');
+ const [quote,setQuote]=useState('USDT');
+ const [sort,setSort]=useState<'default'|'price'|'change'|'volume'>('default');
+ const [favorites,setFavorites]=useState<string[]>([]);
+ const matched=useFilteredPairs(pairs,search);
+ const found=matched.filter(p=>(category!=='Favorites'||favorites.includes(p.symbol))&&(quote==='All'||p.quote===quote));
+ const ordered=[...found].sort((x,y)=>{
+   if(sort==='default')return Number(y.symbol===pair.symbol)-Number(x.symbol===pair.symbol);
+   const a=tickers[x.symbol],b=tickers[y.symbol];
+   const va=sort==='price'?a?.lastPrice:sort==='change'?a?.change:a?.turnover;
+   const vb=sort==='price'?b?.lastPrice:sort==='change'?b?.change:b?.turnover;
+   return (vb??-Infinity)-(va??-Infinity);
+ });
+ const formatPrice=(v:number)=>v.toLocaleString('en-US',{maximumFractionDigits:v>=1?4:8});
+ const formatVolume=(v:number)=>v>=1e9?(v/1e9).toFixed(2)+'B':v>=1e6?(v/1e6).toFixed(2)+'M':v>=1000?(v/1000).toFixed(2)+'K':v.toFixed(2);
  return <section className="marketbar"><div className="pair-selector">
  <button className="pair pair-trigger" type="button" aria-expanded={open} onClick={()=>setOpen(!open)}><span className="coin">{pair.base.slice(0,1)}</span><span><strong>{pair.base}/{pair.quote}</strong><small>Spot Trading</small></span><span className="chevron">⌄</span></button>
- {open&&<div className="market-dropdown"><div className="market-dropdown-top"><strong>Spot Markets</strong><button type="button" aria-label="Close market list" onClick={()=>setOpen(false)}>✕</button></div>
- <input autoFocus value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search BTC, ETH, SOL…" aria-label="Search spot markets"/>
- <div className="market-catalog-status">{source==='live'?'Bybit Spot · Live catalog':source==='loading'?'Loading Bybit spot markets…':'Popular pairs · Catalog temporarily unavailable'} · {found.length} pairs</div>
- <div className="market-items">{found.slice(0,350).map(p=><button className={'market-item '+(pair.symbol===p.symbol?'active':'')} type="button" key={p.symbol} onClick={()=>{onSelect(p);setOpen(false);setSearch('');}}><span>{p.base}<small>/{p.quote}</small></span><span>{p.symbol}</span></button>)}{found.length===0&&<div className="market-noresults">No matching Spot markets</div>}</div></div>}
- </div><div className="price"><strong>{display}</strong><small>Last price</small></div>{[['24h Change',display],['24h High',display],['24h Low',display],['24h Volume ('+pair.base+')',display],['24h Turnover ('+pair.quote+')',display]].map(([k,v])=><div className="marketstat" key={k}><small>{k}</small><strong>{v}</strong></div>)}<span className="marketstate"><i/>Public market data</span></section>
+ {open&&<div className="market-dropdown" role="dialog" aria-label="Spot market selector">
+ <div className="market-search-line"><input autoFocus value={search} onChange={e=>setSearch(e.target.value)} placeholder="⌕  Search markets" aria-label="Search spot markets"/><button type="button" title="Close" aria-label="Close" onClick={()=>setOpen(false)}>✕</button></div>
+ <div className="market-main-tabs">{(['Favorites','Crypto','TradFi'] as const).map(x=><button type="button" className={category===x?'active':''} key={x} onClick={()=>setCategory(x)}>{x}</button>)}</div>
+ <div className="market-type-tabs"><button className="active">Spot</button><button disabled>Perpetual</button><button disabled>Expiry</button><button disabled>Options</button><button disabled>Pre-Market</button></div>
+ <div className="market-filter-tabs"><button className="market-quote" onClick={()=>setQuote(quote==='USDT'?'All':'USDT')}>{quote}⌄</button><button className={quote==='All'?'active':''} onClick={()=>setQuote('All')}>All</button><button disabled>New</button><button disabled>0 Fees</button><button disabled>Margin Trading</button></div>
+ <div className="market-table-head"><button onClick={()=>setSort('default')}>Name ↕</button><button onClick={()=>setSort('price')}>Price ↕</button><button onClick={()=>setSort('change')}>24H % ↕</button><button onClick={()=>setSort('volume')}>Volume ↕</button></div>
+ <div className="market-catalog-status">{source==='live'?'Bybit Spot pairs':source==='loading'?'Loading market catalog…':'Popular pairs (live catalog unavailable)'} · {pricesReady?'Live price data':'Price feed unavailable'} · {found.length}</div>
+ <div className="market-items">{category==='TradFi'?<div className="market-noresults">TradFi markets are not part of Bybit Spot catalog</div>:ordered.slice(0,400).map(p=>{
+ const tick=tickers[p.symbol],active=p.symbol===pair.symbol,star=favorites.includes(p.symbol);
+ return <div className={'market-table-row '+(active?'active':'')} key={p.symbol}>
+ <button className={'market-star '+(star?'saved':'')} title={star?'Remove favorite':'Add favorite'} aria-label={'Favorite '+p.symbol} onClick={()=>setFavorites(prev=>star?prev.filter(x=>x!==p.symbol):[...prev,p.symbol])}>{star?'★':'☆'}</button>
+ <button className="market-row-select" onClick={()=>{onSelect(p);setOpen(false);setSearch('');}}>
+ <span className="market-symbol-cell"><span className="market-token-icon">{p.base.slice(0,1)}</span><span className="market-coin-name"><strong>{p.base}</strong><small>{p.quote}</small></span></span>
+ <span className="market-numeric">{tick?formatPrice(tick.lastPrice):'—'}</span>
+ <span className={'market-numeric '+(tick?(tick.change>=0?'positive':'negative'):'')}>{tick?(tick.change>=0?'+':'')+(tick.change*100).toFixed(2)+'%':'—'}</span>
+ <span className="market-numeric">{tick?formatVolume(tick.turnover)+' ('+p.quote+')':'—'}</span>
+ </button></div>;})}{found.length===0&&category!=='TradFi'&&<div className="market-noresults">No matching Spot pairs</div>}</div>
+ </div>}
+ </div><div className="price"><strong>{tickers[pair.symbol]?formatPrice(tickers[pair.symbol].lastPrice):display}</strong><small>Last price</small></div>{[['24h Change',tickers[pair.symbol]?(tickers[pair.symbol].change*100).toFixed(2)+'%':display],['24h High',display],['24h Low',display],['24h Volume ('+pair.base+')',display],['24h Turnover ('+pair.quote+')',tickers[pair.symbol]?formatVolume(tickers[pair.symbol].turnover):display]].map(([k,v])=><div className="marketstat" key={k}><small>{k}</small><strong>{v}</strong></div>)}<span className="marketstate"><i/>{pricesReady?'Live Bybit tickers':'Public market data'}</span></section>
 }
 const tabs=['Chart','Overview','Data','Feed','Trade Analysis'] as const;
 function ChartPanel({pair}:{pair:SpotPair}){const [tab,setTab]=useState<(typeof tabs)[number]>('Chart');const [frame,setFrame]=useState('1h');return <section className="panel chart"><div className="tabs">{tabs.map(x=><button key={x} onClick={()=>setTab(x)} className={tab===x?'active':''}>{x}</button>)}<span className="paneltools">⚙　⛶</span></div>{tab==='Chart'?<><div className="chart-toolbar"><span className="active-blue">Trading Chart</span><div className="timeframes">{['1m','5m','15m','30m','1h','4h','1d','1w'].map(x=><button key={x} onClick={()=>setFrame(x)} className={frame===x?'on':''}>{x}</button>)}</div><span className="muted">Indicators　⌄</span></div><div className="chart-area"><div className="chart-grid"/><div className="chart-message"><span className="chart-icon">▥</span><b>Chart ready for market-data integration</b><p>React chart container · {frame} · {pair.base}/{pair.quote}</p><small>No simulated candles or prices are displayed.</small></div><span className="axis axis-top">Price ({pair.quote})</span><span className="axis axis-bottom">Time (UTC)</span></div></>:<div className="waiting">{tab} panel · React component ready for live data</div>}</section>}
@@ -69,5 +98,5 @@ function OrderBook({pair}:{pair:SpotPair}){
 function TradingForm({side,pair}:{side:BookSide;pair:SpotPair}){const [kind,setKind]=useState('Limit');const [price,setPrice]=useState('');const [amount,setAmount]=useState('');const [percent,setPercent]=useState(0);return <div className="tradeform"><div className="formcaption"><span>Available</span><span>— {side==='buy'?pair.quote:pair.base}</span></div><div className="ordertypes">{['Limit','Market','Stop Limit'].map(x=><button key={x} onClick={()=>setKind(x)} className={kind===x?'active':''}>{x}</button>)}</div>{kind!=='Market'&&<label className="field"><span>Price</span><input type="number" min="0" placeholder="Enter price" value={price} onChange={e=>setPrice(e.target.value)}/><strong>{pair.quote}</strong></label>}<label className="field"><span>Amount</span><input type="number" min="0" placeholder="Enter amount" value={amount} onChange={e=>setAmount(e.target.value)}/><strong>{pair.base}</strong></label><input className="percentage" type="range" min="0" max="100" step="25" value={percent} onChange={e=>setPercent(Number(e.target.value))}/><div className="rangelabel"><span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span></div><div className="formcaption"><span>Total</span><span>— {pair.quote}</span></div><button className={'tradeaction '+side} disabled>{side==='buy'?'Buy '+pair.base:'Sell '+pair.base}</button><p className="loginprompt">Trading requires account connection</p></div>}
 function TradePanel({pair}:{pair:SpotPair}){const [side,setSide]=useState<BookSide>('buy');return <section className="panel tradepanel"><div className="tabs compact"><button className="active">Spot</button><button>Margin</button></div><div className="sidepicker"><button className={side==='buy'?'buy chosen':''} onClick={()=>setSide('buy')}>Buy</button><button className={side==='sell'?'sell chosen':''} onClick={()=>setSide('sell')}>Sell</button></div><TradingForm side={side} pair={pair}/></section>}
 function Orders(){const [tab,setTab]=useState('Open Orders (0)');return <section className="panel orders"><div className="tabs compact">{['Open Orders (0)','Order History','Trade History','Assets'].map(x=><button key={x} className={tab===x?'active':''} onClick={()=>setTab(x)}>{x}</button>)}</div><div className="orders-empty">Sign in to view your {tab.toLowerCase()}</div></section>}
-function App(){const {pairs,source}=useSpotMarkets();const [pair,setPair]=useState<SpotPair>({symbol:'BTCUSDT',base:'BTC',quote:'USDT'});return <><Header/><main><MarketBar pair={pair} onSelect={setPair} pairs={pairs} source={source}/><div className="workspace"><ChartPanel pair={pair}/><OrderBook key={pair.symbol} pair={pair}/><TradePanel pair={pair}/><Orders/></div></main><footer>NEXORA Spot · Public Bybit market catalog and orderbook</footer></>}
+function App(){const {pairs,source}=useSpotMarkets();const {tickers,ready:pricesReady}=useSpotTickers();const [pair,setPair]=useState<SpotPair>({symbol:'BTCUSDT',base:'BTC',quote:'USDT'});return <><Header/><main><MarketBar pair={pair} onSelect={setPair} pairs={pairs} source={source} tickers={tickers} pricesReady={pricesReady}/><div className="workspace"><ChartPanel pair={pair}/><OrderBook key={pair.symbol} pair={pair}/><TradePanel pair={pair}/><Orders/></div></main><footer>NEXORA Spot · Public Bybit market catalog and orderbook</footer></>}
 createRoot(document.getElementById('root')!).render(<React.StrictMode><App/></React.StrictMode>);
