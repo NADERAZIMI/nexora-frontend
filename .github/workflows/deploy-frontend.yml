@@ -124,6 +124,10 @@ jobs:
           assert count>=100 and 0<=age<180,"Ticker payload invalid or stale"
           PY
           crontab -l | grep 'NEXORA_SPOT_TICKERS'
+          if command -v systemctl >/dev/null 2>&1; then
+            systemctl is-active cron || { echo 'Ticker refresher scheduler is not running'; exit 1; }
+          fi
+          echo 'Ticker service and fresh cache verified'
           REMOTE
           # Persist token images independently of frontend releases (once per symbol).
           # A fresh release links back to the dedicated NEXORA asset directory.
