@@ -11,3 +11,38 @@
 .recent-trades{height:calc(100% - 43px);overflow:auto}
 .recent-trades .book-row{min-height:25px}
 .depthblock .depth-placeholder{margin:auto;text-align:center;padding:10px}
+
+/* Compact exchange depth layout */
+.orderbook{font-variant-numeric:tabular-nums}
+.orderbook .tabs.compact{gap:18px;padding-inline:12px}
+.orderbook .stream-state{font-size:10px}
+.orderbook .obtools{height:43px;flex:none;padding:0 10px}
+.orderbook .obtools select{min-width:100px;text-align:left;height:29px;background:#202127;border:0;padding:4px 9px}
+.depth-modes{display:flex;align-items:center;gap:10px}
+.depth-icon{font-size:18px;color:#606671}
+.depth-icon.selected{color:#16B89A}
+.orderbook .obhead,.orderbook .book-row{display:grid;grid-template-columns:minmax(0,1.12fr) minmax(0,.95fr) minmax(0,.97fr);gap:4px;align-items:center;padding-left:9px;padding-right:9px}
+.orderbook .obhead{height:34px;min-height:34px;flex:none;font-size:11px;color:#929AAA}
+.orderbook .obhead span:nth-child(n+2){text-align:right}
+.orderbook .depthblock{flex:1;min-height:0;overflow:hidden;display:block}
+.orderbook .book-rows{width:100%;height:100%;display:flex;flex-direction:column;justify-content:space-evenly;overflow:hidden}
+.orderbook .book-row{position:relative;width:100%;height:calc(100% / 12);min-height:19px;max-height:32px;flex:none;font-size:12px;line-height:1.25;white-space:nowrap;overflow:hidden}
+.orderbook .book-row .book-number{position:relative;z-index:1;text-align:right;min-width:0;overflow:hidden;text-overflow:clip;letter-spacing:-.2px}
+.orderbook .book-row .book-price{text-align:left}
+.orderbook .book-row .book-bar{position:absolute;right:0;top:0;height:100%;z-index:0;pointer-events:none}
+.orderbook .book-row.ask .book-bar{background:rgba(240,90,112,.20)}
+.orderbook .book-row.bid .book-bar{background:rgba(22,184,154,.20)}
+.orderbook .book-row.ask .book-price{color:#F05A70}
+.orderbook .book-row.bid .book-price{color:#16B89A}
+.orderbook .midprice{height:48px;flex:none;padding:0 12px;display:flex;align-items:center;gap:8px;border:0}
+.orderbook .midprice span{font-size:22px;letter-spacing:-.5px}
+.orderbook .midprice.up span{color:#16B89A}
+.orderbook .midprice.down span{color:#F05A70}
+.orderbook .midprice small{font-size:11px;white-space:nowrap;color:#929AAA}
+.orderbook .book-ratio{margin:7px 10px 10px;display:flex;height:23px;flex:none;border-radius:3px;overflow:hidden;font-size:11px;font-weight:600}
+.orderbook .ratio-buy,.orderbook .ratio-sell{height:100%;display:flex;align-items:center;white-space:nowrap;overflow:hidden}
+.orderbook .ratio-buy{justify-content:flex-start;background:rgba(22,184,154,.23);color:#16B89A;padding-left:5px}
+.orderbook .ratio-sell{justify-content:flex-end;background:rgba(240,90,112,.23);color:#F05A70;padding-right:5px}
+.orderbook .recent-trades .book-row{height:26px}
+.orderbook .recent-trades .book-number{font-size:11px}
+@media(max-width:1280px){.orderbook .book-row{font-size:11px}.orderbook .obhead{font-size:10px}}
