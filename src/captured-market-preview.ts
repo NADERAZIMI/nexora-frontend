@@ -34,8 +34,17 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
   warning.className = 'nexora-market-preview-warning';
   warning.textContent = 'Price examples only. The order book remains the saved BTC/USDT snapshot.';
   panel.append(headingLine, choices, sample, warning);
-  anchor.style.position = 'relative';
-  anchor.append(panel);
+  // The archived headline sits inside transformed, clipped layout wrappers.
+  // Portal the menu to body so it overlays the chart instead of being clipped.
+  document.body.append(panel);
+  const positionPanel = () => {
+    const rect = anchor.getBoundingClientRect();
+    panel.style.left = `${Math.max(8, Math.min(rect.left, window.innerWidth - Math.min(620, window.innerWidth - 16) - 8))}px`;
+    panel.style.top = `${rect.bottom + 6}px`;
+  };
+  positionPanel();
+  window.addEventListener('resize', positionPanel);
+  window.addEventListener('scroll', positionPanel, true);
   function show(id: 'BTC_USDT' | 'SHIDO_USDT' | 'WOJAK_USDT') {
     const item = capturedMarketDisplay(id);
     sample.textContent = item.label + ': ' + item.formattedPrice + ' USDT | displayed precision: ' + item.formattedPrecision;
@@ -43,13 +52,13 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
   }
   show('BTC_USDT');
   const close = () => { panel.hidden = true; heading.setAttribute('aria-expanded', 'false'); };
-  const toggle = (event?: Event) => { event?.stopPropagation(); panel.hidden = !panel.hidden; heading.setAttribute('aria-expanded', String(!panel.hidden)); };
+  const toggle = (event?: Event) => { event?.stopPropagation(); if (panel.hidden) positionPanel(); panel.hidden = !panel.hidden; heading.setAttribute('aria-expanded', String(!panel.hidden)); };
   const key = (event: KeyboardEvent) => {
     if (event.key === 'Escape') { close(); return; }
     if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggle(event); }
   };
   const outside = (event: MouseEvent) => {
-    if (!panel.hidden && !anchor.contains(event.target as Node)) close();
+    if (!panel.hidden && !anchor.contains(event.target as Node) && !panel.contains(event.target as Node)) close();
   };
   heading.addEventListener('click', toggle);
   heading.addEventListener('keydown', key);
@@ -62,7 +71,8 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
     heading.removeAttribute('tabindex');
     heading.removeAttribute('aria-label');
     heading.removeAttribute('aria-expanded');
-    anchor.style.removeProperty('position');
+    window.removeEventListener('resize', positionPanel);
+    window.removeEventListener('scroll', positionPanel, true);
     panel.remove();
   };
 }
