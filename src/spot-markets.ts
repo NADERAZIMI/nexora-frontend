@@ -8,6 +8,16 @@ export function useSpotMarkets(){
  useEffect(()=>{
   const abort=new AbortController();
   const run=async()=>{
+   // Use the full Bybit catalog saved with the frontend release, avoiding browser CORS.
+   try{
+    const response=await fetch('/spot-markets.json',{signal:abort.signal,cache:'no-store'});
+    if(response.ok){
+     const data=await response.json() as {source?:string;pairs?:SpotPair[]};
+     if(data.source==='bybit-public-spot'&&Array.isArray(data.pairs)&&data.pairs.length>=100){
+      setPairs(data.pairs);setSource('live');return;
+     }
+    }
+   }catch{if(abort.signal.aborted)return;}
    const hosts=['/bybit-public/v5/market/instruments-info','https://api.bybit.com/v5/market/instruments-info','https://api.bytick.com/v5/market/instruments-info'];
    let loaded:SpotPair[]=[];
    for(const host of hosts){
