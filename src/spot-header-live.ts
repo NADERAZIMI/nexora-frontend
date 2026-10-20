@@ -39,6 +39,7 @@ export function attachSpotHeaderLive(root:HTMLElement):()=>void{
    if(volumeLabel)volumeLabel.textContent='24H Volume ('+base+')';
    if(amountLabel)amountLabel.textContent='24H Amount ('+quote+')';
    headline.dataset.nexoraHeaderFeed='live';
+   root.dispatchEvent(new CustomEvent('nexora:live-ticker',{detail:{symbol:id,price:last,change24h:change,receivedAt:Date.now()}}));
   }catch(e){if(disposed||signal.aborted||id!==symbol)return;clear('unavailable');console.warn('[NEXORA] Spot headline ticker unavailable',e)}
  };
  const onMarket=(ev:Event)=>{
@@ -49,6 +50,6 @@ export function attachSpotHeaderLive(root:HTMLElement):()=>void{
   clear('loading');if(volumeLabel)volumeLabel.textContent='24H Volume ('+base+')';if(amountLabel)amountLabel.textContent='24H Amount ('+quote+')';void refresh();
  };
  root.addEventListener('nexora:market-selected',onMarket);clear('loading');void refresh();
- const timer=window.setInterval(()=>{void refresh()},15000);
+ const timer=window.setInterval(()=>{if(!document.hidden)void refresh()},4000);
  return ()=>{disposed=true;ctrl?.abort();clearInterval(timer);root.removeEventListener('nexora:market-selected',onMarket)};
 }
