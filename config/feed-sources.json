@@ -1,0 +1,22 @@
+{
+  "description": "NEXORA feed source registry. Listing a source does not grant a reproduction licence. Enable individual connectors only after operational and rights verification.",
+  "version": 1,
+  "sources": [
+    {"id":"coindesk","name":"CoinDesk","type":"rss","url":"https://www.coindesk.com/arc/outboundfeeds/rss/?outputType=xml","categories":["News","Token News"],"enabledForIngestion":false},
+    {"id":"cointelegraph","name":"Cointelegraph","type":"rss","url":"https://cointelegraph.com/rss","categories":["News","Token News"],"enabledForIngestion":false},
+    {"id":"theblock","name":"The Block","type":"rss","url":"https://www.theblock.co/rss.xml","categories":["News","Token News"],"enabledForIngestion":false},
+    {"id":"decrypt","name":"Decrypt","type":"rss","url":"https://decrypt.co/feed","categories":["News","Token News"],"enabledForIngestion":false},
+    {"id":"dlnews","name":"DL News","type":"rss","url":"https://www.dlnews.com/arc/outboundfeeds/rss/","categories":["News","Token News"],"enabledForIngestion":false},
+    {"id":"bitcoinmagazine","name":"Bitcoin Magazine","type":"rss","url":"https://bitcoinmagazine.com/.rss/full/","categories":["Token News"],"enabledForIngestion":false},
+    {"id":"defiant","name":"The Defiant","type":"rss","url":"https://thedefiant.io/feed","categories":["Token News"],"enabledForIngestion":false},
+    {"id":"coinbase","name":"Coinbase Blog","type":"rss","url":"https://www.coinbase.com/blog/rss.xml","categories":["Token News"],"enabledForIngestion":false},
+    {"id":"solana","name":"Solana News","type":"rss","url":"https://solana.com/news/rss.xml","categories":["Token News"],"enabledForIngestion":false},
+    {"id":"fed","name":"Federal Reserve","type":"rss-directory","url":"https://www.federalreserve.gov/feeds/feeds.htm","categories":["Macro News","Calendar"],"enabledForIngestion":false},
+    {"id":"ecb","name":"European Central Bank","type":"rss-directory","url":"https://www.ecb.europa.eu/home/html/rss.en.html","categories":["Macro News","Calendar"],"enabledForIngestion":false},
+    {"id":"sec","name":"US SEC","type":"rss-directory","url":"https://www.sec.gov/about/rss-feeds","categories":["News","Macro News"],"enabledForIngestion":false},
+    {"id":"gdelt","name":"GDELT","type":"api","url":"https://www.gdeltproject.org/","categories":["News","Macro News"],"enabledForIngestion":false},
+    {"id":"cryptopanic","name":"CryptoPanic","type":"licensed-api","url":"https://cryptopanic.com/about/api/","categories":["News","Token News"],"enabledForIngestion":false},
+    {"id":"coinmarketcal","name":"CoinMarketCal","type":"licensed-api","url":"https://coinmarketcal.com/developer/docs","categories":["Calendar"],"enabledForIngestion":false},
+    {"id":"tradingeconomics","name":"Trading Economics","type":"licensed-api","url":"https://docs.tradingeconomics.com/","categories":["Macro News","Calendar"],"enabledForIngestion":false}
+  ]
+}
