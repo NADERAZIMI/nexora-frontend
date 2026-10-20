@@ -18,8 +18,6 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
-      - name: Generate complete public Bybit Spot catalog
-        run: python3 scripts/build-spot-catalog.py
       - name: Restore locally cached token logos
         uses: actions/cache@v4
         with:
@@ -28,6 +26,10 @@ jobs:
       - name: Download missing token logos for same-origin delivery
         run: python3 scripts/build-token-icons.py
       - run: npm run build
+      - name: Include catalog generator for Turkey VPS
+        run: |
+          mkdir -p dist/build-tools
+          cp scripts/build-spot-catalog.py dist/build-tools/build-spot-catalog.py
       - uses: actions/upload-artifact@v4
         with:
           name: nexora-frontend-dist
@@ -71,6 +73,18 @@ jobs:
           SSH_OPTS="-i $HOME/.ssh/id_ed25519 -p $PORT -o StrictHostKeyChecking=yes -o BatchMode=yes"
           ssh $SSH_OPTS "$USER@$HOST" "mkdir -p ~/nexora-frontend/releases/$RELEASE"
           rsync -az --delete -e "ssh -i $HOME/.ssh/id_ed25519 -p $PORT -o StrictHostKeyChecking=yes -o BatchMode=yes" dist/ "$USER@$HOST:nexora-frontend/releases/$RELEASE/"
+          # Build the public spot catalog on the Turkey VPS, rather than GitHub
+          # runners, which may be blocked by Bybit's regional restrictions.
+          ssh $SSH_OPTS "$USER@$HOST" bash -s -- "$RELEASE" <<'REMOTE'
+          set -euo pipefail
+          release="$1"
+          case "$release" in *[!a-f0-9]*|'') exit 1;; esac
+          cd "$HOME/nexora-frontend/releases/$release"
+          python3 build-tools/build-spot-catalog.py
+          test -s public/spot-markets.json
+          mv public/spot-markets.json spot-markets.json
+          rm -rf build-tools public
+          REMOTE
           # Persist token images independently of frontend releases (once per symbol).
           # A fresh release links back to the dedicated NEXORA asset directory.
           ssh $SSH_OPTS "$USER@$HOST" bash -s -- "$RELEASE" <<'REMOTE'
