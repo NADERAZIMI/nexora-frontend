@@ -594,10 +594,34 @@ test('offline market chooser previews exact small prices without relabeling the 
   await region.getByRole('button',{name:'WOJAK'}).click();
   assert.match(await region.textContent(), /0\.0\{7\}4276/);
   assert.match(await region.textContent(), /not live data/);
-  assert.match(await page.locator('[class*="__bigName"] h1').first().textContent(), /BTC\/USDT/);
+  assert.match(await page.locator('[class*="__bigName"] h1').first().textContent(), /WOJAK\/USDT/);
   assert.equal(await page.locator('[data-local-orderbook-mode]').isVisible(),true);
   await region.getByRole('button',{name:'SHIDO'}).click();
   assert.match(await region.textContent(), /0\.0000786/);
   await opener.press('Escape');
   assert.equal(await region.isVisible(),false);
+});
+
+test('spot market arrow opens searchable, sortable picker and selection updates pair', async t => {
+  const page = await pageFor(t);
+  const region=page.getByRole('region',{name:'Captured market price examples'});
+  const arrow=page.getByRole('button',{name:'Open spot market selector'});
+  await arrow.click();
+  assert.equal(await region.isVisible(),true);
+  const input=region.getByRole('searchbox',{name:'Search captured pairs'});
+  await input.fill('SHI');
+  assert.equal(await region.getByRole('button',{name:'SHIDO'}).isVisible(),true);
+  assert.equal(await region.getByRole('button',{name:'WOJAK'}).isVisible(),false);
+  await input.fill('');
+  await region.getByRole('button',{name:'Price ↕'}).click();
+  await region.getByRole('button',{name:'Price ↕'}).click();
+  await region.getByRole('button',{name:'SHIDO'}).click();
+  assert.equal(await region.isVisible(),false);
+  assert.equal(await page.locator('.snapshot-surface').getAttribute('data-local-selected-market'),'SHIDO_USDT');
+  assert.equal(await page.locator('.snapshot-surface').getAttribute('data-local-market-data-unavailable'),'true');
+  assert.equal((await page.locator('[class*="__bigName"] h1').first().textContent())?.trim(),'SHIDO/USDT');
+  await arrow.press('Enter');
+  await region.getByRole('button',{name:'BTC'}).click();
+  assert.equal((await page.locator('[class*="__bigName"] h1').first().textContent())?.trim(),'BTC/USDT');
+  assert.equal(await page.locator('.snapshot-surface').getAttribute('data-local-market-data-unavailable'),'false');
 });
