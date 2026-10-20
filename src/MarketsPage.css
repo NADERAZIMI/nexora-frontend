@@ -95,3 +95,8 @@ html[data-nx-theme="light"] .markets-period-picker button.active{background:var(
 .markets-table th:first-child,.markets-table td:first-child{text-align:left;min-width:155px}
 .markets-table th:last-child,.markets-table td:last-child{min-width:75px}
 .markets-table-scroll{width:100%;overflow-x:auto}
+
+/* Popular asset filter: text-only and horizontally scrollable; NEXORA is last. */
+.markets-quote-tabs{gap:19px;overflow-x:auto;scrollbar-width:thin;max-width:100%;padding-bottom:2px}
+.markets-quote-tabs button{flex:0 0 auto;white-space:nowrap}
+.markets-filterbar{max-width:100%;min-width:0}
