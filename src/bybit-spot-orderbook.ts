@@ -5,35 +5,58 @@ const validLevels=(input:unknown):Level[]=>Array.isArray(input)?input.filter((x)
 export function attachBybitSpotOrderbook(root:HTMLElement):()=>void{
  const book=root.querySelector<HTMLElement>('[class*="__orderbookDealsWrapper"]');
  if(!book)return ()=>{};
- const panel=document.createElement('div');panel.className='nexora-bybit-book-live';
- const status=document.createElement('div');status.className='nexora-bybit-book-status';status.setAttribute('role','status');
- const layout=document.createElement('div');layout.className='nexora-bybit-book-layout';
- const asks=document.createElement('div'),bids=document.createElement('div');
- asks.className='nexora-bybit-book-side asks';bids.className='nexora-bybit-book-side bids';
- layout.append(asks,bids);panel.append(status,layout);book.append(panel);
+ const asksHost=book.querySelector<HTMLElement>('[class*="__asksWrapper"]');
+ const bidsHost=book.querySelector<HTMLElement>('[class*="__bidsWrapper"]');
+ const center=book.querySelector<HTMLElement>('[class*="__newPrice"]');
+ const centerPrice=center?.querySelector<HTMLElement>('[class*="__bigPrice"] [class*="__priceEllipsis"] > div');
+ const fiat=center?.querySelector<HTMLElement>('[class*="__fiatPrice"] [dir="ltr"] > [dir="ltr"]');
+ if(!asksHost||!bidsHost)return ()=>{};
+ const asksRows=Array.from(asksHost.querySelectorAll<HTMLElement>('[class*="__tableRow"]'));
+ const bidsRows=Array.from(bidsHost.querySelectorAll<HTMLElement>('[class*="__tableRow"]'));
+ const status=document.createElement('span');status.className='nexora-bybit-native-status';
+ status.setAttribute('role','status');status.textContent='Connecting to Bybit…';
+ book.querySelector<HTMLElement>('[class*="__controller"]')?.append(status);
+ const originalPrice=centerPrice?.textContent??'';
+ const originalFiat=fiat?.textContent??'';
  let symbol='BTCUSDT',ws:WebSocket|null=null,disposed=false,retry:number|undefined,ping:number|undefined,renderTimer:number|undefined,attempt=0;
  let snapshot=false,lastSeq=-1,lastUpdate=-1,lastFrame=0;
  const bidMap=new Map<string,string>(),askMap=new Map<string,string>();
- const reset=()=>{bidMap.clear();askMap.clear();snapshot=false;lastSeq=-1;lastUpdate=-1;asks.replaceChildren();bids.replaceChildren();status.textContent='Connecting to Bybit Spot order book…';panel.dataset.state='connecting'};
+ const reset=()=>{
+  bidMap.clear();askMap.clear();snapshot=false;lastSeq=-1;lastUpdate=-1;
+  for(const row of [...asksRows,...bidsRows])row.style.visibility='hidden';
+  if(centerPrice)centerPrice.textContent='—';if(fiat)fiat.textContent='—';
+  status.textContent='Connecting to Bybit…';book.dataset.nexoraDepthState='connecting';
+ };
  const update=(map:Map<string,string>,levels:Level[])=>{for(const [p,q] of levels){if(Number(q)===0)map.delete(p);else map.set(p,q)}};
+ const format=(v:string)=>Number(v).toLocaleString('en-US',{maximumFractionDigits:8});
  const draw=()=>{
   if(!snapshot)return;
-  const renderSide=(host:HTMLElement,map:Map<string,string>,descending:boolean)=>{
-   const rows=[...map.entries()].sort((a,b)=>descending?Number(b[0])-Number(a[0]):Number(a[0])-Number(b[0])).slice(0,12);
-   const fragment=document.createDocumentFragment();let cumulative=0;
-   for(const [p,q] of rows){
-    cumulative+=Number(p)*Number(q);
-    const row=document.createElement('div');row.className='nexora-bybit-depth-row';
-    const price=document.createElement('span');price.className='price';price.textContent=p;
-    const qty=document.createElement('span');qty.textContent=q;
-    const total=document.createElement('span');total.textContent=new Intl.NumberFormat('en-US',{maximumFractionDigits:2}).format(cumulative);
-    row.append(price,qty,total);fragment.append(row);
-   }
-   host.replaceChildren(fragment);
+  const renderSide=(rows:HTMLElement[],map:Map<string,string>,descending:boolean)=>{
+   const levels=[...map.entries()].sort((a,b)=>descending?Number(b[0])-Number(a[0]):Number(a[0])-Number(b[0])).slice(0,rows.length);
+   let cumulative=0;
+   rows.forEach((row,i)=>{
+    const level=levels[i];row.style.visibility=level?'visible':'hidden';
+    if(!level)return;
+    const [p,q]=level;cumulative+=Number(p)*Number(q);
+    const priceEl=row.querySelector<HTMLElement>('[class*="__orderbookItem"] > [class*="__price"]');
+    const qtyEl=row.querySelector<HTMLElement>('[class*="__orderbookItem"] > [class*="__vol"] span');
+    const sumEl=row.querySelector<HTMLElement>('[class*="__orderbookItem"] > [class*="__amount"] span');
+    if(priceEl)priceEl.textContent=format(p);
+    if(qtyEl)qtyEl.textContent=format(q);
+    if(sumEl)sumEl.textContent=cumulative.toLocaleString('en-US',{maximumFractionDigits:2});
+    const bar=row.querySelector<HTMLElement>('[class*="__bar"]');
+    if(bar)bar.style.transform='scaleX('+Math.min(1,Number(q)/Math.max(1,...levels.map(x=>Number(x[1]))))+')';
+   });
   };
-  renderSide(asks,askMap,false);renderSide(bids,bidMap,true);
-  status.textContent='NEXORA · Bybit Spot · '+symbol;
-  panel.dataset.state='live';
+  renderSide(asksRows,askMap,false);renderSide(bidsRows,bidMap,true);
+  const bestBid=Math.max(0,...bidMap.keys().map(Number));
+  const bestAsk=Math.min(Infinity,...askMap.keys().map(Number));
+  const mid=bestBid>0&&Number.isFinite(bestAsk)?(bestBid+bestAsk)/2:bestBid||bestAsk;
+  if(Number.isFinite(mid)&&mid>0){
+   if(centerPrice)centerPrice.textContent=mid.toLocaleString('en-US',{maximumFractionDigits:8});
+   if(fiat)fiat.textContent=mid.toLocaleString('en-US',{maximumFractionDigits:8});
+  }
+  status.textContent='Bybit Spot';book.dataset.nexoraDepthState='live';
  };
  const scheduleRender=()=>{if(renderTimer!==undefined)return;renderTimer=window.setTimeout(()=>{renderTimer=undefined;draw()},90)};
  const connect=()=>{
@@ -81,10 +104,8 @@ export function attachBybitSpotOrderbook(root:HTMLElement):()=>void{
   if(!/^[A-Z0-9]{3,30}$/.test(next)||next===symbol)return;
   symbol=next;connect();
  };
- const onMode=()=>{panel.dataset.mode=book.dataset.localOrderbookMode||'combined'};
- const observer=new MutationObserver(onMode);observer.observe(book,{attributes:true,attributeFilter:['data-local-orderbook-mode']});onMode();
  root.addEventListener('nexora:market-selected',onMarket);
  connect();
  const watchdog=window.setInterval(()=>{if(snapshot&&lastFrame&&Date.now()-lastFrame>30000)connect()},5000);
- return ()=>{disposed=true;root.removeEventListener('nexora:market-selected',onMarket);observer.disconnect();clearInterval(watchdog);if(retry!==undefined)clearTimeout(retry);if(ping!==undefined)clearInterval(ping);if(renderTimer!==undefined)clearTimeout(renderTimer);if(ws){ws.onclose=null;ws.close()}panel.remove()};
+ return ()=>{disposed=true;root.removeEventListener('nexora:market-selected',onMarket);clearInterval(watchdog);if(retry!==undefined)clearTimeout(retry);if(ping!==undefined)clearInterval(ping);if(renderTimer!==undefined)clearTimeout(renderTimer);if(ws){ws.onclose=null;ws.close()}status.remove();if(centerPrice)centerPrice.textContent=originalPrice;if(fiat)fiat.textContent=originalFiat;for(const row of [...asksRows,...bidsRows])row.style.visibility=''};
 }
