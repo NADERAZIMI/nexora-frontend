@@ -5,6 +5,7 @@ import { attachSpotLocalControls } from './spot-local-controls';
 import { attachOrderBookDisplay } from './orderbook-display';
 import { attachCapturedMarketPreview } from './captured-market-preview';
 import { attachReadOnlyMarketFeed } from './live-market-feed';
+import { attachSpotTokenInfo } from './spot-token-info';
 import './reference.css';
 import './palette.css';
 import './prototype.css';
@@ -28,6 +29,7 @@ const SnapshotSurface = memo(function SnapshotSurface({ onNotice }: { onNotice: 
     const disposeLocalControls = attachSpotLocalControls(root);
     const disposeOrderBookDisplay = attachOrderBookDisplay(root);
     const disposeReadOnlyMarketFeed = attachReadOnlyMarketFeed(root);
+    const disposeTokenInfo = attachSpotTokenInfo(root);
     const disposeCapturedMarketPreview = attachCapturedMarketPreview(root);
     root.querySelector('input.ant-input-sm')?.setAttribute('aria-label', 'Search markets (local snapshot)');
     const click = (event: MouseEvent) => {
@@ -56,7 +58,7 @@ const SnapshotSurface = memo(function SnapshotSurface({ onNotice }: { onNotice: 
     };
     root.addEventListener('click', click);
     root.addEventListener('keydown', key);
-    return () => { disposeCapturedMarketPreview(); disposeReadOnlyMarketFeed(); disposeOrderBookDisplay(); disposeLocalControls(); root.removeEventListener('click', click); root.removeEventListener('keydown', key); };
+    return () => { disposeCapturedMarketPreview(); disposeTokenInfo(); disposeReadOnlyMarketFeed(); disposeOrderBookDisplay(); disposeLocalControls(); root.removeEventListener('click', click); root.removeEventListener('keydown', key); };
   }, [onNotice]);
   return <div className="snapshot-surface" ref={surface} dangerouslySetInnerHTML={{ __html: snapshot }} />;
 });
