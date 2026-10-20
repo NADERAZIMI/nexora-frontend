@@ -21,7 +21,7 @@ function Header({page,setPage,theme,toggleTheme}:{page:Page;setPage:(page:Page)=
 }
 const display='—';
 const formatLivePrice=(value:number)=>value.toLocaleString('en-US',{maximumFractionDigits:12});
-function MarketBar({pair,onSelect,pairs,source,tickers,pricesReady,book}:{pair:SpotPair;onSelect:(pair:SpotPair)=>void;pairs:SpotPair[];source:'loading'|'live'|'fallback';tickers:Record<string,MarketTicker>;pricesReady:boolean;book:BookState;livePrice:number|null}){
+function MarketBar({pair,onSelect,pairs,source,tickers,pricesReady,book,livePrice}:{pair:SpotPair;onSelect:(pair:SpotPair)=>void;pairs:SpotPair[];source:'loading'|'live'|'fallback';tickers:Record<string,MarketTicker>;pricesReady:boolean;book:BookState;livePrice:number|null}){
  const [open,setOpen]=useState(false),[search,setSearch]=useState('');
  const [category,setCategory]=useState<'Favorites'|'Crypto'|'TradFi'>('Crypto');
  const [quote,setQuote]=useState('All');
