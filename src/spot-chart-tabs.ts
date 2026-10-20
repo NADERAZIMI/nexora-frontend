@@ -28,14 +28,11 @@ export function attachSpotChartTabs(root:HTMLElement):()=>void{
   const title='<div class="nexora-analytics-title">'+escapeText(base+'/'+quote)+' · NEXORA Spot <span>'+(lastUpdate?'Live public market data':'Waiting for live market data')+'</span></div>';
   const entries=[...candles.values()].sort((a,b)=>(a.start||0)-(b.start||0));
   const closes=entries.map(c=>numeric(c.close)).filter((x):x is number=>x!==null);
-  const line=active===0?(closes.length>=2?closes:latest):[];
-  if(active===0){
-   if(line.length<2){view.innerHTML=title+'<div class="nexora-analytics-empty">Waiting for live prices to build the chart…</div>';return}
-   const width=900,height=320,min=Math.min(...line),max=Math.max(...line),span=max-min||1;
-   const pts=line.map((v,i)=>(20+i*860/Math.max(1,line.length-1)).toFixed(1)+','+(height-20-(v-min)/span*(height-45)).toFixed(1)).join(' ');
-   const label=closes.length>=2?'Live 1-minute candle closes':'Live price updates';
-   view.innerHTML=title+'<div class="nexora-live-chart-caption">'+label+' · '+fmt(String(line[line.length-1]),8)+' '+escapeText(quote)+'</div><svg class="nexora-live-chart" viewBox="0 0 900 320" preserveAspectRatio="none" role="img" aria-label="Live price history"><polyline points="'+pts+'" fill="none" stroke="#5865F2" stroke-width="2" vector-effect="non-scaling-stroke"/></svg><div class="nexora-live-chart-foot">Observed prices since this tab connected · Not a historical trading chart</div>';
-  }else if(active===1){
+  // The approved interactive candlestick chart belongs to the existing chart engine.
+  // Keep this analytics overlay completely out of its way when Chart is selected.
+  view.hidden=active===0;
+  if(active===0){view.replaceChildren();return}
+  if(active===1){
    const change=numeric(ticker?.price24hPcnt);
    view.innerHTML=title+'<div class="nexora-analytics-stats">'+[
     stat('Last price',fmt(ticker?.lastPrice,8)+' '+quote),stat('24h change',change===null?'—':(change*100).toFixed(2)+'%'),
