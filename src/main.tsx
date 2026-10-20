@@ -15,6 +15,16 @@ const SnapshotSurface = memo(function SnapshotSurface({ onNotice }: { onNotice: 
   const surface = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const root = surface.current!;
+    // Rebrand visible text from archived reference without changing API routes, links, or asset URLs.
+    const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
+    let textNode:Node|null=walker.nextNode();
+    while(textNode){
+      const parent=textNode.parentElement;
+      if(parent&&!parent.closest('script,style,noscript')&&textNode.textContent?.includes('MEXC')){
+        textNode.textContent=textNode.textContent.replaceAll('MEXC','NEXORA');
+      }
+      textNode=walker.nextNode();
+    }
     const disposeLocalControls = attachSpotLocalControls(root);
     const disposeOrderBookDisplay = attachOrderBookDisplay(root);
     const disposeReadOnlyMarketFeed = attachReadOnlyMarketFeed(root);
