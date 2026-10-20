@@ -113,6 +113,8 @@ export function attachSpotTokenInfo(root:HTMLElement):()=>void{
    opened=true;
    chart.dataset.nexoraInfoOpen='true';
    host.hidden=false;
+   // Close a floating market picker before switching chart tabs.
+   root.dispatchEvent(new Event('nexora:close-market-picker'));
    markTabs(info);
    void load();
  };
