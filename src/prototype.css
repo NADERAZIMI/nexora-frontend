@@ -350,3 +350,16 @@ font-size:13px;cursor:pointer}
 .nexora-bybit-symbol-picker input{width:100%;height:38px;border:1px solid #3b4252;background:#0d0d0d;color:#fff;padding:7px 10px}
 .nexora-bybit-symbol-picker button{border:0;background:#5865f2;color:white;padding:10px;cursor:pointer}
 .nexora-bybit-symbol-picker small{color:#929aaa}
+
+/* Bybit V5 public Spot depth: isolate stale reference book underneath. */
+.nexora-bybit-book-live{position:absolute;inset:43px 0 0;z-index:2147482600;background:#0d0d0d;display:flex;flex-direction:column;min-height:0;padding:6px 9px;box-sizing:border-box;color:#dce1ea;font:12px/1.5 Arial,sans-serif}
+.nexora-bybit-book-status{min-height:25px;padding:4px 3px;color:#929aaa;font-size:11px;flex:none}
+.nexora-bybit-book-layout{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.nexora-bybit-book-side{flex:1;min-height:0;overflow:hidden}
+.nexora-bybit-depth-row{display:grid;grid-template-columns:37% 28% 35%;gap:0;padding:3px 3px;font-variant-numeric:tabular-nums;font-size:11px;line-height:1.6}
+.nexora-bybit-depth-row>span:nth-child(n+2){text-align:right}
+.nexora-bybit-book-side.asks .price{color:#f05a70}
+.nexora-bybit-book-side.bids .price{color:#16b89a}
+.nexora-bybit-book-live[data-mode=buy] .asks,.nexora-bybit-book-live[data-mode=sell] .bids{display:none}
+.nexora-bybit-book-live[data-mode=buy] .bids,.nexora-bybit-book-live[data-mode=sell] .asks{flex:1}
+.nexora-bybit-book-live[data-state=connecting] .nexora-bybit-book-layout{opacity:.25}
