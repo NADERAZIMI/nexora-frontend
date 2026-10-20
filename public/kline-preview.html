@@ -20,6 +20,12 @@ input{width:155px;text-transform:uppercase}button{cursor:pointer}button:hover{bo
 .separator{height:24px;border-left:1px solid #363b45;margin:0 7px}.chart-mode{display:flex;gap:0;margin-left:auto;background:#20242d;padding:2px;border-radius:4px}
 .chart-mode button.active{background:#343c4e}.chart-toolbar button:hover{background:#252b36}
 @media(max-width:780px){.chart-toolbar{overflow-x:auto;flex-wrap:nowrap}.chart-toolbar button{white-space:nowrap}.chart-mode{margin-left:15px}}
+body.embedded header,body.embedded .market-row,body.embedded .container>.info{display:none!important}
+body.embedded .container{padding:0;margin:0;height:100vh;display:flex;flex-direction:column}
+body.embedded .chart-toolbar{margin:0;border-left:0;border-right:0;border-top:0;border-radius:0;flex:0 0 auto}
+body.embedded #chart{flex:1;min-height:180px;height:auto;border:0;width:100%}
+body.embedded #status{margin:0;padding:3px 10px;min-height:17px;font-size:10px}
+body.embedded{overflow:hidden}
 </style></head><body>
 <header><strong class="brand">NEXORA</strong><strong>Professional Spot Chart · Preview</strong><span>·</span><span>Read-only Spot data</span><a href="/" style="margin-left:auto">Back to existing Spot</a></header>
 <main class="container">
@@ -40,6 +46,8 @@ input{width:155px;text-transform:uppercase}button{cursor:pointer}button:hover{bo
 (()=>{
  const el=id=>document.getElementById(id);
  const status=(message,error=false)=>{el('status').textContent=message;el('status').classList.toggle('error',error)};
+ const embedded = new URLSearchParams(location.search).get('embedded') === '1';
+ if(embedded)document.body.classList.add('embedded');
  const lib=window.klinecharts;
  if(!lib?.init){status('KLineChart library unavailable. Check CDN access.',true);return}
  let chart;
@@ -47,7 +55,10 @@ input{width:155px;text-transform:uppercase}button{cursor:pointer}button:hover{bo
  catch(error){status('Chart initialization failed: '+error.message,true);return}
  if(!chart){status('Chart initialization returned no instance.',true);return}
  const PERIODS={'1m':{span:1,type:'minute'},'5m':{span:5,type:'minute'},'15m':{span:15,type:'minute'},'30m':{span:30,type:'minute'},'60m':{span:1,type:'hour'},'4h':{span:4,type:'hour'},'1d':{span:1,type:'day'}};
- let symbol='BTCUSDT',period='15m',generation=0;
+ const params=new URLSearchParams(location.search);
+ const initialSymbol=(params.get('symbol')||'BTCUSDT').toUpperCase();
+ let symbol=/^[A-Z0-9]{3,30}$/.test(initialSymbol)?initialSymbol:'BTCUSDT',period='15m',generation=0;
+ el('symbol').value=symbol;
  const active=new Map(),ids={};
  const indicator=(key,name,options,paneId,stack)=>{
   try{
@@ -97,6 +108,12 @@ input{width:155px;text-transform:uppercase}button{cursor:pointer}button:hover{bo
   }});
   configureIndicators();
  }catch(error){status('KLineChart setup failed: '+error.message,true)}
+ window.addEventListener('message',event=>{
+  if(event.origin!==location.origin||event.source!==window.parent||!event.data||event.data.type!=='nexora:chart-market')return;
+  const next=String(event.data.symbol||'').toUpperCase();
+  if(!/^[A-Z0-9]{3,30}$/.test(next)||next===symbol)return;
+  el('symbol').value=next;loadMarket();
+ });
  el('load').addEventListener('click',loadMarket);
  el('symbol').addEventListener('keydown',e=>{if(e.key==='Enter')loadMarket()});
  for(const button of el('period-buttons').querySelectorAll('button[data-period]')){
