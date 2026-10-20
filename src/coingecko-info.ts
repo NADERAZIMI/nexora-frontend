@@ -18,7 +18,7 @@ let listLoading:Promise<Map<string,string>>|null=null;
 async function uniqueCoinIds():Promise<Map<string,string>>{
  if(listCache&&Date.now()-listCache.at<24*3600000)return listCache.unique;
  if(!listLoading)listLoading=(async()=>{
-  const response=await fetch('/coingecko-public/api/v3/coins/list?include_platform=false',{credentials:'omit'});
+  const response=await fetch('/token-assets/coins-list.json',{credentials:'omit'});
   if(!response.ok)throw new Error('CoinGecko coin list HTTP '+response.status);
   const data=await response.json() as unknown;
   if(!Array.isArray(data))throw new Error('Invalid CoinGecko coin list');
@@ -53,7 +53,8 @@ export async function getCoinProfile(base:string,signal:AbortSignal):Promise<Coi
  if(!id)return null;
  const hit=cache.get(id);if(hit&&Date.now()-hit.at<3600000)return hit.value;
  // The NEXORA reverse proxy attaches the configured Demo API key.
- const response=await fetch('/coingecko-public/api/v3/coins/'+encodeURIComponent(id)+'?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false&sparkline=false',{signal,headers:{Accept:'application/json'},credentials:'omit'});
+ const response=await fetch('/token-assets/profiles/'+encodeURIComponent(id)+'.json',{signal,credentials:'omit'});
+ if(response.status===404)return null;
  if(!response.ok)throw new Error('CoinGecko metadata unavailable (HTTP '+response.status+')');
  const d=await response.json() as Payload;
  if(str(d.symbol).toUpperCase()!==symbol)throw new Error('CoinGecko symbol mismatch');
@@ -74,44 +75,20 @@ export async function getCoinProfile(base:string,signal:AbortSignal):Promise<Coi
  cache.set(id,{at:Date.now(),value:profile});return profile;
 }
 
-/** CoinGecko market image batches; only unique symbols are used to avoid wrong project icons. */
-let imageCache:{at:number;images:Map<string,string>}|null=null;
+/** Immutable server-side token icon index. Refreshed only by explicit catalog sync. */
 let imageTask:Promise<Map<string,string>>|null=null;
-export function getCoinGeckoMarketImages(signal?:AbortSignal):Promise<Map<string,string>>{
- if(imageCache&&Date.now()-imageCache.at<3600000)return Promise.resolve(imageCache.images);
- if(imageTask)return imageTask;
- imageTask=(async()=>{
-  // Walk farther than the first 500 ranked coins. Avoid a request burst on Demo.
-  const images=new Map<string,string>(),ambiguous=new Set<string>();
-  let completed=0;
-  for(let page=1;page<=12;page++){
-   if(signal?.aborted)break;
-   try{
-    const response=await fetch('/coingecko-public/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page='+page+'&sparkline=false',{signal,credentials:'omit',headers:{Accept:'application/json'}});
-    if(!response.ok){
-     // Respect the provider quota: retain previously collected pages.
-     if(response.status===429)break;
-     if(page===1)throw new Error('CoinGecko market icons HTTP '+response.status);
-     break;
-    }
-    const data=await response.json() as unknown;
-    if(!Array.isArray(data)||data.length===0)break;
-    completed++;
-    for(const item of data as {symbol?:unknown;image?:unknown}[]){
-     if(typeof item.symbol!=='string'||typeof item.image!=='string')continue;
-     const symbol=item.symbol.toUpperCase(),src=url(item.image);
-     if(!src||ambiguous.has(symbol))continue;
-     if(images.has(symbol)){images.delete(symbol);ambiguous.add(symbol);}
-     else images.set(symbol,src);
-    }
-    if(data.length<250)break;
-   }catch(error){
-    if(page===1)throw error;
-    break;
-   }
+let imageCache:Map<string,string>|null=null;
+export function getCoinGeckoMarketImages(_signal?:AbortSignal):Promise<Map<string,string>>{
+ if(imageCache)return Promise.resolve(imageCache);
+ if(!imageTask)imageTask=fetch('/token-assets/icons.json',{credentials:'omit'}).then(async response=>{
+  if(!response.ok)throw new Error('Local token icon catalog HTTP '+response.status);
+  const raw=await response.json() as unknown;
+  if(!raw||typeof raw!=='object'||Array.isArray(raw))throw new Error('Invalid local icon catalog');
+  const images=new Map<string,string>();
+  for(const [symbol,value] of Object.entries(raw)){
+   if(typeof value==='string'&&/^\/token-assets\/icons\/[a-z0-9-]+\.(png|webp|svg)$/.test(value))images.set(symbol,value);
   }
-  if(completed===0)throw new Error('Market icon feeds unavailable');
-  imageCache={at:Date.now(),images};return images;
- })().finally(()=>{imageTask=null});
+  imageCache=images;return images;
+ }).finally(()=>{imageTask=null});
  return imageTask;
 }
