@@ -182,3 +182,17 @@ section[data-local-hide-other-pairs] .ant-checkbox-v2-checked .ant-checkbox-v2-i
   background:#101014!important;
 }
 [class*="__chartWrapper"][data-nexora-info-open="true"] .nexora-live-chart{visibility:hidden!important;pointer-events:none!important}
+
+/* Archived Chart tab underline must follow the active Info/Chart selection. */
+[class*="__chartWrapper"][data-nexora-info-open="true"] #rc-tabs-0-tab-chart{
+  border-bottom-color:transparent!important;
+}
+[class*="__chartWrapper"][data-nexora-info-open="true"] #rc-tabs-0-tab-information{
+  color:#F4F6FA!important;
+  border-bottom:2px solid #F4F6FA!important;
+}
+[class*="__chartWrapper"][data-nexora-info-open="true"] .ant-tabs-v2-ink-bar,
+[class*="__chartWrapper"][data-nexora-info-open="true"] .ant-tabs-v2-motion-ink-overlay{
+  visibility:hidden!important;
+}
+[class*="__symbolAvatarWrapper"] img[hidden]{display:none!important}
