@@ -6,7 +6,7 @@ import { spawn } from 'node:child_process';
 import { once } from 'node:events';
 import { chromium } from 'playwright';
 
-// Characterization tests: preserve current behavior, including documented gaps.
+// Regression contracts: supported local controls plus documented remaining gaps.
 const root = new URL('../', import.meta.url);
 const baseline = JSON.parse(await readFile(new URL('baseline.json', import.meta.url), 'utf8'));
 const selectors = {
@@ -43,8 +43,8 @@ after(async () => {
   if (server && server.exitCode === null) { const exited = once(server, 'exit'); server.kill(); await exited; }
 });
 
-async function pageFor(t) {
-  const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, serviceWorkers: 'block' });
+async function pageFor(t, options = {}) {
+  const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, serviceWorkers: 'block', ...options });
   const errors = [], external = [];
   // This suite must never exercise the original venue's remote destinations.
   await context.route('**/*', route => {
@@ -67,6 +67,9 @@ async function percent(page, value) {
   assert.equal(await page.locator(selectors.slider).evaluate(el => el.style.left), `${value}%`);
   assert.equal(await page.locator('.ant-slider-v2-track').evaluate(el => el.style.width), `${value}%`);
   assert.equal(await page.locator(selectors.total).inputValue(), '0');
+  for (const [base, active] of [['ant-slider-v2-mark-text','ant-slider-v2-mark-text-active'],['ant-slider-v2-dot','ant-slider-v2-dot-active']]) {
+    assert.deepEqual(await page.locator(`.${base}`).evaluateAll((els, activeClass) => els.map(el => el.classList.contains(activeClass)), active), [0,25,50,75,100].map(mark => mark <= value));
+  }
 }
 
 test('frozen application, archived DOM, CSS and official assets remain byte-identical', async () => {
@@ -115,28 +118,97 @@ test('slider midpoint click and keyboard clamp, resetting only Total to zero', a
   }
   assert.equal(await page.locator(selectors.price).inputValue(), '12.34');
 });
-test('known slider gap: movement alone does not update percentage or captured mark classes', async t => {
+test('continuous mouse drag captures outside rail, clamps, releases, and preserves Price', async t => {
   const page = await pageFor(t), slider = page.locator(selectors.slider), rail = page.locator(selectors.rail);
-  await slider.focus(); await slider.press('End');
-  const classes = () => page.locator('.ant-slider-v2-mark-text,.ant-slider-v2-dot').evaluateAll(els => els.map(el => el.className));
-  const before = await classes(), box = await rail.boundingBox(); assert.ok(box);
-  await page.mouse.move(box.x + box.width, box.y + box.height / 2); await page.mouse.down();
-  await page.mouse.move(box.x + box.width / 4, box.y + box.height / 2, { steps: 8 });
-  assert.equal(await slider.getAttribute('aria-valuenow'), '100');
-  await page.mouse.up(); assert.deepEqual(await classes(), before);
-  // Release behavior depends on synthesized click hit target; no continuous drag contract is claimed.
+  await page.locator(selectors.price).fill('78.125');
+  const box = await rail.boundingBox(); assert.ok(box);
+  await page.mouse.move(box.x, box.y + box.height / 2); await page.mouse.down();
+  assert.equal(await slider.evaluate(el => el === document.activeElement), true);
+  for (const value of [25,50,75,100,50,0]) {
+    await page.mouse.move(box.x + box.width * value / 100, box.y + box.height / 2, { steps: 4 });
+    await percent(page, value); // Verified while pointer is still down.
+  }
+  await page.mouse.move(box.x - 30, box.y - 50); await percent(page, 0);
+  await page.mouse.move(box.x + box.width + 5, box.y - 50); await percent(page, 100);
+  await page.mouse.up();
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2); await percent(page, 100);
+  await page.mouse.click(box.x + box.width / 4, box.y + box.height / 2); await percent(page, 25);
+  assert.equal(await page.locator(selectors.price).inputValue(), '78.125');
 });
-test('checkbox native state toggles by click and Space, custom checkmark stays hidden', async t => {
+test('pointer cancellation and lost capture stop updates and allow a subsequent drag', async t => {
+  const page = await pageFor(t), rail = page.locator(selectors.rail), box = await rail.boundingBox(); assert.ok(box);
+  await rail.evaluate(el => el.addEventListener('pointerdown', event => { el.dataset.testPointer = String(event.pointerId); }));
+  for (const reason of ['pointercancel','lostpointercapture']) {
+    await page.mouse.move(box.x + box.width / 4, box.y + box.height / 2); await page.mouse.down();
+    await rail.evaluate(el => {
+      const pointerId = Number(el.dataset.testPointer) + 1;
+      for (const type of ['pointermove','pointercancel','lostpointercapture']) el.dispatchEvent(new PointerEvent(type, { pointerId, bubbles: true, clientX: 0 }));
+    });
+    await percent(page, 25);
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2); await percent(page, 50);
+    await rail.evaluate((el, reason) => {
+      const pointerId = Number(el.dataset.testPointer);
+      if (reason === 'pointercancel') el.dispatchEvent(new PointerEvent('pointercancel', { pointerId, bubbles: true, clientX: 0 }));
+      else el.releasePointerCapture(pointerId);
+    }, reason);
+    // Move outside before releasing, preventing an unrelated synthesized click.
+    await page.mouse.move(box.x - 40, box.y - 50); await percent(page, 50);
+    await page.mouse.up();
+    assert.equal(await rail.evaluate(el => el.hasPointerCapture(Number(el.dataset.testPointer))), false);
+  }
+  await page.mouse.click(box.x + box.width * .75, box.y + box.height / 2); await percent(page, 75);
+});
+test('touch dragging updates continuously, cancellation retains value and next touch can finish', async t => {
+  const page = await pageFor(t, { hasTouch: true }), rail = page.locator(selectors.rail), box = await rail.boundingBox(); assert.ok(box);
+  const session = await page.context().newCDPSession(page);
+  const touch = (type, value) => session.send('Input.dispatchTouchEvent', { type, touchPoints: value === null ? [] : [{ x: box.x + box.width * value / 100, y: box.y + box.height / 2, id: 1 }] });
+  await page.locator(selectors.price).fill('9.875');
+  assert.equal(await rail.evaluate(el => getComputedStyle(el).touchAction), 'none');
+  await touch('touchStart', 0); await touch('touchMove', 50); await percent(page, 50);
+  await touch('touchMove', 75); await percent(page, 75);
+  await touch('touchCancel', null); await percent(page, 75);
+  await touch('touchStart', 25); await touch('touchMove', 100); await percent(page, 100);
+  await touch('touchEnd', null); await percent(page, 100);
+  assert.equal(await page.locator(selectors.price).inputValue(), '9.875');
+  await session.detach();
+});
+test('checkbox click, label and Space synchronize visuals and scoped local state without adding orders', async t => {
   const page = await pageFor(t), checkbox = page.locator(selectors.checkbox);
+  const empty = page.locator('[class*="__L5K7Da__availableWrapper"]');
+  const emptyContent = await empty.innerHTML();
+  const scope = page.locator('section[data-local-hide-other-pairs]');
   const visual = () => checkbox.evaluate(el => {
     const wrapper = el.closest('.ant-checkbox-v2-wrapper'), inner = wrapper.querySelector('.ant-checkbox-v2-inner');
     const css = getComputedStyle(inner, '::after');
     return { wrapper: wrapper.className, container: el.parentElement.className, opacity: css.opacity, transform: css.transform };
   });
   assert.equal(await checkbox.isChecked(), false); const before = await visual();
-  await checkbox.click(); assert.equal(await checkbox.isChecked(), true); assert.deepEqual(await visual(), before);
   assert.equal(before.opacity, '0'); assert.match(before.transform, /^matrix\(0, 0, 0, 0,/);
+  assert.equal(await scope.count(), 1); assert.equal(await scope.getAttribute('data-local-hide-other-pairs'), 'false');
+  await checkbox.click(); assert.equal(await checkbox.isChecked(), true);
+  await page.waitForFunction(() => getComputedStyle(document.querySelector('.ant-checkbox-v2-inner'),'::after').opacity === '1');
+  const checked = await visual(); assert.ok(checked.wrapper.includes('ant-checkbox-v2-wrapper-checked')); assert.ok(checked.container.includes('ant-checkbox-v2-checked'));
+  assert.doesNotMatch(checked.transform, /^matrix\(0, 0, 0, 0,/);
+  assert.equal(await scope.getAttribute('data-local-hide-other-pairs'), 'true');
+  await page.locator('[data-testid="deposit-button"]').click(); await notice(page);
+  assert.equal(await checkbox.isChecked(), true); assert.equal(await scope.getAttribute('data-local-hide-other-pairs'), 'true');
+  await page.getByRole('button', { name: 'Dismiss notice' }).click();
   await checkbox.focus(); await checkbox.press('Space'); assert.equal(await checkbox.isChecked(), false);
+  await page.waitForFunction(() => getComputedStyle(document.querySelector('.ant-checkbox-v2-inner'),'::after').opacity === '0');
+  assert.equal(await scope.getAttribute('data-local-hide-other-pairs'), 'false');
+  await page.locator('.ant-checkbox-v2-wrapper').click(); assert.equal(await checkbox.isChecked(), true);
+  assert.equal(await scope.getAttribute('data-local-hide-other-pairs'), 'true');
+  assert.equal(await empty.innerHTML(), emptyContent); assert.equal(await empty.isVisible(), true);
+});
+test('local controls preserve surrounding geometry and checkbox preserves manually typed values', async t => {
+  const page = await pageFor(t);
+  const geometry = () => page.locator('[class*="__chartWrapper"],[class*="__orderbookDealsWrapper"],[class*="__actionWrapper"],section[data-local-hide-other-pairs],input[type="number"],.ant-slider-v2').evaluateAll(els => els.map(el => { const r = el.getBoundingClientRect(); const c = getComputedStyle(el); return { x:r.x,y:r.y,width:r.width,height:r.height,font:c.font,padding:c.padding }; }));
+  const before = await geometry();
+  await page.locator(selectors.price).fill('3.125'); await page.locator(selectors.total).fill('6.25');
+  await page.locator(selectors.checkbox).click();
+  assert.equal(await page.locator(selectors.total).inputValue(), '6.25');
+  await page.locator(selectors.slider).focus(); await page.keyboard.press('End'); await percent(page, 100);
+  assert.equal(await page.locator(selectors.price).inputValue(), '3.125'); assert.deepEqual(await geometry(), before);
 });
 test('inactive tabs only emit missing-content notices; selected tabs remain selected', async t => {
   const page = await pageFor(t);

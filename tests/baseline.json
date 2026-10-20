@@ -17,11 +17,13 @@
     "public/reference-btc-volume-axis.png": "b32eb55409ffa3b99d4ed38b55f3ba0e266f1564d3d087d0f94d18911e8e9ae2",
     "public/reference-btc-volume.png": "78181749cee8a9a12d513c9e88cba1707c702d77d3a9bf8cad2ed1597ae04c5b",
     "src/fidelity.css": "2b1f0137bea24d3378c7301e2a50e5d936d2cd995391d16d334f25b2177fdcc2",
-    "src/main.tsx": "88f3b878a0cd515eec90391c1a15f38afb362ac946ef4788ff292f97db34c920",
+    "src/main.tsx": "e8df4c4a21a2e1b36b0e2ecd215d381e83de4d57bdf05ccd8a58a64d92000ea8",
     "src/palette.css": "1c3d95509331246188c74a55e792542040e4ed12a98721de6a0be355c498a775",
-    "src/prototype.css": "5df21b3c45e77e7db0ba3bab22476b792e20e2dc231d61b8decf1c03cb1251cc",
+    "src/prototype.css": "269bfcac288f56e34319d36870085dd55f521bb6162c571c08a342d53206b387",
     "src/reference.css": "aaa1e46672300d6c410465cd1a0f26d7b567939ac01a04bb3bcb226a5935fa76",
     "src/snapshot.html": "11181f22d37a7c00ca90d665e2e9cab429d0787087dd112fce2aa0f91aa8f8b9",
-    "src/vite-env.d.ts": "424faf9241dd699dda995b367ed36665732da1e6ec1f33b2fd40394488ecac92"
-  }
+    "src/vite-env.d.ts": "424faf9241dd699dda995b367ed36665732da1e6ec1f33b2fd40394488ecac92",
+    "src/spot-local-controls.ts": "3dc527b8bf2e430418f41c3c06964c8434e417411ea4d27e7874cf675211c9ad"
+  },
+  "phase02cReviewedFrom": "1acc95bdb3a45053d9117e6282b81f833ef268ad"
 }

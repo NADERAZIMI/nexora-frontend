@@ -2,3 +2,6 @@
 .prototype-notice{position:fixed;left:50%;bottom:48px;transform:translateX(-50%);z-index:10000;max-width:600px;padding:14px 40px 14px 18px;background:var(--bg-secondary);border:1px solid var(--color-primary);border-radius:6px;color:var(--text-primary);font:14px/1.5 Arial,sans-serif;box-shadow:0 4px 20px #0008}
 .prototype-notice button{position:absolute;right:12px;top:9px;border:0;background:transparent;color:var(--text-secondary);font-size:22px;cursor:pointer}
 [data-local-side=sell] [data-testid=spot-trade-orderBuyBtn]{background:var(--color-danger)}
+/* Existing checkbox geometry is retained; only its checked state is revealed. */
+section[data-local-hide-other-pairs] .ant-checkbox-v2-checked .ant-checkbox-v2-inner{background:var(--color-primary);border-color:var(--color-primary)}
+section[data-local-hide-other-pairs] .ant-checkbox-v2-checked .ant-checkbox-v2-inner:after{opacity:1;border-color:var(--text-primary);transform:rotate(45deg) scale(1) translate(-50%,-50%)}

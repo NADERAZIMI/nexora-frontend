@@ -1,6 +1,7 @@
 import { memo, useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import snapshot from './snapshot.html?raw';
+import { attachSpotLocalControls } from './spot-local-controls';
 import './reference.css';
 import './palette.css';
 import './prototype.css';
@@ -11,22 +12,10 @@ const SnapshotSurface = memo(function SnapshotSurface({ onNotice }: { onNotice: 
   const surface = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const root = surface.current!;
-    const slider = root.querySelector<HTMLElement>('[role="slider"]');
-    slider?.setAttribute('aria-label', 'Percentage of available local mock balance');
+    const disposeLocalControls = attachSpotLocalControls(root);
     root.querySelector('input.ant-input-sm')?.setAttribute('aria-label', 'Search markets (local snapshot)');
-    const setPercent = (value: number) => {
-      const percent = Math.min(100, Math.max(0, Math.round(value)));
-      slider!.style.left = `${percent}%`;
-      slider!.setAttribute('aria-valuenow', String(percent));
-      root.querySelector<HTMLElement>('.ant-slider-v2-track')!.style.width = `${percent}%`;
-      // The saved available balance is zero; no fictional funds are introduced.
-      const total = root.querySelector<HTMLInputElement>('[data-testid="spot-trade-buyTotal"]');
-      if (total) total.value = '0';
-    };
     const click = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
-      const rail = target.closest<HTMLElement>('.ant-slider-v2');
-      if (rail) { const rect = rail.getBoundingClientRect(); setPercent((event.clientX - rect.left) / rect.width * 100); return; }
       const tab = target.closest<HTMLElement>('[role="tab"]');
       if (tab) {
         event.preventDefault();
@@ -54,18 +43,13 @@ const SnapshotSurface = memo(function SnapshotSurface({ onNotice }: { onNotice: 
       }
     };
     const key = (event: KeyboardEvent) => {
-      if (event.target === slider && ['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
-        event.preventDefault();
-        const current = Number(slider?.getAttribute('aria-valuenow') || 0);
-        setPercent(event.key === 'Home' ? 0 : event.key === 'End' ? 100 : current + (event.key === 'ArrowRight' ? 1 : -1));
-      }
       if (event.key === 'Enter' && event.target instanceof HTMLInputElement && event.target.classList.contains('ant-input-sm')) {
         onNotice('Local mock data: only the saved BTC/USDT market is available.');
       }
     };
     root.addEventListener('click', click);
     root.addEventListener('keydown', key);
-    return () => { root.removeEventListener('click', click); root.removeEventListener('keydown', key); };
+    return () => { disposeLocalControls(); root.removeEventListener('click', click); root.removeEventListener('keydown', key); };
   }, [onNotice]);
   return <div className="snapshot-surface" ref={surface} dangerouslySetInnerHTML={{ __html: snapshot }} />;
 });
