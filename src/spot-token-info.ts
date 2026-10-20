@@ -28,7 +28,7 @@ export function attachSpotTokenInfo(root:HTMLElement):()=>void{
    host.replaceChildren();
    const top=document.createElement('div');top.className='nexora-token-info-heading';
    const title=document.createElement('h2');title.textContent=profile?.name||base;
-   const note=document.createElement('span');note.textContent=profile?'Project data: CoinGecko':'Market prices: MEXC';
+   const note=document.createElement('span');note.textContent=profile?'Project data: CoinGecko':'NEXORA Spot Info';
    top.append(title,note);host.append(top);
    const layout=document.createElement('div');layout.className='nexora-token-info-grid';
    const overview=document.createElement('div');const heading=document.createElement('h3');heading.textContent='Overview';overview.append(heading);
