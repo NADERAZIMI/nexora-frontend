@@ -103,3 +103,42 @@
 .market-item>span:last-child{color:#717b8d;font-size:10px}
 .market-noresults{text-align:center;color:#929AAA;padding:28px 6px}
 @media(max-width:750px){.market-dropdown{position:fixed;top:114px;left:12px;width:calc(100vw - 24px);max-height:70vh}.market-items{max-height:55vh}}
+
+/* NEXORA Spot picker: compact Bybit-style multi-column market table */
+.marketbar{overflow:visible}
+.market-dropdown{width:460px;max-width:calc(100vw - 20px);padding:0;background:#121318;border:1px solid #272930;border-radius:4px;box-shadow:0 18px 42px #000c;overflow:hidden}
+.market-search-line{display:flex;gap:8px;align-items:center;padding:13px 10px 10px}
+.market-search-line input{height:34px;flex:1;min-width:0;background:#222329;border:0;color:#F4F6FA;border-radius:4px;padding:0 11px;font-size:12px}
+.market-search-line>button{font-size:14px;padding:5px 8px}
+.market-main-tabs{display:flex;gap:15px;align-items:center;height:36px;border-bottom:1px solid #292b34;padding:0 10px}
+.market-main-tabs button{height:100%;position:relative;color:#898f9c;font-size:12px;font-weight:600}
+.market-main-tabs button.active{color:#F4F6FA}
+.market-main-tabs button.active:after{position:absolute;content:'';height:2px;background:#5865F2;bottom:0;left:0;right:0}
+.market-type-tabs{display:flex;align-items:center;gap:7px;height:43px;padding:0 10px;overflow-x:auto;scrollbar-width:none}
+.market-type-tabs button{padding:6px 10px;border-radius:17px;background:#1a1b20;color:#777e89;white-space:nowrap;font-size:11px}
+.market-type-tabs button.active{color:#a9b5ff;background:#24283c}
+.market-type-tabs button:disabled,.market-filter-tabs button:disabled{cursor:default;opacity:.65}
+.market-filter-tabs{height:34px;display:flex;align-items:center;gap:12px;padding:0 10px;overflow-x:auto;white-space:nowrap;scrollbar-width:none}
+.market-filter-tabs button{padding:0;font-size:11px}
+.market-filter-tabs .market-quote{font-weight:700;color:#F4F6FA}
+.market-filter-tabs button.active{color:#5865F2}
+.market-table-head{display:grid;grid-template-columns:minmax(0,1fr) 86px 70px 110px;align-items:center;height:34px;padding:0 12px 0 33px;gap:4px;border-bottom:1px solid #25262c}
+.market-table-head button{font-size:10px;text-align:right;padding:0;white-space:nowrap}
+.market-table-head button:first-child{text-align:left}
+.market-catalog-status{padding:5px 10px;font-size:10px;color:#777f8b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.market-items{max-height:410px;overflow:auto;scrollbar-width:thin}
+.market-table-row{height:50px;display:flex;align-items:center;padding:0 8px;min-width:0}
+.market-table-row:hover,.market-table-row.active{background:#292b30}
+.market-table-row .market-star{color:#89919d;padding:2px 3px;flex:none;font-size:17px;width:23px}
+.market-table-row .market-star.saved{color:#5865F2}
+.market-row-select{padding:0;display:grid;grid-template-columns:minmax(0,1fr) 86px 70px 110px;align-items:center;gap:4px;min-width:0;width:100%;height:100%;color:#F4F6FA}
+.market-symbol-cell{min-width:0;display:flex;align-items:center;gap:7px}
+.market-token-icon{width:21px;height:21px;min-width:21px;background:#333948;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+.market-coin-name{min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:3px;overflow:hidden}
+.market-coin-name strong{font-size:12px;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.market-coin-name small{font-size:10px;color:#777f8b}
+.market-row-select .market-numeric{font-variant-numeric:tabular-nums;text-align:right;font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#F4F6FA}
+.market-row-select .market-numeric.positive{color:#16B89A}
+.market-row-select .market-numeric.negative{color:#F05A70}
+.market-noresults{padding:38px 10px;text-align:center;color:#929AAA;font-size:12px}
+@media(max-width:750px){.market-dropdown{position:fixed;top:105px;left:8px;width:calc(100vw - 16px)}.market-table-head,.market-row-select{grid-template-columns:minmax(0,1fr) 76px 62px 92px}.market-table-head{padding-left:31px;padding-right:8px}.market-row-select .market-numeric{font-size:10px}.market-items{max-height:55vh}}
