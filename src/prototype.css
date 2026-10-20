@@ -256,3 +256,9 @@ font-size:13px;cursor:pointer}
 .nexora-timeframe-grid button:hover,.nexora-timeframe-grid button.is-active{border-color:#7e8697;background:#252a35}
 .nexora-timeframe-subtitle{color:#929aaa;margin:20px 0 14px;font-size:14px}
 .nexora-timeframe-hint{margin:16px 0 0;color:#929aaa;font-size:11px;line-height:1.5}
+
+.nexora-timeframe-grid button{position:relative}
+.nexora-timeframe-mark{position:absolute;right:-6px;top:-8px;width:15px;height:15px;border-radius:50%;display:grid;place-items:center;font-size:12px;line-height:1;background:#4b5360;color:#fff}
+.nexora-timeframe-mark.add{background:#3b4b5c}
+.nexora-timeframe-mark.remove{background:#4b4e58}
+.nexora-timeframe-menu-top button:last-child:not(:first-child){margin-left:10px}
