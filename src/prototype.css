@@ -158,3 +158,9 @@ section[data-local-hide-other-pairs] .ant-checkbox-v2-checked .ant-checkbox-v2-i
 .nexora-token-info p{color:#929AAA;margin:0 0 12px}
 .nexora-token-info-error{color:#F05A70!important}
 @media(max-width:760px){.nexora-token-info-grid{grid-template-columns:1fr;gap:24px}.nexora-token-info{padding:18px 14px}}
+
+.nexora-info-logo{width:36px;height:36px;object-fit:contain;border-radius:50%;margin-right:8px}
+.nexora-info-links{display:flex;flex-wrap:wrap;gap:9px;margin-top:16px}
+.nexora-info-links a{background:#232630;border-radius:20px;padding:6px 13px;color:#F4F6FA;text-decoration:none;font-size:12px}
+.nexora-info-links a:hover{background:#303748}
+.nexora-info-credit{font-size:11px;margin-top:20px!important;color:#929AAA!important}
