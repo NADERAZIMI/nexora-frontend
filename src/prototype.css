@@ -262,3 +262,10 @@ font-size:13px;cursor:pointer}
 .nexora-timeframe-mark.add{background:#3b4b5c}
 .nexora-timeframe-mark.remove{background:#4b4e58}
 .nexora-timeframe-menu-top button:last-child:not(:first-child){margin-left:10px}
+
+/* Interactive NEXORA chart tools: true pan, trend lines and MA / EMA switches. */
+.nexora-chart-tools{display:flex;flex:0 0 auto;align-items:center;flex-wrap:wrap;gap:6px;padding:4px 0 7px;border-bottom:1px solid #292d36}
+.nexora-chart-tools button{font:11px Arial,sans-serif;color:#a8b1c2;border:1px solid #343b49;background:#171b24;border-radius:4px;padding:5px 8px;cursor:pointer}
+.nexora-chart-tools button[aria-pressed=true]{border-color:#5865f2;color:#f4f6fa;background:#20242d}
+.nexora-chart-tools button:hover{color:#fff;border-color:#5865f2}
+.nexora-live-chart canvas{min-height:180px;flex:1 1 auto;touch-action:none}
