@@ -19,7 +19,7 @@
     "src/fidelity.css": "2b1f0137bea24d3378c7301e2a50e5d936d2cd995391d16d334f25b2177fdcc2",
     "src/main.tsx": "313535a1599994f2a261981ba1708103a95c359ea117b53062a704bc66657431",
     "src/palette.css": "1c3d95509331246188c74a55e792542040e4ed12a98721de6a0be355c498a775",
-    "src/prototype.css": "7ba8a13542f9387d9150ad6b7e6a5fa1b965e27705bb51c0b453996ff642b281",
+    "src/prototype.css": "ad19f3697378a96d6f5674bb8ca788e710cc5ecd56a1eb4a2b5e4d8c46d7f547",
     "src/reference.css": "aaa1e46672300d6c410465cd1a0f26d7b567939ac01a04bb3bcb226a5935fa76",
     "src/snapshot.html": "11181f22d37a7c00ca90d665e2e9cab429d0787087dd112fce2aa0f91aa8f8b9",
     "src/vite-env.d.ts": "424faf9241dd699dda995b367ed36665732da1e6ec1f33b2fd40394488ecac92",
@@ -27,7 +27,7 @@
     "src/orderbook-display.ts": "6f56e491b75077b21565b4179031bab4078027ba7c8dca2d625f9aa8a2277dfd",
     "src/price-precision.ts": "94b49af3bf14235c5ac20776b6e719c4f53cf18a3d200f36e523a6fc29c2c1e1",
     "src/captured-market-catalog.ts": "3791cb0d65b7c236e478f69a37c88dd2bb974f6d85acbab99924e920bb0fb566",
-    "src/captured-market-preview.ts": "8ec771c91d7d5222f0d5588f3d287371b601954c9c0e9957f26a7598299f3c28"
+    "src/captured-market-preview.ts": "454105ada39b89d0fb540b0cb5d2248023bed9270dfe9e0f36ad99df4b695530"
   },
   "phase02cReviewedFrom": "1acc95bdb3a45053d9117e6282b81f833ef268ad",
   "phase02dReviewedFrom": "99410fea21c1e77edd0540b7c3acf35b379b5ae0",
