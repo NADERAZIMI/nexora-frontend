@@ -179,7 +179,12 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
     root.dataset.localSelectedMarket=market.id;
     root.dataset.localMarketDataUnavailable='true';
     sample.textContent=label+': '+formatPrice(market.price)+' '+market.quote+' (MEXC public price)';
-    setDataAvailability(market.id,label);
+    // Public market data can populate the chart/depth; forms stay unavailable.
+    for(const panel of btcOnlyPanels) {
+      const liveVisual=panel.matches('[class*="__chartWrapper"],[class*="__orderbookDealsWrapper"]');
+      if(liveVisual){delete panel.dataset.nexoraUnavailable;delete panel.dataset.nexoraUnavailableLabel;}
+    }
+    root.dispatchEvent(new CustomEvent('nexora:market-selected',{detail:{symbol:market.id}}));
     buttons.forEach(choice=>choice.button.setAttribute('aria-pressed','false'));
     refresh();
   }
@@ -211,6 +216,7 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
     root.dataset.localSelectedMarket = id;
     root.dataset.localMarketDataUnavailable = String(id !== 'BTC_USDT');
     setDataAvailability(id, item.label);
+    root.dispatchEvent(new CustomEvent('nexora:market-selected',{detail:{symbol:id.replace('_','')}}));
     refresh();
   }
   show('BTC_USDT');
