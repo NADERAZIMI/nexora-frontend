@@ -1,3 +1,4 @@
+import { getCoinProfile, type CoinProfile } from './coingecko-info';
 /** Read-only token Info overlay backed solely by public MEXC Spot endpoints. */
 type ExchangeDetail={symbol?:string;baseAsset?:string;quoteAsset?:string;fullName?:string};
 type Ticker24={symbol?:string;lastPrice?:string;priceChangePercent?:string;highPrice?:string;lowPrice?:string;volume?:string;quoteVolume?:string;openPrice?:string};
@@ -23,17 +24,25 @@ export function attachSpotTokenInfo(root:HTMLElement):()=>void{
  chart.append(host);
  let selected='BTCUSDT',selectedQuote='USDT',controller:AbortController|null=null,mounted=true,opened=false;
  const baseFrom=(symbol:string,quote:string)=>symbol.endsWith(quote)?symbol.slice(0,-quote.length):symbol;
- const render=(base:string,quote:string,infoData:ExchangeDetail|null,ticker:Ticker24|null,error='')=>{
+ const render=(base:string,quote:string,infoData:ExchangeDetail|null,ticker:Ticker24|null,error='',profile:CoinProfile|null=null)=>{
    host.replaceChildren();
    const top=document.createElement('div');top.className='nexora-token-info-heading';
-   const title=document.createElement('h2');title.textContent=base;
+   const title=document.createElement('h2');title.textContent=profile?.name||base;
    const note=document.createElement('span');note.textContent=error?'Public market information unavailable':'Public Spot market information';
    top.append(title,note);host.append(top);
    const layout=document.createElement('div');layout.className='nexora-token-info-grid';
    const overview=document.createElement('div');const heading=document.createElement('h3');heading.textContent='Overview';overview.append(heading);
    const pct=number(ticker?.priceChangePercent);
    const facts:[string,string][]=[
-    ['Token',infoData?.fullName?.trim()||base],
+    ['Token',profile?.name||infoData?.fullName?.trim()||base],
+    ['Rank',profile?.rank===null||!profile?'—':'No.'+profile.rank],
+    ['Market Cap',formatted(profile?.marketCap,' USD')],
+    ['Fully Diluted Market Cap',formatted(profile?.fdv,' USD')],
+    ['Circulating Supply',formatted(profile?.circulating)],
+    ['Max Supply',formatted(profile?.max)],
+    ['Total Supply',formatted(profile?.total)],
+    ['All-Time High',formatted(profile?.ath,' USD')],
+    ['All-Time Low',formatted(profile?.atl,' USD')],
     ['Trading Pair',base+'/'+quote],
     ['Last Price',formatted(ticker?.lastPrice,' '+quote)],
     ['24h Change',pct===null?'—':(pct*100).toFixed(2)+'%'],
@@ -44,7 +53,17 @@ export function attachSpotTokenInfo(root:HTMLElement):()=>void{
    ];
    for(const [label,value] of facts){const row=document.createElement('div');row.className='nexora-token-info-fact';const key=document.createElement('span');key.textContent=label;const val=document.createElement('strong');val.textContent=value;row.append(key,val);overview.append(row);}
    const about=document.createElement('div');const sub=document.createElement('h3');sub.textContent='Introduction';about.append(sub);
-   const paragraph=document.createElement('p');paragraph.textContent='A verified project description, market capitalization, rank, supply and official social links are not provided by the connected public Spot market endpoints. They will appear only when a reliable metadata source is available.';about.append(paragraph);
+   const paragraph=document.createElement('p');paragraph.textContent=profile?.description||'Verified project details are currently unavailable from the connected metadata provider.';about.append(paragraph);
+   if(profile){
+    const links=document.createElement('div');links.className='nexora-info-links';
+    for(const [name,href] of [['Website',profile.homepage],['Explorer',profile.explorer],['X',profile.twitter],['Telegram',profile.telegram],['Reddit',profile.reddit],['GitHub',profile.github]]){
+     if(!href)continue;
+     const a=document.createElement('a');a.textContent=name;a.href=href;a.target='_blank';a.rel='noopener noreferrer nofollow';links.append(a);
+    }
+    about.append(links);
+    if(profile.image){const logo=document.createElement('img');logo.className='nexora-info-logo';logo.src=profile.image;logo.alt='';top.prepend(logo);}
+    const credit=document.createElement('p');credit.className='nexora-info-credit';credit.textContent='Project metadata: CoinGecko · market data: public Spot feed';about.append(credit);
+   }
    if(error){const warn=document.createElement('p');warn.className='nexora-token-info-error';warn.textContent=error;about.append(warn);}
    layout.append(overview,about);host.append(layout);
  };
@@ -53,12 +72,13 @@ export function attachSpotTokenInfo(root:HTMLElement):()=>void{
    const id=selected;
    render(baseFrom(id,selectedQuote),selectedQuote,null,null,'Loading public market information…');
    try{
-     const details=await Promise.allSettled([get<{symbols?:ExchangeDetail[]}>('exchangeInfo?symbol='+encodeURIComponent(id),signal),get<Ticker24>('ticker/24hr?symbol='+encodeURIComponent(id),signal)]);
+     const details=await Promise.allSettled([get<{symbols?:ExchangeDetail[]}>('exchangeInfo?symbol='+encodeURIComponent(id),signal),get<Ticker24>('ticker/24hr?symbol='+encodeURIComponent(id),signal),getCoinProfile(baseFrom(id,selectedQuote),signal)]);
      if(!mounted||signal.aborted||selected!==id)return;
      const metadata=details[0].status==='fulfilled'?details[0].value.symbols?.find(x=>x.symbol===id)??null:null;
      const ticker=details[1].status==='fulfilled'?details[1].value:null;
      const quote=metadata?.quoteAsset??selectedQuote;const base=metadata?.baseAsset??baseFrom(id,quote);
-     render(base,quote,metadata,ticker,metadata||ticker?'':'Market data is currently unavailable.');
+     const profile=details[2].status==='fulfilled'?details[2].value:null;
+     render(base,quote,metadata,ticker,metadata||ticker||profile?'':'Market data is currently unavailable.',profile);
    }catch(error){if(!signal.aborted&&mounted)render(baseFrom(id,selectedQuote),selectedQuote,null,null,String(error));}
  };
  const show=()=>{opened=true;host.hidden=false;void load()};
