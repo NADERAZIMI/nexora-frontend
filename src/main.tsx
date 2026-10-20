@@ -28,6 +28,10 @@ function MarketBar({pair,onSelect,pairs,source,tickers,pricesReady}:{pair:SpotPa
  });
  const formatPrice=(v:number)=>v.toLocaleString('en-US',{maximumFractionDigits:v>=1?4:8});
  const formatVolume=(v:number)=>v>=1e9?(v/1e9).toFixed(2)+'B':v>=1e6?(v/1e6).toFixed(2)+'M':v>=1000?(v/1000).toFixed(2)+'K':v.toFixed(2);
+ const selectedTicker=tickers[pair.symbol];
+ const marketPrice=(v:number|undefined)=>v===undefined||!Number.isFinite(v)?'—':formatPrice(v);
+ const signedChange=selectedTicker?(selectedTicker.change>=0?'+':'')+(selectedTicker.change*100).toFixed(2)+'%':'—';
+ const changeClass=selectedTicker?(selectedTicker.change>0?'market-up':selectedTicker.change<0?'market-down':'market-flat'):'market-flat';
  return <section className="marketbar"><div className="pair-selector">
  <div className="pair pair-label"><span className="coin">{pair.base.slice(0,1)}</span><span><strong>{pair.base}/{pair.quote}</strong><small>Spot Trading</small></span><button className="pair-open-button" type="button" aria-label="Open spot pair list" aria-haspopup="dialog" aria-expanded={open} onClick={()=>setOpen(value=>!value)} title="Choose trading pair"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="m3.5 6 4.5 4 4.5-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg></button></div>
  {open&&<div className="market-dropdown" role="dialog" aria-label="Spot market selector">
@@ -48,7 +52,13 @@ function MarketBar({pair,onSelect,pairs,source,tickers,pricesReady}:{pair:SpotPa
  <span className="market-numeric">{tick?formatVolume(tick.turnover)+' ('+p.quote+')':'—'}</span>
  </button></div>;})}{found.length===0&&category!=='TradFi'&&<div className="market-noresults">No matching Spot pairs</div>}</div>
  </div>}
- </div><div className="price"><strong>{tickers[pair.symbol]?formatPrice(tickers[pair.symbol].lastPrice):display}</strong><small>Last price</small></div>{[['24h Change',tickers[pair.symbol]?(tickers[pair.symbol].change*100).toFixed(2)+'%':display],['24h High',display],['24h Low',display],['24h Volume ('+pair.base+')',display],['24h Turnover ('+pair.quote+')',tickers[pair.symbol]?formatVolume(tickers[pair.symbol].turnover):display]].map(([k,v])=><div className="marketstat" key={k}><small>{k}</small><strong>{v}</strong></div>)}<span className="marketstate"><i/>{pricesReady?'Live Bybit tickers':'Public market data'}</span></section>
+ </div><div className={'price market-last '+changeClass}><strong>{marketPrice(selectedTicker?.lastPrice)}</strong><small>{selectedTicker?'≈'+marketPrice(selectedTicker.lastPrice)+' '+pair.quote:'Last price'}</small></div>
+ <div className="marketstat market-change"><small>24H Change</small><strong className={changeClass}>{signedChange}</strong></div>
+ <div className="marketstat"><small>24H High</small><strong>{marketPrice(selectedTicker?.high)}</strong></div>
+ <div className="marketstat"><small>24H Low</small><strong>{marketPrice(selectedTicker?.low)}</strong></div>
+ <div className="marketstat"><small>24H Volume ({pair.base})</small><strong>{selectedTicker?.volume!==undefined?formatVolume(selectedTicker.volume):'—'}</strong></div>
+ <div className="marketstat"><small>24H Turnover ({pair.quote})</small><strong>{selectedTicker?formatVolume(selectedTicker.turnover):'—'}</strong></div>
+ <span className="marketstate"><i/>{pricesReady?'Live Bybit tickers':'Market data unavailable'}</span></section>
 }
 type FundraisingPerson={name:string;subtitle:string;avatar:string;links:{name:string;url:string}[]};
 const bitcoinFundraising:{team:FundraisingPerson[];investors:FundraisingPerson[]}={
