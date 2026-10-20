@@ -30,6 +30,7 @@ jobs:
         run: |
           mkdir -p dist/build-tools
           cp scripts/build-spot-catalog.py dist/build-tools/build-spot-catalog.py
+          cp scripts/refresh-spot-tickers.py dist/build-tools/refresh-spot-tickers.py
       - uses: actions/upload-artifact@v4
         with:
           name: nexora-frontend-dist
@@ -84,6 +85,26 @@ jobs:
           test -s public/spot-markets.json
           mv public/spot-markets.json spot-markets.json
           rm -rf build-tools public
+          REMOTE
+          # Persist fresh market prices outside releases and update once per minute.
+          # Restrict all writes to the independent NEXORA frontend directory.
+          ssh $SSH_OPTS "$USER@$HOST" bash -s -- "$RELEASE" <<'REMOTE'
+          set -euo pipefail
+          release="$1"
+          case "$release" in *[!a-f0-9]*|'') exit 1;; esac
+          cd "$HOME/nexora-frontend"
+          mkdir -p shared/build-tools
+          cp "releases/$release/build-tools/refresh-spot-tickers.py" shared/build-tools/
+          python3 shared/build-tools/refresh-spot-tickers.py
+          ln -s ../../shared/spot-tickers.json "releases/$release/spot-tickers.json"
+          if ! command -v crontab >/dev/null 2>&1; then
+            echo "::error::crontab unavailable: cannot guarantee updated prices"
+            exit 1
+          fi
+          (crontab -l 2>/dev/null || true) | grep -v '# NEXORA_SPOT_TICKERS' > /tmp/nexora-spot-cron-$ || true
+          printf '%s\n' '* * * * * /usr/bin/python3 "$HOME/nexora-frontend/shared/build-tools/refresh-spot-tickers.py" >/dev/null 2>&1 # NEXORA_SPOT_TICKERS' >> /tmp/nexora-spot-cron-$
+          crontab /tmp/nexora-spot-cron-$
+          rm -f /tmp/nexora-spot-cron-$
           REMOTE
           # Persist token images independently of frontend releases (once per symbol).
           # A fresh release links back to the dedicated NEXORA asset directory.
