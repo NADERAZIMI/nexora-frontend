@@ -1,4 +1,4 @@
-import {useMemo,useState} from 'react';
+import {useMemo,useState,type ReactNode} from 'react';
 import './DataPanel.css';
 
 type Tab='Fund Flow'|'Trade data'|'Trading Trend';
@@ -15,7 +15,7 @@ function Plot({series,kind='line',colors=['#328ff8','#efa300'],labels=['Series A
  {Array.from({length:5},(_,i)=><text key={i} x={left+i*inner/4} y={height-9} fontSize="10" fill="#737a86" textAnchor="middle">{['09-20','09-27','10-04','10-11','10-20'][i]}</text>)}
  </svg><div className="data-legend">{labels.map((label,i)=><span key={label}><i style={{background:colors[i]||'#16B89A'}}/>{label}</span>)}</div></>;
 }
-function Card({title,children}:{title:string;children:React.ReactNode}){return <section className="data-card-wrap"><h3>{title}</h3><div className="data-card">{children}</div></section>}
+function Card({title,children}:{title:string;children:ReactNode}){return <section className="data-card-wrap"><h3>{title}</h3><div className="data-card">{children}</div></section>}
 function Pick({items,value,onChange}:{items:string[];value:string;onChange:(x:string)=>void}){return <div className="data-periods">{items.map(x=><button type="button" key={x} onClick={()=>onChange(x)} className={x===value?'active':''}>{x}</button>)}</div>}
 function Ring(){
  const parts=[35.11,6.99,3.72,3.62,7.11,43.45];const palette=['#F56C73','#f33e56','#b62c48','#06976d','#15a879','#3dbc83'];let acc=0;
