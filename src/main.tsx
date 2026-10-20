@@ -7,6 +7,7 @@ import { attachCapturedMarketPreview } from './captured-market-preview';
 import { attachReadOnlyMarketFeed } from './live-market-feed';
 import { attachSpotTokenInfo } from './spot-token-info';
 import { attachSpotTradingData } from './spot-trading-data';
+import { attachSpotHeaderLive } from './spot-header-live';
 import './reference.css';
 import './palette.css';
 import './prototype.css';
@@ -27,6 +28,7 @@ const SnapshotSurface = memo(function SnapshotSurface({ onNotice }: { onNotice: 
       }
       textNode=walker.nextNode();
     }
+    const disposeHeaderLive = attachSpotHeaderLive(root);
     const disposeLocalControls = attachSpotLocalControls(root);
     const disposeOrderBookDisplay = attachOrderBookDisplay(root);
     const disposeReadOnlyMarketFeed = attachReadOnlyMarketFeed(root);
@@ -72,7 +74,7 @@ const SnapshotSurface = memo(function SnapshotSurface({ onNotice }: { onNotice: 
     };
     root.addEventListener('click', click);
     root.addEventListener('keydown', key);
-    return () => { disposeCapturedMarketPreview(); disposeTradingData(); disposeTokenInfo(); disposeReadOnlyMarketFeed(); disposeOrderBookDisplay(); disposeLocalControls(); root.removeEventListener('click', click); root.removeEventListener('keydown', key); headerSearch?.removeEventListener('input', searchInput); };
+    return () => { disposeCapturedMarketPreview(); disposeHeaderLive(); disposeTradingData(); disposeTokenInfo(); disposeReadOnlyMarketFeed(); disposeOrderBookDisplay(); disposeLocalControls(); root.removeEventListener('click', click); root.removeEventListener('keydown', key); headerSearch?.removeEventListener('input', searchInput); };
   }, [onNotice]);
   return <div className="snapshot-surface" ref={surface} dangerouslySetInnerHTML={{ __html: snapshot }} />;
 });
