@@ -150,7 +150,11 @@ def main():
         image_url = image.get('small') if isinstance(image, dict) else None
         icon_file = root / 'icons' / (ident + '.png')
         if icon_file.exists() or icon_download(image_url, icon_file):
-            icons[symbol] = '/token-assets/icons/' + icon_file.name
+            local_url = '/token-assets/icons/' + icon_file.name
+            icons[symbol] = local_url
+            if isinstance(data.get('image'), dict):
+                data['image']['small'] = local_url
+                save_json(file, data)
             save_json(icons_path, icons)
         completed += 1
         print("Saved", symbol, ident, flush=True)
