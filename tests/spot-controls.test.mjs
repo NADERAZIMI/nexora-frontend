@@ -515,10 +515,12 @@ test('single-side book rows start below headers with no opposite slot and a cont
       for (const key of ['height','width','font','color','padding']) assert.equal(row[key],before[key]);
       if (i) assert.equal(row.y-current.rows[side][i-1].y,21,'original row pitch');
     }
-    assert.equal(current.price.y,current[side].bottom,`mid-price directly follows visible side: ${JSON.stringify(current.children)}`);
-    assert.ok(current.price.height>0); assert.ok(current.price.height<original.asks.height,'mid-price does not reserve a side slot');
-    assert.ok(current.price.bottom<=current.body.bottom,'mid-price remains in content area');
-    assert.equal(await book.locator('[class*="__newPrice"]').isVisible(),true);
+    // Single-side means no opposite-side readouts: neither shared mid-price
+    // nor the bottom B/S split should remain visible.
+    assert.equal(current.price.height,0,'mid-price hidden in single-side mode');
+    assert.equal(await book.locator('[class*="__newPrice"]').isVisible(),false);
+    assert.equal(await book.locator('[class*="__marketProportionWrapper"]').isVisible(),false);
+    assert.equal(current[side].y,current.body.y,'selected side fills from panel header');
     await group.getByRole('button', { name:'Combined Buy + Sell',exact:true }).press('Space');
     assert.deepEqual(await measure(),original,'Combined restores exact captured placement');
   }
