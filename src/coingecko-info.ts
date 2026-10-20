@@ -37,7 +37,7 @@ async function uniqueCoinIds():Promise<Map<string,string>>{
 }
 const num=(v:unknown):number|null=>typeof v==='number'&&Number.isFinite(v)?v:null;
 const str=(v:unknown):string=>typeof v==='string'?v:'';
-const url=(v:unknown):string=>{const s=str(v);try {return new URL(s).protocol==='https:'?s:''}catch{return ''}};
+const url=(v:unknown):string=>{const s=str(v);if(/^\\/token-assets\\/icons\\/[a-z0-9-]+\\.png$/.test(s))return s;try {return new URL(s).protocol==='https:'?s:''}catch{return ''}};
 const first=(v:unknown):string=>Array.isArray(v)?str(v.find(x=>typeof x==='string'&&x.startsWith('https://'))):'';
 type Payload={symbol?:unknown;name?:unknown;image?:{small?:unknown};market_cap_rank?:unknown;description?:{en?:unknown};links?:{
  homepage?:unknown;blockchain_site?:unknown;twitter_screen_name?:unknown;telegram_channel_identifier?:unknown;subreddit_url?:unknown;repos_url?:{github?:unknown}
