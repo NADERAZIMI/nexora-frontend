@@ -305,3 +305,11 @@ font-size:13px;cursor:pointer}
 /* Keep the chart-type menu anchored beneath its own button, above canvas. */
 .nexora-chart-top-row{overflow:visible}
 .nexora-chart-type-menu{position:absolute;top:34px;left:0;margin-top:0}
+
+/* Two-candle chart type icon, compact like the approved reference. */
+.nexora-chart-type-trigger{gap:0;padding:3px 4px;min-width:24px;justify-content:center}
+.nexora-chart-type-glyph{gap:4px;height:17px;align-items:center}
+.nexora-chart-type-glyph i{width:4px;height:9px}
+.nexora-chart-type-glyph i:first-child{height:12px}
+.nexora-chart-type-glyph i:last-child{height:9px}
+.nexora-chart-type-glyph i:after{top:-4px;bottom:-4px;left:1px}
