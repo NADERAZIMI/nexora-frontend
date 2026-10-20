@@ -17,7 +17,7 @@ function library():Promise<Lib>{
    s.onerror=()=>{s.remove();next()};document.head.append(s);
   };next();
  }).catch(err=>{scriptPromise=undefined;throw err});
- return scriptPromise;
+ return scriptPromise!;
 }
 const frames:Record<string,string>={'1m':'1','3m':'3','5m':'5','15m':'15','30m':'30','1h':'60','4h':'240','1d':'D','1w':'W','1M':'M'};
 function average(bars:Bar[],length:number,exponential:boolean){
