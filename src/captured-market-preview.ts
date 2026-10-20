@@ -286,12 +286,14 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
   arrow?.addEventListener('keydown', key);
   heading.addEventListener('keydown', key);
   document.addEventListener('click', outside);
+  root.addEventListener('nexora:close-market-picker',close);
   return () => {
     heading.removeEventListener('click', toggle);
     arrow?.removeEventListener('click', toggle);
     arrow?.removeEventListener('keydown', key);
     heading.removeEventListener('keydown', key);
     document.removeEventListener('click', outside);
+    root.removeEventListener('nexora:close-market-picker',close);
     heading.removeAttribute('role');
     heading.removeAttribute('tabindex');
     heading.removeAttribute('aria-label');
