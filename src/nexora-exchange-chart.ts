@@ -4,14 +4,18 @@ type Series={setData:(bars:unknown[])=>void;update:(bar:unknown)=>void;createPri
 type Chart={addSeries:(type:unknown,opts?:object,paneIndex?:number)=>Series;removeSeries:(s:Series)=>void;timeScale:()=>{fitContent:()=>void};applyOptions:(opts:object)=>void;remove:()=>void;subscribeClick?:(callback:(param:{point?:{x:number;y:number}})=>void)=>void;unsubscribeClick?:(callback:(param:{point?:{x:number;y:number}})=>void)=>void};
 type Lib={createChart:(node:HTMLElement,opts:object)=>Chart;CandlestickSeries:unknown;HistogramSeries:unknown;LineSeries:unknown};
 declare global{interface Window{LightweightCharts?:Lib}}
-const src='https://cdn.jsdelivr.net/npm/lightweight-charts@5.0.9/dist/lightweight-charts.standalone.production.js';
+const sources=['https://cdn.jsdelivr.net/npm/lightweight-charts@5.0.9/dist/lightweight-charts.standalone.production.js','https://unpkg.com/lightweight-charts@5.0.9/dist/lightweight-charts.standalone.production.js'];
 let scriptPromise:Promise<Lib>|undefined;
 function library():Promise<Lib>{
  if(window.LightweightCharts?.createChart)return Promise.resolve(window.LightweightCharts);
  if(!scriptPromise)scriptPromise=new Promise((resolve,reject)=>{
-  const s=document.createElement('script');s.src=src;s.async=true;s.crossOrigin='anonymous';
-  s.onload=()=>window.LightweightCharts?.createChart?resolve(window.LightweightCharts):reject(Error('Chart library unavailable'));
-  s.onerror=()=>reject(Error('Unable to load chart library'));document.head.append(s);
+  let index=0;
+  const next=()=>{
+   if(index>=sources.length){reject(Error('All chart CDN sources unavailable'));return}
+   const s=document.createElement('script');s.src=sources[index++];s.async=true;s.crossOrigin='anonymous';
+   s.onload=()=>{if(window.LightweightCharts?.createChart)resolve(window.LightweightCharts);else{s.remove();next()}};
+   s.onerror=()=>{s.remove();next()};document.head.append(s);
+  };next();
  }).catch(err=>{scriptPromise=undefined;throw err});
  return scriptPromise;
 }
@@ -59,7 +63,7 @@ export function attachNexoraExchangeChart(wrapper:HTMLElement,root:HTMLElement):
   if(visible.has('Volume')){
    if(!volume)volume=chart.addSeries(window.LightweightCharts!.HistogramSeries,{priceFormat:{type:'volume'},priceScaleId:'volume',lastValueVisible:false,priceLineVisible:false});
    volume.setData(data.map(b=>({time:b.time,value:b.volume,color:b.close>=b.open?'#16b89a70':'#f05a7070'})));
-   volume.priceScale?.().applyOptions({scaleMargins:{top:0.82,bottom:0}});
+   volume.priceScale?.('volume').applyOptions({scaleMargins:{top:0.82,bottom:0}});
   }else if(volume){chart.removeSeries(volume);volume=null}
   for(const [name,length,color,expo] of [['MA 20',20,'#3d6bff',false],['EMA 50',50,'#e3a044',true]] as const){
    let series=name==='MA 20'?ma:ema;
@@ -101,7 +105,7 @@ export function attachNexoraExchangeChart(wrapper:HTMLElement,root:HTMLElement):
   message('Loading '+symbol+' · '+frame.value+' historical candles…');
   const qs=new URLSearchParams({category:'spot',symbol,interval:frames[frame.value],limit:'1000'});
   try{
-   const response=await fetch('https://api.bybit.com/v5/market/kline?'+qs,{credentials:'omit',cache:'no-store',signal:abort.signal});
+   const response=await fetch('/bybit-public/v5/market/kline?'+qs,{credentials:'omit',cache:'no-store',signal:abort.signal});
    if(!response.ok)throw Error('HTTP '+response.status);
    const result=await response.json() as {retCode:number;result?:{list?:string[][]}};
    if(result.retCode!==0||!Array.isArray(result.result?.list))throw Error('Invalid OHLCV response');
