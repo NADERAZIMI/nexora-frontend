@@ -84,7 +84,7 @@ jobs:
           python3 build-tools/build-spot-catalog.py
           test -s public/spot-markets.json
           mv public/spot-markets.json spot-markets.json
-          rm -rf build-tools public
+          rm -rf public
           REMOTE
           # Persist fresh market prices outside releases and update once per minute.
           # Restrict all writes to the independent NEXORA frontend directory.
