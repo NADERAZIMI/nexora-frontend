@@ -265,3 +265,6 @@ body *::-webkit-scrollbar-corner,html::-webkit-scrollbar-corner,body::-webkit-sc
 .order-percent-control .rangelabel button{color:#929AAA;font-size:10px;padding:3px 0}
 .order-percent-control .rangelabel button.selected{color:#3378FF}
 html[data-nx-theme="light"] .order-percent-track .percentage::-webkit-slider-thumb,html[data-nx-theme="light"] .order-percent-track .percentage::-moz-range-thumb{border-color:#FFFFFF}
+
+/* At preset percentages the native range thumb is the single visible dot. */
+.order-percent-track .order-percent-dot.at-thumb{opacity:0;pointer-events:none}
