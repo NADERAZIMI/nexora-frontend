@@ -1,6 +1,6 @@
 import { getMexcSpotMarkets, type MexcSpotMarket } from './mexc-public-markets';
 import { formatPrice } from './price-precision';
-import { getCoinProfile } from './coingecko-info';
+import { getCoinProfile, getCoinGeckoMarketImages } from './coingecko-info';
 import { CAPTURED_MARKETS, capturedMarketDisplay } from './captured-market-catalog';
 
 export function attachCapturedMarketPreview(root: HTMLElement): () => void {
@@ -249,6 +249,9 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
       panel.dataset.marketCount=String(liveMarkets.length);
       choices.hidden=true;
       refresh();
+      void getCoinGeckoMarketImages(loadController.signal).then(images=>{
+        for(const [symbol,src] of images)applyIcon(symbol,src);
+      }).catch(()=>{ /* Neutral avatars remain for unavailable CoinGecko icon batches. */ });
     } catch(error) {
       if(loadController.signal.aborted)return;
       empty.hidden=false;
