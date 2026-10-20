@@ -13,6 +13,7 @@ function ChartPanel(){const [tab,setTab]=useState<(typeof tabs)[number]>('Chart'
 function OrderBook(){
  const [mode,setMode]=useState('Order Book');
  const [step,setStep]=useState('0.1');
+ const [layout,setLayout]=useState<'both'|'split'|'bids'|'asks'>('both');
  const book=useBybitSpotBook('BTCUSDT');
  const priceText=(n:number)=>n.toLocaleString('en-US',{minimumFractionDigits:1,maximumFractionDigits:1});
  const qtyText=(n:number)=>n.toFixed(6);
@@ -38,14 +39,14 @@ function OrderBook(){
  const last=book.trades[0],mid=last?.price??bestBid??null;
  const askQty=book.asks.reduce((n,x)=>n+x.amount,0),bidQty=book.bids.reduce((n,x)=>n+x.amount,0);
  const buyPercent=bidQty+askQty?Math.round(100*bidQty/(bidQty+askQty)):0;
- return <section className="panel orderbook">
+ return <section className={'panel orderbook depth-layout-'+layout}>
  <div className="tabs compact"><button className={mode==='Order Book'?'active':''} onClick={()=>setMode('Order Book')}>Order Book</button><button className={mode==='Recent Trades'?'active':''} onClick={()=>setMode('Recent Trades')}>Recent Trades</button><span className={'stream-state '+(book.synchronized?'ready':'')}>{book.synchronized?'● Live':book.connected?'● Syncing':'○ Offline'}</span></div>
  {mode==='Order Book'?<>
-  <div className="obtools"><div className="depth-modes" aria-label="Order book layouts"><span className="depth-icon selected">▥</span><span className="depth-icon">▤</span><span className="depth-icon">▥</span></div><select aria-label="Price precision" value={step} onChange={e=>setStep(e.target.value)}>{['0.1','0.5','1','5','10'].map(x=><option value={x} key={x}>{x}</option>)}</select></div>
+  <div className="obtools"><div className="depth-modes" role="group" aria-label="Order book display layout">{(['both','split','bids','asks'] as const).map((value)=><button type="button" key={value} className={'depth-layout-button '+(layout===value?'selected':'')} aria-label={{both:'Sell above buy',split:'Side by side depth',bids:'Buy orders only',asks:'Sell orders only'}[value]} title={{both:'Sells above buys',split:'Side-by-side',bids:'Buy only',asks:'Sell only'}[value]} aria-pressed={layout===value} onClick={()=>setLayout(value)}><span className={'depth-layout-symbol '+value}><i/><i/><i/><i/><i/><i/></span></button>)}</div><select aria-label="Price precision" value={step} onChange={e=>setStep(e.target.value)}>{['0.1','0.5','1','5','10'].map(x=><option value={x} key={x}>{x}</option>)}</select></div>
   <div className="obhead book-columns"><span>Price (USDT)</span><span>Qty (BTC)</span><span>Total (BTC)</span></div>
-  <div className="depthblock"><div className="book-rows">{book.synchronized?drawRows([...asks].reverse(),'ask'):<div className="depth-placeholder">{book.error||'Waiting for Bybit snapshot…'}</div>}</div></div>
+  {layout!=='bids'&&<div className={'depthblock '+(layout==='split'?'split-asks':'')}><div className="book-rows">{book.synchronized?drawRows([...asks].reverse(),'ask'):<div className="depth-placeholder">{book.error||'Waiting for Bybit snapshot…'}</div>}</div></div>}
   <div className={'midprice '+(last?.side==='Buy'?'up':'down')}><span>{mid!==null?priceText(mid):display}</span><small>{mid!==null?'≈ '+mid.toLocaleString('en-US',{style:'currency',currency:'USD',minimumFractionDigits:2}):'USDT'}</small></div>
-  <div className="depthblock"><div className="book-rows">{book.synchronized?drawRows(bids,'bid'):<div className="depth-placeholder">{book.error||'Waiting for Bybit snapshot…'}</div>}</div></div>
+  {layout!=='asks'&&<div className={'depthblock '+(layout==='split'?'split-bids':'')}><div className="book-rows">{book.synchronized?drawRows(bids,'bid'):<div className="depth-placeholder">{book.error||'Waiting for Bybit snapshot…'}</div>}</div></div>}
   <div className="book-ratio" aria-label="Displayed depth buy sell proportions"><div className="ratio-buy" style={{width:buyPercent+'%'}}>B&nbsp; {book.synchronized?buyPercent+'%':'—'}</div><div className="ratio-sell" style={{width:(100-buyPercent)+'%'}}>{book.synchronized?(100-buyPercent)+'%':'—'} &nbsp;S</div></div>
  </>:<div className="recent-trades"><div className="obhead book-columns"><span>Price (USDT)</span><span>Qty (BTC)</span><span>Time</span></div>{book.trades.length?book.trades.slice(0,35).map(t=><div className={'book-row '+(t.side==='Buy'?'bid':'ask')} key={t.id}><span className="book-number book-price">{priceText(t.price)}</span><span className="book-number">{qtyText(t.amount)}</span><span className="book-number">{new Date(t.timestamp).toLocaleTimeString('en-GB')}</span></div>):<div className="waiting">Waiting for public trades…</div>}</div>}
  </section>;
