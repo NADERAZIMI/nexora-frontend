@@ -1,3 +1,4 @@
+import { createInteractiveSpotChart } from './interactive-chart';
 /** Read-only MEXC public spot feed: never connects to trading/account endpoints. */
 export interface DepthLevel { price:string; qty:string }
 export interface Candle { time:number; open:number;high:number;low:number;close:number }
@@ -128,20 +129,8 @@ export function attachReadOnlyMarketFeed(root:HTMLElement){
  }
  let controller:AbortController|null=null, interval:number|undefined,selected='BTCUSDT',mounted=true,scale=1;
  const restore=()=>{originals.forEach(x=>{x.node.textContent=x.text});if(price)price.textContent=originalPrice};
- const paint=(candles:Candle[])=>{
-  const width=Math.max(250,canvas.clientWidth),height=Math.max(180,canvas.clientHeight),dpr=window.devicePixelRatio||1;
-  canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);
-  const ctx=canvas.getContext('2d');if(!ctx)return;ctx.setTransform(dpr,0,0,dpr,0,0);
-  ctx.clearRect(0,0,width,height);
-  const selectedBars=candles.slice(-Math.max(15,Math.floor(80/scale)));
-  if(!selectedBars.length)return;
-  const min=Math.min(...selectedBars.map(c=>c.low)),max=Math.max(...selectedBars.map(c=>c.high)),span=max-min||max*.0001||1;
-  const y=(v:number)=>14+(max-v)/span*(height-30);
-  const step=width/selectedBars.length;
-  ctx.strokeStyle='#292c32';ctx.lineWidth=1;
-  for(let i=1;i<5;i++){let yy=height*i/5;ctx.beginPath();ctx.moveTo(0,yy);ctx.lineTo(width,yy);ctx.stroke()}
-  selectedBars.forEach((c,i)=>{const green=c.close>=c.open;ctx.fillStyle=ctx.strokeStyle=green?'#16B89A':'#F05A70';const x=i*step+step/2;ctx.beginPath();ctx.moveTo(x,y(c.low));ctx.lineTo(x,y(c.high));ctx.stroke();const top=Math.min(y(c.open),y(c.close)),bottom=Math.max(y(c.open),y(c.close));ctx.fillRect(x-Math.max(1,step*.3),top,Math.max(2,step*.6),Math.max(1,bottom-top))});
- };
+ const interactive=createInteractiveSpotChart(canvas,overlay);
+ const paint=(candles:Candle[])=>interactive.setCandles(candles);
  const refresh=async()=>{
   controller?.abort();controller=new AbortController();const signal=controller.signal;
   retry.hidden=true;state.textContent='Loading '+selected+' live market data…';
@@ -168,21 +157,17 @@ export function attachReadOnlyMarketFeed(root:HTMLElement){
  const choose=(event:Event)=>{
    const id=(event as CustomEvent<{symbol:string}>).detail?.symbol;
    if(!id||!/^[A-Z0-9]{3,30}$/.test(id))return;
-   selected=id;latestCandles=[];restore();overlay.hidden=false;label.textContent='' ;
+   selected=id;latestCandles=[];interactive.setCandles([],true);restore();overlay.hidden=false;label.textContent='' ;
    for(const side of ['asks','bids'])for(const row of book.querySelectorAll<HTMLElement>('[class*="__'+side+'Wrapper"] [class*="__tableRow"]'))row.style.visibility='hidden';
    if(price)price.textContent='—';
    const ctx=canvas.getContext('2d');ctx?.clearRect(0,0,canvas.width,canvas.height);
    if(interval!==undefined)clearInterval(interval);
    void refresh();interval=window.setInterval(()=>{void refresh()},15000);
  };
- const zoom=(event:WheelEvent)=>{if(overlay.hidden)return;event.preventDefault();scale=Math.max(.5,Math.min(5,scale*(event.deltaY<0?1.15:.87)));paint(latestCandles);};
  root.addEventListener('nexora:market-selected',choose);
- canvas.addEventListener('wheel',zoom,{passive:false});
  const dismiss=(event:PointerEvent)=>{if(!menu.hidden&&!menu.contains(event.target as Node)&&!toolbar.contains(event.target as Node)){menu.hidden=true;renderToolbar()}};
  document.addEventListener('pointerdown',dismiss);
- const resize=()=>{if(!overlay.hidden&&latestCandles.length)paint(latestCandles)};
- window.addEventListener('resize',resize);
  // Show verified public BTC candles immediately instead of the archived static chart.
  choose(new CustomEvent('nexora:market-selected',{detail:{symbol:'BTCUSDT'}}));
- return ()=>{mounted=false;controller?.abort();if(interval!==undefined)clearInterval(interval);restore();overlay.remove();root.removeEventListener('nexora:market-selected',choose);canvas.removeEventListener('wheel',zoom);window.removeEventListener('resize',resize);document.removeEventListener('pointerdown',dismiss)};
+ return ()=>{mounted=false;controller?.abort();if(interval!==undefined)clearInterval(interval);restore();overlay.remove();root.removeEventListener('nexora:market-selected',choose);interactive.dispose();document.removeEventListener('pointerdown',dismiss)};
 }
