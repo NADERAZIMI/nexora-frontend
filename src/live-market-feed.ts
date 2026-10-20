@@ -138,6 +138,7 @@ export function attachReadOnlyMarketFeed(root:HTMLElement){
   }
  }
  let controller:AbortController|null=null, interval:number|undefined,selected='BTCUSDT',mounted=true,scale=1;
+ let mostRecentTickerAt=0;
  const restore=()=>{originals.forEach(x=>{x.node.textContent=x.text});if(price)price.textContent=originalPrice};
  const interactive=createInteractiveSpotChart(canvas,topRow);
  const disposeChartTypePicker=attachChartTypePicker(topRow,type=>interactive.setChartType(type as Parameters<typeof interactive.setChartType>[0]));
@@ -158,7 +159,7 @@ export function attachReadOnlyMarketFeed(root:HTMLElement){
     });
    };
    paintSide('asks',frame.asks);paintSide('bids',frame.bids);
-   if(price){const last=frame.candles.at(-1);price.textContent=frame.lastPrice||(last?String(last.close):(frame.bids[0]?.price??frame.asks[0]?.price??'—'));}
+   if(price&&Date.now()-mostRecentTickerAt>6000){const last=frame.candles.at(-1);price.textContent=frame.lastPrice||(last?String(last.close):(frame.bids[0]?.price??frame.asks[0]?.price??'—'));}
    latestCandles=frame.candles;
    paint(latestCandles);
    const tick=Number(frame.lastPrice);interactive.setLivePrice(Number.isFinite(tick)&&tick>0?tick:null);
@@ -169,7 +170,7 @@ export function attachReadOnlyMarketFeed(root:HTMLElement){
  const choose=(event:Event)=>{
    const id=(event as CustomEvent<{symbol:string}>).detail?.symbol;
    if(!id||!/^[A-Z0-9]{3,30}$/.test(id))return;
-   selected=id;
+   selected=id;mostRecentTickerAt=0;
    if(embedded.contentWindow)embedded.contentWindow.postMessage({type:'nexora:chart-market',symbol:id},location.origin);
    if(!embedded.contentWindow||embedded.dataset.loaded!=='true')embedded.src='/kline-preview.html?embedded=1&symbol='+encodeURIComponent(id);
    latestCandles=[];interactive.setCandles([],true);restore();overlay.hidden=false;label.textContent='' ;
@@ -183,6 +184,7 @@ export function attachReadOnlyMarketFeed(root:HTMLElement){
  const onTicker=(event:Event)=>{
   const detail=(event as CustomEvent<{symbol?:string;price?:number}>).detail;
   if(!detail||detail.symbol!==selected||typeof detail.price!=='number'||!Number.isFinite(detail.price)||detail.price<=0)return;
+  mostRecentTickerAt=Date.now();
   if(price)price.textContent=detail.price.toLocaleString('en-US',{maximumFractionDigits:detail.price>=100?2:8});
   interactive.setLivePrice(detail.price);
  };
