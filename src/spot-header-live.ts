@@ -50,6 +50,6 @@ export function attachSpotHeaderLive(root:HTMLElement):()=>void{
   clear('loading');if(volumeLabel)volumeLabel.textContent='24H Volume ('+base+')';if(amountLabel)amountLabel.textContent='24H Amount ('+quote+')';void refresh();
  };
  root.addEventListener('nexora:market-selected',onMarket);clear('loading');void refresh();
- const timer=window.setInterval(()=>{if(!document.hidden)void refresh()},4000);
+ const timer=window.setInterval(()=>{if(!document.hidden)void refresh()},2000);
  return ()=>{disposed=true;ctrl?.abort();clearInterval(timer);root.removeEventListener('nexora:market-selected',onMarket)};
 }
