@@ -19,12 +19,25 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
   const sample = document.createElement('div');
   sample.className = 'nexora-market-preview-value';
   sample.setAttribute('aria-live', 'polite');
+  const search = document.createElement('input');
+  search.className = 'nexora-market-preview-search';
+  search.type = 'search';
+  search.placeholder = 'Search pair';
+  search.setAttribute('aria-label', 'Search captured pairs');
+  const columns = document.createElement('div');
+  columns.className = 'nexora-market-preview-columns';
+  columns.innerHTML = '<span>Pair</span><span>Captured price (USDT)</span><span>Precision</span>';
   const choices = document.createElement('div');
   choices.className = 'nexora-market-preview-choices';
   const buttons = CAPTURED_MARKETS.map(market => {
     const button = document.createElement('button');
     button.type = 'button';
-    button.textContent = market.symbol;
+    const display = capturedMarketDisplay(market.id);
+    button.innerHTML = '<span></span><span></span><span></span>';
+    button.children[0].textContent = market.symbol + '/USDT';
+    button.children[1].textContent = display.formattedPrice;
+    button.children[2].textContent = display.formattedPrecision;
+    button.setAttribute('aria-label', market.symbol);
     button.setAttribute('aria-pressed', String(market.id === 'BTC_USDT'));
     button.addEventListener('click', event => { event.stopPropagation(); show(market.id); });
     choices.append(button);
@@ -33,7 +46,11 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
   const warning = document.createElement('div');
   warning.className = 'nexora-market-preview-warning';
   warning.textContent = 'Price examples only. The order book remains the saved BTC/USDT snapshot.';
-  panel.append(headingLine, choices, sample, warning);
+  search.addEventListener('input', () => {
+    const query = search.value.trim().toUpperCase();
+    buttons.forEach(({ id, button }) => { button.hidden = !id.includes(query); });
+  });
+  panel.append(headingLine, search, columns, choices, sample, warning);
   // The archived headline sits inside transformed, clipped layout wrappers.
   // Portal the menu to body so it overlays the chart instead of being clipped.
   document.body.append(panel);
