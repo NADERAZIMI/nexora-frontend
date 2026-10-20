@@ -65,3 +65,15 @@
 html:not([data-nx-theme="light"]) .markets-page{background:#000000}
 html:not([data-nx-theme="light"]) .markets-overview-stat,html:not([data-nx-theme="light"]) .markets-highlight{background:#101014}
 html:not([data-nx-theme="light"]) .markets-filterbar input,html:not([data-nx-theme="light"]) .markets-pagination button{background:#15191F}
+
+/* Preserve the original Markets layout while using the full viewport width. */
+.markets-page{width:100%;max-width:none;margin:0;padding:26px clamp(16px,2.2vw,38px) 45px}
+.markets-period-picker{display:flex;flex-wrap:wrap;align-items:center;gap:7px;padding:12px 0 15px}
+.markets-period-picker>span{font-size:12px;font-weight:600;color:var(--nx-text);margin-right:10px}
+.markets-period-picker button{border:1px solid transparent;border-radius:4px;padding:8px 13px;background:#15191F;color:var(--nx-muted);font-size:12px;min-width:44px}
+.markets-period-picker button.active{color:#3378FF;border-color:#3378FF;background:#101014}
+.markets-period-picker button:hover{color:#3378FF}
+.markets-period-picker small{font-size:11px;margin-left:auto;color:var(--nx-muted)}
+html[data-nx-theme="light"] .markets-period-picker button{background:var(--nx-elevated)}
+html[data-nx-theme="light"] .markets-period-picker button.active{background:var(--nx-surface)}
+@media(max-width:750px){.markets-page{padding:18px 12px 30px}.markets-period-picker small{flex-basis:100%;margin-left:0}}
