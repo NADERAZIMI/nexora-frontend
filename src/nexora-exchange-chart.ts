@@ -30,7 +30,7 @@ function average(bars:Bar[],length:number,exponential:boolean){
  return out;
 }
 export function attachNexoraExchangeChart(wrapper:HTMLElement,root:HTMLElement):()=>void{
- const host=document.createElement('div');host.className='nexora-exchange-chart';
+ const host=document.createElement('div');host.className='nexora-exchange-chart';host.setAttribute('data-nexora-chart','lightweight');
  const tools=document.createElement('div');tools.className='nexora-exchange-toolbar';
  const side=document.createElement('div');side.className='nexora-exchange-side';
  const plot=document.createElement('div');plot.className='nexora-exchange-plot';
@@ -63,7 +63,7 @@ export function attachNexoraExchangeChart(wrapper:HTMLElement,root:HTMLElement):
   if(visible.has('Volume')){
    if(!volume)volume=chart.addSeries(window.LightweightCharts!.HistogramSeries,{priceFormat:{type:'volume'},priceScaleId:'volume',lastValueVisible:false,priceLineVisible:false});
    volume.setData(data.map(b=>({time:b.time,value:b.volume,color:b.close>=b.open?'#16b89a70':'#f05a7070'})));
-   volume.priceScale?.('volume').applyOptions({scaleMargins:{top:0.82,bottom:0}});
+   volume.priceScale?.('volume')?.applyOptions({scaleMargins:{top:0.82,bottom:0}});
   }else if(volume){chart.removeSeries(volume);volume=null}
   for(const [name,length,color,expo] of [['MA 20',20,'#3d6bff',false],['EMA 50',50,'#e3a044',true]] as const){
    let series=name==='MA 20'?ma:ema;
