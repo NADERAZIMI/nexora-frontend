@@ -75,4 +75,20 @@ jobs:
           SSH_OPTS="-i $HOME/.ssh/id_ed25519 -p $PORT -o StrictHostKeyChecking=yes -o BatchMode=yes"
           ssh $SSH_OPTS "$USER@$HOST" "mkdir -p ~/nexora-frontend/releases/$RELEASE"
           rsync -az --delete -e "ssh -i $HOME/.ssh/id_ed25519 -p $PORT -o StrictHostKeyChecking=yes -o BatchMode=yes" dist/ "$USER@$HOST:nexora-frontend/releases/$RELEASE/"
+          # Fetch the public Bybit symbol catalog on the VPS so browsers never
+          # need cross-origin Bybit REST access. Fail safely before release switch.
+          ssh $SSH_OPTS "$USER@$HOST" bash -s -- "$RELEASE" <<'REMOTE'
+          set -euo pipefail
+          release="$1"
+          dest="$HOME/nexora-frontend/releases/$release/bybit-spot-catalog.json"
+          curl --fail --silent --show-error --location --connect-timeout 10 --max-time 35 --retry 2             'https://api.bybit.com/v5/market/instruments-info?category=spot' -o "$dest.tmp"
+          python3 - "$dest.tmp" <<'PY'
+          import json,sys
+          with open(sys.argv[1],encoding='utf-8') as f: obj=json.load(f)
+          rows=obj.get('result',{}).get('list',[])
+          assert obj.get('retCode')==0 and isinstance(rows,list) and len(rows)>100, 'Invalid Bybit Spot catalog'
+          print('Validated Bybit Spot instruments:',len(rows))
+          PY
+          mv "$dest.tmp" "$dest"
+          REMOTE
           ssh $SSH_OPTS "$USER@$HOST" "cd ~/nexora-frontend && ln -sfn releases/$RELEASE next && mv -Tf next current"
