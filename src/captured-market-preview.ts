@@ -289,6 +289,20 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
   arrow?.addEventListener('keydown', key);
   heading.addEventListener('keydown', key);
   document.addEventListener('click', outside);
+  const onMarketSearch = (event: Event) => {
+    const detail = (event as CustomEvent<{ query?: string }>).detail;
+    const query = typeof detail?.query === 'string' ? detail.query.trim().slice(0, 50) : '';
+    search.value = query;
+    activeQuote = 'All';
+    visibleLimit = 120;
+    tabButtons.forEach(b => b.setAttribute('aria-pressed', String(b.textContent === 'All')));
+    refresh();
+    if (panel.hidden) { positionPanel(); void loadLive(); }
+    panel.hidden = false;
+    heading.setAttribute('aria-expanded', 'true');
+    search.focus({ preventScroll: true });
+  };
+  root.addEventListener('nexora:open-market-search', onMarketSearch);
   root.addEventListener('nexora:close-market-picker',close);
   return () => {
     heading.removeEventListener('click', toggle);
@@ -297,6 +311,7 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
     heading.removeEventListener('keydown', key);
     document.removeEventListener('click', outside);
     root.removeEventListener('nexora:close-market-picker',close);
+    root.removeEventListener('nexora:open-market-search', onMarketSearch);
     heading.removeAttribute('role');
     heading.removeAttribute('tabindex');
     heading.removeAttribute('aria-label');
