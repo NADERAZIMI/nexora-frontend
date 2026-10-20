@@ -340,3 +340,13 @@ font-size:13px;cursor:pointer}
 .nexora-embedded-kline>.nexora-live-state,
 .nexora-embedded-kline>.nexora-feed-retry{display:none!important}
 .nexora-live-chart .nexora-embedded-kline-frame{display:block;flex:1;width:100%;height:100%;min-height:220px;border:0;background:#0d0d0d}
+
+/* Bybit migration: never show MEXC archive values as current chart/depth. */
+.nexora-bybit-pending{display:flex;align-items:center;justify-content:center;text-align:center;background:#0d0d0d;color:#9aa4b7;font:13px/1.6 Arial,sans-serif;padding:22px;box-sizing:border-box}
+.nexora-bybit-chart-pending{position:absolute;inset:46px 0 0;z-index:2147482500}
+.nexora-bybit-book-pending{position:absolute;inset:45px 0 0;z-index:2147482500}
+.nexora-bybit-symbol-picker[hidden]{display:none!important}
+.nexora-bybit-symbol-picker{position:fixed;z-index:2147483100;top:110px;left:16px;width:min(340px,calc(100vw - 32px));background:#20242d;color:#f4f6fa;border:1px solid #343a46;padding:15px;box-shadow:0 12px 35px #0009;border-radius:6px;display:grid;gap:10px;font:13px Arial,sans-serif}
+.nexora-bybit-symbol-picker input{width:100%;height:38px;border:1px solid #3b4252;background:#0d0d0d;color:#fff;padding:7px 10px}
+.nexora-bybit-symbol-picker button{border:0;background:#5865f2;color:white;padding:10px;cursor:pointer}
+.nexora-bybit-symbol-picker small{color:#929aaa}
