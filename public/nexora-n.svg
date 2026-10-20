@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="60 120 1150 1020" role="img" aria-label="NEXORA N">
+<defs><linearGradient id="base" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#38C0FF"/><stop offset=".46" stop-color="#1689FF"/><stop offset="1" stop-color="#0057FF"/></linearGradient><linearGradient id="wing" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#3378FF"/><stop offset="1" stop-color="#003AAB"/></linearGradient><linearGradient id="ribbon" x1="0" y1="0" x2=".9" y2="1"><stop stop-color="#38BFFF"/><stop offset=".53" stop-color="#167DF9"/><stop offset="1" stop-color="#0057FF"/></linearGradient></defs>
+<path d="M1144 180L1116 184 809 376Q795 388 795 413L795 614 529 389 356 261Q310 246 273 263L121 365Q102 380 102 400L103 1093Q113 1098 126 1089L421 899Q432 889 432 872L433 660 888 1075Q922 1099 975 1078L1104 991Q1141 971 1141 946L1153 883Z" fill="url(#base)"/>
+<path d="M795 614L795 413Q795 388 809 376L1116 184 1144 180 1153 883Q1151 930 1141 946L1104 991 887 788Z" fill="url(#wing)"/>
+<path d="M102 401L102 1093Q113 1098 126 1089L421 899Q432 889 432 872L433 660 119 381Z" fill="url(#wing)"/>
+<path d="M121 365L273 263Q312 245 356 261L529 389 888 702 1153 883Q1152 926 1141 946L1104 991 975 1078Q922 1099 888 1075L433 660Z" fill="url(#ribbon)"/>
+</svg>
