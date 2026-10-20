@@ -95,8 +95,8 @@ jobs:
           cd "$HOME/nexora-frontend"
           mkdir -p shared/build-tools
           cp "releases/$release/build-tools/refresh-spot-tickers.py" shared/build-tools/
-          python3 shared/build-tools/refresh-spot-tickers.py
-          ln -s ../../shared/spot-tickers.json "releases/$release/spot-tickers.json"
+          NEXORA_TICKER_TARGET="$HOME/nexora-frontend/releases/$release/spot-tickers.json" python3 shared/build-tools/refresh-spot-tickers.py
+          test -s "releases/$release/spot-tickers.json"
           if ! command -v crontab >/dev/null 2>&1; then
             echo "::error::crontab unavailable: cannot guarantee updated prices"
             exit 1
