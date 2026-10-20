@@ -62,9 +62,7 @@ export function attachReadOnlyMarketFeed(root:HTMLElement){
  const refresh=async()=>{
   controller?.abort();controller=new AbortController();const signal=controller.signal;
   retry.hidden=true;state.textContent='Loading '+selected+' live market data…';
-  for(const side of ['asks','bids']) for(const row of book.querySelectorAll<HTMLElement>('[class*="__'+side+'Wrapper"] [class*="__tableRow"]'))row.style.visibility='hidden';
-  if(price)price.textContent='—';
-  const ctx=canvas.getContext('2d');ctx?.clearRect(0,0,canvas.width,canvas.height);
+
   try{
    const frame=await fetchMarketFrame(selected,signal);if(signal.aborted||!mounted)return;
    const paintSide=(side:'asks'|'bids',levels:DepthLevel[])=>{
@@ -87,6 +85,9 @@ export function attachReadOnlyMarketFeed(root:HTMLElement){
    const id=(event as CustomEvent<{symbol:string}>).detail?.symbol;
    if(!id||!/^[A-Z0-9]{3,30}$/.test(id))return;
    selected=id;restore();overlay.hidden=false;label.textContent=id+' · MEXC spot (live read-only)';
+   for(const side of ['asks','bids'])for(const row of book.querySelectorAll<HTMLElement>('[class*="__'+side+'Wrapper"] [class*="__tableRow"]'))row.style.visibility='hidden';
+   if(price)price.textContent='—';
+   const ctx=canvas.getContext('2d');ctx?.clearRect(0,0,canvas.width,canvas.height);
    if(interval!==undefined)clearInterval(interval);
    void refresh();interval=window.setInterval(()=>{void refresh()},15000);
  };
