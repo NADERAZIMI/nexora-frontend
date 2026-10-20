@@ -28,6 +28,7 @@ const SnapshotSurface = memo(function SnapshotSurface({ onNotice }: { onNotice: 
         onNotice(`Local mock prototype: ${tab.textContent?.trim()} contents are not included in the saved HTML.`);
         return;
       }
+      if (target.closest('[class*="__symbolInfoBox"] [class*="__bigName"]')) return;
       const interval = target.closest('[class*="__favInterval"], [class*="__chartType"], [class*="__bigName"]');
       if (interval) { onNotice('Local mock prototype: the chart and BTC/USDT market are the static saved reference.'); return; }
       const action = target.closest('button,a');
