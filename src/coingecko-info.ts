@@ -44,7 +44,7 @@ type Payload={symbol?:unknown;name?:unknown;image?:{small?:unknown};market_cap_r
 };market_data?:{market_cap?:{usd?:unknown};fully_diluted_valuation?:{usd?:unknown};circulating_supply?:unknown;total_supply?:unknown;max_supply?:unknown;ath?:{usd?:unknown};atl?:{usd?:unknown}}};
 export async function getCoinProfile(base:string,signal:AbortSignal):Promise<CoinProfile|null>{
  const symbol=base.toUpperCase();
- let id=IDS[symbol];
+ let id: string | undefined=IDS[symbol];
  if(!id){
   // Only use an automatic ID when exactly one CoinGecko asset has this ticker.
   const unique=await uniqueCoinIds();
