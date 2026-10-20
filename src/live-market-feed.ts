@@ -151,6 +151,7 @@ export function attachReadOnlyMarketFeed(root:HTMLElement){
    if(price){const last=frame.candles.at(-1);price.textContent=frame.lastPrice||(last?String(last.close):(frame.bids[0]?.price??frame.asks[0]?.price??'—'));}
    latestCandles=frame.candles;
    paint(latestCandles);
+   const tick=Number(frame.lastPrice);interactive.setLivePrice(Number.isFinite(tick)&&tick>0?tick:null);
    retry.hidden=true;
    state.textContent='';
   }catch(e){if(signal.aborted||!mounted)return;const message=e instanceof Error?e.message:String(e);state.textContent='NEXORA market feed unavailable: '+message.replaceAll('MEXC','market');retry.hidden=false;console.warn('[NEXORA public market feed]',message);}
