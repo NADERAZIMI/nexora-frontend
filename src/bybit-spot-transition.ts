@@ -7,12 +7,12 @@ export function attachBybitSpotTransition(root:HTMLElement):()=>void {
  const label=root.querySelector<HTMLElement>('[class*="__fullName"]');
  const chartPlaceholder=document.createElement('div');
  chartPlaceholder.className='nexora-bybit-pending nexora-bybit-chart-pending';
- chartPlaceholder.textContent='NEXORA · Bybit chart integration in progress';
+ chartPlaceholder.textContent='NEXORA · Chart integration in progress';
  chart?.append(chartPlaceholder);
  const picker=document.createElement('form');
  picker.className='nexora-bybit-symbol-picker';
  picker.hidden=true;
- picker.innerHTML='<label for="nexora-bybit-symbol">Bybit Spot symbol</label><input id="nexora-bybit-symbol" name="symbol" value="BTCUSDT" maxlength="30" placeholder="ETHUSDT" autocomplete="off"><button type="submit">Select</button><small>Symbols are validated by the live Bybit ticker stream.</small>';
+ picker.innerHTML='<label for="nexora-bybit-symbol">NEXORA Spot symbol</label><input id="nexora-bybit-symbol" name="symbol" value="BTCUSDT" maxlength="30" placeholder="ETHUSDT" autocomplete="off"><button type="submit">Select</button><small>Market availability is verified by the live feed.</small>';
  document.body.append(picker);
  const input=picker.querySelector<HTMLInputElement>('input')!;
  const submit=(event:Event)=>{
@@ -24,7 +24,7 @@ export function attachBybitSpotTransition(root:HTMLElement):()=>void {
   const quote=['USDT','USDC','BTC','ETH'].find(x=>symbol.endsWith(x))??'USDT';
   const base=symbol.endsWith(quote)?symbol.slice(0,-quote.length):symbol;
   if(name)name.textContent=base+'/'+quote;
-  if(label)label.textContent='Bybit Spot';
+  if(label)label.textContent='NEXORA Spot';
   root.dispatchEvent(new CustomEvent('nexora:market-selected',{detail:{symbol,base,quote,category:'spot'}}));
  };
  const toggle=(e:Event)=>{e.preventDefault();e.stopPropagation();picker.hidden=!picker.hidden;if(!picker.hidden)input.focus()};
