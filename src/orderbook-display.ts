@@ -1,3 +1,5 @@
+import { formatPrice } from './price-precision';
+
 type BookMode = 'combined' | 'buy' | 'sell';
 
 /** Presentation state only; rows and any future data source remain independent. */
@@ -74,6 +76,27 @@ export function attachOrderBookDisplay(root: HTMLElement) {
     document.addEventListener('click', outsidePrecision);
   }
 
+  // Normalize only actual captured price text, preserving the archived DOM
+  // structure, source precision and row identity. Future instrument adapters
+  // can apply the same formatter when replacing the snapshot with live depth.
+  const changedPrices: Array<{ node: HTMLElement; original: string }> = [];
+  for (const node of book.querySelectorAll<HTMLElement>(
+    '[class*="__asksWrapper"] [class*="__orderbookItem"] > [class*="__price"], ' +
+    '[class*="__bidsWrapper"] [class*="__orderbookItem"] > [class*="__price"]'
+  )) {
+    if (node.children.length) continue;
+    const originalPrice = node.textContent?.trim() ?? '';
+    try {
+      const normalized = formatPrice(originalPrice);
+      if (normalized !== originalPrice) {
+        changedPrices.push({ node, original: node.textContent ?? '' });
+        node.textContent = normalized;
+      }
+    } catch {
+      // Captured labels are not assumed to be prices; never corrupt a cell.
+    }
+  }
+
   const alignContent = () => {
     const parent = body.offsetParent;
     if (!(parent instanceof HTMLElement)) return;
@@ -118,5 +141,5 @@ export function attachOrderBookDisplay(root: HTMLElement) {
   });
   const savedMode = book.dataset.localOrderbookMode;
   select(savedMode === 'buy' || savedMode === 'sell' ? savedMode : 'combined');
-  return () => { closePrecision(); precisionTrigger?.removeEventListener('click', togglePrecision); precisionTrigger?.removeEventListener('keydown', precisionKey); document.removeEventListener('click', outsidePrecision); precisionMenu?.remove(); resize.disconnect(); cleanup.forEach(dispose => dispose()); };
+  return () => { changedPrices.forEach(({ node, original }) => { node.textContent = original; }); closePrecision(); precisionTrigger?.removeEventListener('click', togglePrecision); precisionTrigger?.removeEventListener('keydown', precisionKey); document.removeEventListener('click', outsidePrecision); precisionMenu?.remove(); resize.disconnect(); cleanup.forEach(dispose => dispose()); };
 }
