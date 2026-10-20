@@ -1,14 +1,16 @@
 /** Read-only MEXC public spot feed: never connects to trading/account endpoints. */
 export interface DepthLevel { price:string; qty:string }
 export interface Candle { time:number; open:number;high:number;low:number;close:number }
+const TIMEFRAMES=['1m','5m','15m','30m','1h','4h','1d'] as const;
+type Timeframe=typeof TIMEFRAMES[number];
 const valid=(v:unknown):v is string=>typeof v==='string' && /^\d+(?:\.\d+)?$/.test(v);
-export async function fetchMarketFrame(symbol:string, signal:AbortSignal):Promise<{asks:DepthLevel[];bids:DepthLevel[];candles:Candle[];lastPrice:string}> {
+export async function fetchMarketFrame(symbol:string, signal:AbortSignal, timeframe:Timeframe='1m'):Promise<{asks:DepthLevel[];bids:DepthLevel[];candles:Candle[];lastPrice:string}> {
  if(!/^[A-Z0-9]{3,30}$/.test(symbol))throw Error('Invalid market symbol');
  const base='/mexc-public/api/v3/';
  const get=async(path:string)=>{const r=await fetch(base+path,{signal,credentials:'omit'});if(!r.ok)throw Error('MEXC '+r.status+' '+r.statusText+' ('+path.split('?')[0]+')');const data=await r.json() as unknown;if(data&&typeof data==='object'&&'code' in data&&data.code!==200&&data.code!==0)throw Error('MEXC API '+String(data.code));return data};
  const [depthResult, candlesResult, tickerResult] = await Promise.allSettled([
    get('depth?symbol='+symbol+'&limit=20'),
-   get('klines?symbol='+symbol+'&interval=1m&limit=120'),
+   get('klines?symbol='+symbol+'&interval='+timeframe+'&limit=240'),
    get('ticker/price?symbol='+symbol)
  ]);
  if(depthResult.status==='rejected'&&candlesResult.status==='rejected') {
@@ -33,6 +35,16 @@ export function attachReadOnlyMarketFeed(root:HTMLElement){
  const label=document.createElement('div');label.className='nexora-live-chart-label';
  const canvas=document.createElement('canvas');canvas.setAttribute('aria-label','NEXORA spot candlestick chart');
  const state=document.createElement('div');state.className='nexora-live-state';const retry=document.createElement('button');retry.type='button';retry.className='nexora-feed-retry';retry.textContent='Retry';retry.hidden=true;retry.addEventListener('click',()=>{void refresh()});overlay.append(label,canvas,state,retry);chart.append(overlay);
+ const toolbar=document.createElement('div');toolbar.className='nexora-chart-timeframes';toolbar.setAttribute('aria-label','Chart timeframe');
+ const chartButtons=new Map<Timeframe,HTMLButtonElement>();
+ let timeframe:Timeframe='1m',latestCandles:Candle[]=[];
+ for(const tf of TIMEFRAMES){
+  const button=document.createElement('button');button.type='button';button.textContent=tf;
+  button.dataset.timeframe=tf;button.setAttribute('aria-pressed',String(tf===timeframe));
+  button.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();if(timeframe===tf)return;timeframe=tf;scale=1;chartButtons.forEach((b,key)=>b.setAttribute('aria-pressed',String(key===tf)));void refresh()});
+  chartButtons.set(tf,button);toolbar.append(button);
+ }
+ overlay.prepend(toolbar);
  const price=book.querySelector<HTMLElement>('[class*="__newPrice"] [class*="__priceEllipsis"] > div');
  const originalPrice=price?.textContent??'';
  const originals: {node:HTMLElement;text:string}[]=[];
@@ -76,7 +88,8 @@ export function attachReadOnlyMarketFeed(root:HTMLElement){
    };
    paintSide('asks',frame.asks);paintSide('bids',frame.bids);
    if(price){const last=frame.candles.at(-1);price.textContent=frame.lastPrice||(last?String(last.close):(frame.bids[0]?.price??frame.asks[0]?.price??'—'));}
-   paint(frame.candles);
+   latestCandles=frame.candles;
+   paint(latestCandles);
    retry.hidden=true;
    state.textContent='';
   }catch(e){if(signal.aborted||!mounted)return;const message=e instanceof Error?e.message:String(e);state.textContent='NEXORA market feed unavailable: '+message.replaceAll('MEXC','market');retry.hidden=false;console.warn('[NEXORA public market feed]',message);}
@@ -84,15 +97,17 @@ export function attachReadOnlyMarketFeed(root:HTMLElement){
  const choose=(event:Event)=>{
    const id=(event as CustomEvent<{symbol:string}>).detail?.symbol;
    if(!id||!/^[A-Z0-9]{3,30}$/.test(id))return;
-   selected=id;restore();overlay.hidden=false;label.textContent='' ;
+   selected=id;latestCandles=[];restore();overlay.hidden=false;label.textContent='' ;
    for(const side of ['asks','bids'])for(const row of book.querySelectorAll<HTMLElement>('[class*="__'+side+'Wrapper"] [class*="__tableRow"]'))row.style.visibility='hidden';
    if(price)price.textContent='—';
    const ctx=canvas.getContext('2d');ctx?.clearRect(0,0,canvas.width,canvas.height);
    if(interval!==undefined)clearInterval(interval);
    void refresh();interval=window.setInterval(()=>{void refresh()},15000);
  };
- const zoom=(event:WheelEvent)=>{if(overlay.hidden)return;event.preventDefault();scale=Math.max(.5,Math.min(5,scale*(event.deltaY<0?1.15:.87)));};
+ const zoom=(event:WheelEvent)=>{if(overlay.hidden)return;event.preventDefault();scale=Math.max(.5,Math.min(5,scale*(event.deltaY<0?1.15:.87)));paint(latestCandles);};
  root.addEventListener('nexora:market-selected',choose);
  canvas.addEventListener('wheel',zoom,{passive:false});
- return ()=>{mounted=false;controller?.abort();if(interval!==undefined)clearInterval(interval);restore();overlay.remove();root.removeEventListener('nexora:market-selected',choose);canvas.removeEventListener('wheel',zoom)};
+ const resize=()=>{if(!overlay.hidden&&latestCandles.length)paint(latestCandles)};
+ window.addEventListener('resize',resize);
+ return ()=>{mounted=false;controller?.abort();if(interval!==undefined)clearInterval(interval);restore();overlay.remove();root.removeEventListener('nexora:market-selected',choose);canvas.removeEventListener('wheel',zoom);window.removeEventListener('resize',resize)};
 }
