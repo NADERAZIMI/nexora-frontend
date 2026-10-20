@@ -9,14 +9,36 @@ export function createInteractiveSpotChart(canvas:HTMLCanvasElement, host:HTMLEl
  let drag:{x:number;y:number;offset:number;vertical:number}|null=null;
  let draft:Point|null=null,lines:Line[]=[],ma=true,ema=true,livePrice:number|null=null,chartType:DirectChartType='Candles';
  const controls=document.createElement('div');controls.className='nexora-chart-tools';
- const button=(title:string,handler:()=>void)=>{const b=document.createElement('button');b.type='button';b.textContent=title;b.onclick=handler;controls.append(b);return b};
- const panButton=button('Move',()=>{mode='pan';sync()});
- const trendButton=button('Trend Line',()=>{mode='trend';sync()});
- const maButton=button('MA 5/10/20',()=>{ma=!ma;sync()});
- const emaButton=button('EMA 20',()=>{ema=!ema;sync()});
- button('Reset',()=>{visible=85;offset=0;vertical=1;pointer=null;draw()});
- button('Clear Lines',()=>{lines=[];draft=null;draw()});
+ const button=(icon:string,title:string,handler:()=>void)=>{
+  const b=document.createElement('button');b.type='button';b.textContent=icon;b.title=title;
+  b.setAttribute('aria-label',title);b.onclick=handler;controls.append(b);return b;
+ };
+ const panButton=button('↔','Move / Pan',()=>{mode='pan';sync()});
+ const trendButton=button('♢','Trend Line',()=>{mode='trend';sync()});
+ const maButton=button('ƒₓ','MA 5 / 10 / 20',()=>{ma=!ma;sync()});
+ const emaButton=button('≋','EMA 20',()=>{ema=!ema;sync()});
+ const placeholder=(glyph:string,title:string)=>{
+  const b=document.createElement('button');b.type='button';b.textContent=glyph;
+  b.title=title+' (coming later)';b.setAttribute('aria-label',title+' (coming later)');
+  b.disabled=true;b.className='nexora-chart-tool-pending';controls.append(b);
+ };
+ placeholder('☷','Indicator list');
+ placeholder('▣','Chart screenshot');
+ placeholder('▣','Calendar');
+ button('↺','Reset chart zoom',()=>{visible=85;offset=0;vertical=1;pointer=null;draw()});
+ button('⌫','Clear trend lines',()=>{lines=[];draft=null;draw()});
  host.append(controls);
+ const right=document.createElement('div');right.className='nexora-chart-display-modes';
+ const modes=['Original','TradingView','Depth'] as const;
+ for(const label of modes){
+  const b=document.createElement('button');b.type='button';b.textContent=label;
+  if(label==='Original'){b.className='is-active';b.setAttribute('aria-pressed','true')}
+  else{b.disabled=true;b.title=label+' (coming later)';b.setAttribute('aria-disabled','true')}
+  right.append(b);
+ }
+ const full=document.createElement('button');full.type='button';full.className='nexora-chart-fullscreen';full.textContent='⛶';
+ full.title='Fullscreen (coming later)';full.setAttribute('aria-label','Fullscreen (coming later)');full.disabled=true;
+ host.append(right,full);
  const sync=()=>{panButton.setAttribute('aria-pressed',String(mode==='pan'));trendButton.setAttribute('aria-pressed',String(mode==='trend'));maButton.setAttribute('aria-pressed',String(ma));emaButton.setAttribute('aria-pressed',String(ema));canvas.style.cursor=mode==='trend'?'crosshair':'grab';draw()};
  const geometry=()=>{
   const w=Math.max(250,canvas.clientWidth),h=Math.max(170,canvas.clientHeight),right=83,bottom=26,left=10,top=53,volumeHeight=Math.max(65,Math.min(120,h*.23));
@@ -110,6 +132,6 @@ export function createInteractiveSpotChart(canvas:HTMLCanvasElement, host:HTMLEl
  canvas.addEventListener('pointercancel',up);canvas.addEventListener('pointerleave',leave);canvas.addEventListener('wheel',wheel,{passive:false});
  window.addEventListener('resize',resize);sync();
  return {setChartType(type:DirectChartType){if(isDirectChartType(type)){chartType=type;draw()}},setLivePrice(value:number|null){livePrice=value;draw()},setCandles(next:Candle[],reset=false){data=next;if(reset){offset=0;visible=85;vertical=1;draft=null;lines=[]}draw()},
- redraw:draw,dispose(){controls.remove();canvas.removeEventListener('pointerdown',down);canvas.removeEventListener('pointermove',move);
+ redraw:draw,dispose(){controls.remove();right.remove();full.remove();canvas.removeEventListener('pointerdown',down);canvas.removeEventListener('pointermove',move);
  canvas.removeEventListener('pointerup',up);canvas.removeEventListener('pointercancel',up);canvas.removeEventListener('pointerleave',leave);canvas.removeEventListener('wheel',wheel);window.removeEventListener('resize',resize)}};
 }
