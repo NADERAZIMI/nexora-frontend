@@ -77,7 +77,7 @@ class BybitChartDatafeed{
     if(message.topic!==topic||!Array.isArray(message.data))return;
     for(const d of message.data){
      const c=candle([d.start,d.open,d.high,d.low,d.close,d.volume,d.turnover]);
-     if(c){this.candles.set(key,c);callback(c)}
+     if(c){const active=this.livePrice!==null&&c.timestamp===bucket(Date.now(),period)?{...c,close:this.livePrice,high:Math.max(c.high,this.livePrice),low:Math.min(c.low,this.livePrice)}:c;this.candles.set(key,active);callback(active)}
     }
    }catch{/* invalid stream message */}
   };
