@@ -32,17 +32,29 @@ class BybitChartDatafeed{
   const start=from>0?(from<1e11?from*1000:from):0;
   if(end>0)query.set('end',String(Math.floor(end)));
   if(start>0&&start<end)query.set('start',String(Math.floor(start)));
-  // Pro v0.1.1 does not catch datafeed errors and otherwise leaves its loader spinning forever.
-  // Bound the initial request and return an empty verified dataset on network failure.
-  const controller=new AbortController();
-  const timeout=setTimeout(()=>controller.abort(),6500);
-  try{
-   const response=await fetch('https://api.bybit.com/v5/market/kline?'+query.toString(),{signal:controller.signal});
-   if(!response.ok)return [];
-   const data=await response.json() as {retCode?:number;result?:{list?:unknown[]}};
-   if(data.retCode!==0||!Array.isArray(data.result?.list))return [];
-   return data.result.list.map(candle).filter((c):c is Candle=>c!==null).sort((a,b)=>a.timestamp-b.timestamp);
-  }catch{return []}finally{clearTimeout(timeout)}
+  // Use verified same-origin history first: direct REST can be geoblocked in browsers.
+  // Do not show an isolated live candle when historical loading has failed.
+  const endpoints=[
+   '/kline-cache/'+symbol.ticker+'/'+interval(period)+'.json',
+   'https://api.bybit.com/v5/market/kline?'+query.toString()
+  ];
+  for(const url of endpoints){
+   const controller=new AbortController();
+   const timeout=setTimeout(()=>controller.abort(),url.startsWith('/')?3500:6500);
+   try{
+    const response=await fetch(url,{signal:controller.signal,cache:url.startsWith('/')?'no-cache':'default'});
+    if(!response.ok)continue;
+    const data=await response.json() as {retCode?:number;result?:{list?:unknown[]};list?:unknown[];generatedAt?:number};
+    if(!url.startsWith('/')&&data.retCode!==0)continue;
+    const list=url.startsWith('/')?data.list:data.result?.list;
+    if(!Array.isArray(list))continue;
+    // Reject stale static snapshots; the WebSocket provides the current candle.
+    if(url.startsWith('/')&&(!data.generatedAt||Date.now()-data.generatedAt>36*60*60*1000))continue;
+    const rows=list.map(candle).filter((c):c is Candle=>c!==null).sort((a,b)=>a.timestamp-b.timestamp);
+    if(rows.length>0)return rows;
+   }catch{/* Try next real-data source. */}finally{clearTimeout(timeout)}
+  }
+  return [];
  }
  subscribe(symbol:SymbolInfo,period:Period,callback:(c:Candle)=>void){
   if(this.closed||!validSymbol(symbol.ticker))return;
