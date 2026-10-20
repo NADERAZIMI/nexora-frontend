@@ -65,3 +65,15 @@ jobs:
           ssh $SSH_OPTS "$USER@$HOST" "mkdir -p ~/nexora-frontend/releases/$RELEASE"
           rsync -az --delete -e "ssh -i $HOME/.ssh/id_ed25519 -p $PORT -o StrictHostKeyChecking=yes -o BatchMode=yes" dist/ "$USER@$HOST:nexora-frontend/releases/$RELEASE/"
           ssh $SSH_OPTS "$USER@$HOST" "cd ~/nexora-frontend && ln -sfn releases/$RELEASE next && mv -Tf next current"
+          # Only after a successful release switch, remove older frontend release
+          # directories. Never touch the backend or paths outside this directory.
+          ssh $SSH_OPTS "$USER@$HOST" bash -s -- "$RELEASE" <<'REMOTE'
+          set -euo pipefail
+          release="$1"
+          case "$release" in *[!a-f0-9]*|'') exit 1 ;; esac
+          cd "$HOME/nexora-frontend"
+          test -d releases
+          test -f "releases/$release/index.html"
+          test "$(readlink current)" = "releases/$release"
+          find releases -mindepth 1 -maxdepth 1 -type d ! -name "$release" -exec rm -rf -- {} +
+          REMOTE
