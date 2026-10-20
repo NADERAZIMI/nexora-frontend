@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react';
 
 export type Level = { price: number; amount: number; total: number };
 export type PublicTrade = { id: string; price: number; amount: number; side: 'Buy' | 'Sell'; timestamp: number };
+export type SpotTickerLive = {lastPrice:number;change:number;high:number;low:number;volume:number;turnover:number};
 export type BookState = {
   asks: Level[]; bids: Level[]; trades: PublicTrade[];
-  connected: boolean; synchronized: boolean; updatedAt: number; error: string | null;
+  ticker: SpotTickerLive|null; connected: boolean; synchronized: boolean; updatedAt: number; error: string | null;
 };
-const empty = (): BookState => ({ asks: [], bids: [], trades: [], connected: false, synchronized: false, updatedAt: 0, error: null });
+const empty = (): BookState => ({ asks: [], bids: [], trades: [], ticker:null, connected: false, synchronized: false, updatedAt: 0, error: null });
 type DepthMessage = { topic?: string; type?: string; data?: { s?: string; u?: number; seq?: number; a?: string[][]; b?: string[][] } };
+type TickerMessage = {topic?:string;data?:{symbol?:string;lastPrice?:string;price24hPcnt?:string;highPrice24h?:string;lowPrice24h?:string;volume24h?:string;turnover24h?:string}};
 type TradesMessage = { topic?: string; data?: Array<{ i?: string; T?: number; p?: string; v?: string; S?: string; s?: string }> };
 function levels(book: Map<number,number>, descending: boolean): Level[] {
   let total = 0;
@@ -48,13 +50,13 @@ export function useBybitSpotBook(symbol = 'BTCUSDT'): BookState {
         if(disposed||socket!==ws)return;
         reconnects=0;
         setState(s=>({...s, connected:true,error:null}));
-        ws.send(JSON.stringify({op:'subscribe',args:['orderbook.50.'+symbol,'publicTrade.'+symbol]}));
+        ws.send(JSON.stringify({op:'subscribe',args:['orderbook.50.'+symbol,'publicTrade.'+symbol,'tickers.'+symbol]}));
         ping=setInterval(()=>{if(ws.readyState===WebSocket.OPEN)ws.send(JSON.stringify({op:'ping'}));},20000);
       };
       ws.onmessage=(event:MessageEvent)=>{
         if(disposed||socket!==ws)return;
         try {
-          const raw=JSON.parse(String(event.data)) as DepthMessage & TradesMessage;
+          const raw=JSON.parse(String(event.data)) as DepthMessage & TradesMessage & TickerMessage;
           if(raw.topic==='orderbook.50.'+symbol && raw.data && !Array.isArray(raw.data)){
             const d=raw.data as NonNullable<DepthMessage['data']>;
             if(d.s!==symbol||!Array.isArray(d.a)||!Array.isArray(d.b))return;
@@ -71,6 +73,19 @@ export function useBybitSpotBook(symbol = 'BTCUSDT'): BookState {
             // An inconsistent/crossed book is not presented as valid live depth.
             if(sortedAsks.length&&sortedBids.length&&sortedBids[0].price>=sortedAsks[0].price)return;
             setState(s=>({...s,asks:sortedAsks,bids:sortedBids,synchronized:true,updatedAt:Date.now(),error:null}));
+          }else if(raw.topic==='tickers.'+symbol&&raw.data&&!Array.isArray(raw.data)){
+            const d=raw.data as NonNullable<TickerMessage['data']>;
+            if(d.symbol!==symbol)return;
+            setState(prev=>{
+              const previous=prev.ticker;
+              const value=(field: keyof SpotTickerLive, input:unknown)=>{
+                if(input===undefined||input===null||input==='')return previous?.[field];
+                const n=Number(input);return Number.isFinite(n)?n:previous?.[field];
+              };
+              const lastPrice=value('lastPrice',d.lastPrice),change=value('change',d.price24hPcnt),high=value('high',d.highPrice24h),low=value('low',d.lowPrice24h),volume=value('volume',d.volume24h),turnover=value('turnover',d.turnover24h);
+              if([lastPrice,change,high,low,volume,turnover].some(x=>x===undefined)||!lastPrice||lastPrice<=0)return prev;
+              return {...prev,ticker:{lastPrice:lastPrice!,change:change!,high:high!,low:low!,volume:volume!,turnover:turnover!}};
+            });
           }else if(raw.topic==='publicTrade.'+symbol&&Array.isArray(raw.data)){
             const incoming=(raw.data as NonNullable<TradesMessage['data']>).filter(x=>x.s===symbol&&Number(x.p)>0&&Number(x.v)>0&&(x.S==='Buy'||x.S==='Sell'))
               .map(x=>({id:String(x.i||[x.T,x.p,x.v,x.S].join(':')),price:Number(x.p),amount:Number(x.v),side:x.S as 'Buy'|'Sell',timestamp:Number(x.T)||Date.now()}));
