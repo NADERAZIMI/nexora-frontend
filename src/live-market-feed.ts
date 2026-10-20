@@ -31,7 +31,7 @@ export function attachReadOnlyMarketFeed(root:HTMLElement){
  if(!chart||!book)return ()=>{};
  const overlay=document.createElement('div');overlay.className='nexora-live-chart';overlay.hidden=true;
  const label=document.createElement('div');label.className='nexora-live-chart-label';
- const canvas=document.createElement('canvas');canvas.setAttribute('aria-label','MEXC 1-minute candlestick chart (read-only)');
+ const canvas=document.createElement('canvas');canvas.setAttribute('aria-label','NEXORA spot candlestick chart');
  const state=document.createElement('div');state.className='nexora-live-state';const retry=document.createElement('button');retry.type='button';retry.className='nexora-feed-retry';retry.textContent='Retry';retry.hidden=true;retry.addEventListener('click',()=>{void refresh()});overlay.append(label,canvas,state,retry);chart.append(overlay);
  const price=book.querySelector<HTMLElement>('[class*="__newPrice"] [class*="__priceEllipsis"] > div');
  const originalPrice=price?.textContent??'';
@@ -78,13 +78,13 @@ export function attachReadOnlyMarketFeed(root:HTMLElement){
    if(price){const last=frame.candles.at(-1);price.textContent=frame.lastPrice||(last?String(last.close):(frame.bids[0]?.price??frame.asks[0]?.price??'—'));}
    paint(frame.candles);
    retry.hidden=true;
-   state.textContent=selected+' · MEXC public · '+(frame.candles.length?'1m candles':'candles unavailable')+' · '+(frame.asks.length+frame.bids.length?'depth snapshot':'depth unavailable')+' · no trading';
-  }catch(e){if(signal.aborted||!mounted)return;const message=e instanceof Error?e.message:String(e);state.textContent='MEXC feed failed: '+message;retry.hidden=false;console.warn('[NEXORA public market feed]',message);}
+   state.textContent='';
+  }catch(e){if(signal.aborted||!mounted)return;const message=e instanceof Error?e.message:String(e);state.textContent='NEXORA market feed unavailable: '+message.replaceAll('MEXC','market');retry.hidden=false;console.warn('[NEXORA public market feed]',message);}
  };
  const choose=(event:Event)=>{
    const id=(event as CustomEvent<{symbol:string}>).detail?.symbol;
    if(!id||!/^[A-Z0-9]{3,30}$/.test(id))return;
-   selected=id;restore();overlay.hidden=false;label.textContent=id+' · MEXC spot (live read-only)';
+   selected=id;restore();overlay.hidden=false;label.textContent='' ;
    for(const side of ['asks','bids'])for(const row of book.querySelectorAll<HTMLElement>('[class*="__'+side+'Wrapper"] [class*="__tableRow"]'))row.style.visibility='hidden';
    if(price)price.textContent='—';
    const ctx=canvas.getContext('2d');ctx?.clearRect(0,0,canvas.width,canvas.height);
