@@ -84,3 +84,22 @@
 .depth-layout-button.selected{box-shadow:inset 0 -2px 0 #5865F2}
 .depth-layout-svg{display:block;flex:none;width:22px;height:20px}
 .orderbook .obtools{justify-content:space-between;padding-inline:10px}
+
+/* Searchable Spot symbol picker */
+.pair-selector{position:relative;flex:none;z-index:15}
+.pair-trigger{background:transparent;text-align:left;border:0;color:#F4F6FA;cursor:pointer}
+.pair-trigger:hover{color:#F4F6FA}
+.market-dropdown{position:absolute;top:calc(100% + 14px);left:0;width:360px;max-width:calc(100vw - 24px);background:#17181d;color:#F4F6FA;border:1px solid #313540;box-shadow:0 15px 38px #000b;border-radius:6px;z-index:100;white-space:normal;padding:12px}
+.market-dropdown-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:14px}
+.market-dropdown-top button{font-size:16px;padding:3px 6px}
+.market-dropdown input{width:100%;height:36px;background:#0D0D0D;border:1px solid #343945;border-radius:4px;color:#F4F6FA;padding:0 10px;outline:0}
+.market-dropdown input:focus{border-color:#5865F2}
+.market-catalog-status{font-size:11px;color:#929AAA;padding:11px 2px 7px}
+.market-items{max-height:420px;overflow-y:auto;scrollbar-width:thin}
+.market-item{width:100%;display:flex;justify-content:space-between;align-items:center;padding:9px 8px;border-radius:3px;color:#F4F6FA;font-size:12px}
+.market-item:hover,.market-item.active{background:#272b37}
+.market-item.active{color:#8294ff}
+.market-item small{display:inline;color:#929AAA}
+.market-item>span:last-child{color:#717b8d;font-size:10px}
+.market-noresults{text-align:center;color:#929AAA;padding:28px 6px}
+@media(max-width:750px){.market-dropdown{position:fixed;top:114px;left:12px;width:calc(100vw - 24px);max-height:70vh}.market-items{max-height:55vh}}
