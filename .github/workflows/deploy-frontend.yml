@@ -22,7 +22,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: public/token-icons/
-          key: nexora-public-spot-icons-v1
+          key: nexora-public-spot-icons-v2
       - name: Download missing token logos for same-origin delivery
         run: python3 scripts/build-token-icons.py
       - run: npm run build
