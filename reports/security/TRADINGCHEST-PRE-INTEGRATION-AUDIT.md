@@ -46,3 +46,27 @@ TradingChest is the preferred functional candidate but remains untrusted
 third-party code until the pending checks complete. Pin versions and hashes;
 do not use mutable `main`, run unknown install hooks, load unpinned CDN scripts,
 or use its Polygon demo datafeed.
+
+## Phase 2 — Lockfile and package acquisition (2026-10-20)
+- Pinned upstream revision checked: `d3c8c6a5510ffaaf0c74a8d4902b28d9e646ccb8`.
+- Parsed **all 690 entries** in the upstream npm lockfile (includes development tools).
+- All entries with a resolved download URL point at `https://registry.npmjs.org/`; all such entries declare an integrity checksum.
+- Three entries advertise an installation script: `esbuild@0.21.5`,
+  `fsevents@2.3.3`, and `playwright/node_modules/fsevents@2.3.2`.
+  These are known package names, **but their installed code was not inspected**;
+  lockfile integrity does not by itself establish a dependency is benign.
+- Root `package.json` does not define an install/postinstall lifecycle hook.
+- Upstream Git tree has no tracked `.exe`, `.dll`, `.node`, `.so`,
+  `.wasm` or `.jar` payloads. This does not cover npm tarball contents.
+- `DefaultDatafeed` explicitly uses `api.polygon.io` and an external WebSocket;
+  the opt-in adapter must be excluded from NEXORA. The generic socket wrapper
+  itself receives URLs from caller code.
+- The npm registry was **unreachable from the audit container** (DNS lookup failed)
+  and was inaccessible through the web fetch path. Therefore npm tarball retrieval,
+  publisher artifact comparison, `npm audit`, fresh `npm ci`, runtime browser tests,
+  and dynamic outgoing-request inspection were **not performed**.
+- No malicious behavior was established by the inspected material; **this is not
+  a clean bill of health**.
+
+**Gate: BLOCKED until registry access and isolated package/runtime audit.
+No installation, dependency addition, production deployment or execution authorized.**
