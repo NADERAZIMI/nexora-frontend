@@ -11,23 +11,44 @@ function MarketBar(){return <section className="marketbar"><div className="pair"
 const tabs=['Chart','Overview','Data','Feed','Trade Analysis'] as const;
 function ChartPanel(){const [tab,setTab]=useState<(typeof tabs)[number]>('Chart');const [frame,setFrame]=useState('1h');return <section className="panel chart"><div className="tabs">{tabs.map(x=><button key={x} onClick={()=>setTab(x)} className={tab===x?'active':''}>{x}</button>)}<span className="paneltools">⚙　⛶</span></div>{tab==='Chart'?<><div className="chart-toolbar"><span className="active-blue">Trading Chart</span><div className="timeframes">{['1m','5m','15m','30m','1h','4h','1d','1w'].map(x=><button key={x} onClick={()=>setFrame(x)} className={frame===x?'on':''}>{x}</button>)}</div><span className="muted">Indicators　⌄</span></div><div className="chart-area"><div className="chart-grid"/><div className="chart-message"><span className="chart-icon">▥</span><b>Chart ready for market-data integration</b><p>React chart container · {frame} · BTC/USDT</p><small>No simulated candles or prices are displayed.</small></div><span className="axis axis-top">Price (USDT)</span><span className="axis axis-bottom">Time (UTC)</span></div></>:<div className="waiting">{tab} panel · React component ready for live data</div>}</section>}
 function OrderBook(){
-const [mode,setMode]=useState('Order Book');
-const book=useBybitSpotBook('BTCUSDT');
-const fmt=(n:number,d=2)=>n.toLocaleString('en-US',{maximumFractionDigits:d});
-const asks=book.asks.slice(0,14).reverse(),bids=book.bids.slice(0,14);
-const spread=book.asks[0]&&book.bids[0]?book.asks[0].price-book.bids[0].price:null;
-const renderRows=(rows:typeof asks,side:'ask'|'bid')=>rows.map(r=><div className={'book-row '+side} key={r.price}><span>{fmt(r.price,2)}</span><span>{fmt(r.amount,6)}</span><span>{fmt(r.total,2)}</span></div>);
-return <section className="panel orderbook">
-<div className="tabs compact"><button className={mode==='Order Book'?'active':''} onClick={()=>setMode('Order Book')}>Order Book</button><button className={mode==='Recent Trades'?'active':''} onClick={()=>setMode('Recent Trades')}>Recent Trades</button><span className={'stream-state '+(book.synchronized?'ready':'')}>{book.synchronized?'● Live':book.connected?'● Syncing':'○ Offline'}</span></div>
-{mode==='Order Book'?<>
-<div className="obtools"><span><i className="square sellbg"/> <i className="square buybg"/>　BTC/USDT Spot</span><span>Depth 50</span></div>
-<div className="obhead"><span>Price (USDT)</span><span>Amount (BTC)</span><span>Total (USDT)</span></div>
-<div className="depthblock"><div className="book-rows">{book.synchronized?renderRows(asks,'ask'):<div className="depth-placeholder">{book.error||'Waiting for Bybit snapshot…'}</div>}</div></div>
-<div className="midprice">{book.bids[0]?fmt(book.bids[0].price,2):display}<small>USDT</small></div>
-<div className="depthblock"><div className="book-rows">{book.synchronized?renderRows(bids,'bid'):<div className="depth-placeholder">{book.error||'Waiting for Bybit snapshot…'}</div>}</div></div>
-<div className="spread">Spread　{spread===null?'—':fmt(spread,2)+' USDT'}</div>
-</>:<div className="recent-trades"><div className="obhead"><span>Price (USDT)</span><span>Amount (BTC)</span><span>Time</span></div>{book.trades.length?book.trades.slice(0,35).map(t=><div className={'book-row '+(t.side==='Buy'?'bid':'ask')} key={t.id}><span>{fmt(t.price,2)}</span><span>{fmt(t.amount,6)}</span><span>{new Date(t.timestamp).toLocaleTimeString('en-GB')}</span></div>):<div className="waiting">Waiting for public trades…</div>}</div>}
-</section>
+ const [mode,setMode]=useState('Order Book');
+ const [step,setStep]=useState('0.1');
+ const book=useBybitSpotBook('BTCUSDT');
+ const priceText=(n:number)=>n.toLocaleString('en-US',{minimumFractionDigits:1,maximumFractionDigits:1});
+ const qtyText=(n:number)=>n.toFixed(6);
+ const aggregate=(levels:typeof book.asks,ask:boolean)=>{
+   const tick=Number(step);
+   const byPrice=new Map<number,number>();
+   for(const level of levels){
+     const key=Math.round((ask?Math.ceil((level.price-1e-9)/tick):Math.floor((level.price+1e-9)/tick))*tick*100)/100;
+     byPrice.set(key,(byPrice.get(key)||0)+level.amount);
+   }
+   let cumulative=0;
+   return [...byPrice.entries()].sort((a,b)=>ask?a[0]-b[0]:b[0]-a[0]).slice(0,12).map(([price,amount])=>({price,amount,total:(cumulative+=amount)}));
+ };
+ const asks=aggregate(book.asks,true),bids=aggregate(book.bids,false);
+ const maxTotal=Math.max(1,...asks.map(x=>x.total),...bids.map(x=>x.total));
+ const drawRows=(rows:typeof asks,side:'ask'|'bid')=>rows.map(r=><div className={'book-row '+side} key={r.price}>
+   <span className="book-bar" style={{width:(r.total/maxTotal*100)+'%'}}/>
+   <span className="book-number book-price">{priceText(r.price)}</span>
+   <span className="book-number">{qtyText(r.amount)}</span>
+   <span className="book-number">{qtyText(r.total)}</span>
+ </div>);
+ const bestAsk=book.asks[0]?.price,bestBid=book.bids[0]?.price;
+ const last=book.trades[0],mid=last?.price??bestBid??null;
+ const askQty=book.asks.reduce((n,x)=>n+x.amount,0),bidQty=book.bids.reduce((n,x)=>n+x.amount,0);
+ const buyPercent=bidQty+askQty?Math.round(100*bidQty/(bidQty+askQty)):0;
+ return <section className="panel orderbook">
+ <div className="tabs compact"><button className={mode==='Order Book'?'active':''} onClick={()=>setMode('Order Book')}>Order Book</button><button className={mode==='Recent Trades'?'active':''} onClick={()=>setMode('Recent Trades')}>Recent Trades</button><span className={'stream-state '+(book.synchronized?'ready':'')}>{book.synchronized?'● Live':book.connected?'● Syncing':'○ Offline'}</span></div>
+ {mode==='Order Book'?<>
+  <div className="obtools"><div className="depth-modes" aria-label="Order book layouts"><span className="depth-icon selected">▥</span><span className="depth-icon">▤</span><span className="depth-icon">▥</span></div><select aria-label="Price precision" value={step} onChange={e=>setStep(e.target.value)}>{['0.1','0.5','1','5','10'].map(x=><option value={x} key={x}>{x}</option>)}</select></div>
+  <div className="obhead book-columns"><span>Price (USDT)</span><span>Qty (BTC)</span><span>Total (BTC)</span></div>
+  <div className="depthblock"><div className="book-rows">{book.synchronized?drawRows([...asks].reverse(),'ask'):<div className="depth-placeholder">{book.error||'Waiting for Bybit snapshot…'}</div>}</div></div>
+  <div className={'midprice '+(last?.side==='Buy'?'up':'down')}><span>{mid!==null?priceText(mid):display}</span><small>{mid!==null?'≈ '+mid.toLocaleString('en-US',{style:'currency',currency:'USD',minimumFractionDigits:2}):'USDT'}</small></div>
+  <div className="depthblock"><div className="book-rows">{book.synchronized?drawRows(bids,'bid'):<div className="depth-placeholder">{book.error||'Waiting for Bybit snapshot…'}</div>}</div></div>
+  <div className="book-ratio" aria-label="Displayed depth buy sell proportions"><div className="ratio-buy" style={{width:buyPercent+'%'}}>B&nbsp; {book.synchronized?buyPercent+'%':'—'}</div><div className="ratio-sell" style={{width:(100-buyPercent)+'%'}}>{book.synchronized?(100-buyPercent)+'%':'—'} &nbsp;S</div></div>
+ </>:<div className="recent-trades"><div className="obhead book-columns"><span>Price (USDT)</span><span>Qty (BTC)</span><span>Time</span></div>{book.trades.length?book.trades.slice(0,35).map(t=><div className={'book-row '+(t.side==='Buy'?'bid':'ask')} key={t.id}><span className="book-number book-price">{priceText(t.price)}</span><span className="book-number">{qtyText(t.amount)}</span><span className="book-number">{new Date(t.timestamp).toLocaleTimeString('en-GB')}</span></div>):<div className="waiting">Waiting for public trades…</div>}</div>}
+ </section>;
 }
 function TradingForm({side}:{side:BookSide}){const [kind,setKind]=useState('Limit');const [price,setPrice]=useState('');const [amount,setAmount]=useState('');const [percent,setPercent]=useState(0);return <div className="tradeform"><div className="formcaption"><span>Available</span><span>— {side==='buy'?'USDT':'BTC'}</span></div><div className="ordertypes">{['Limit','Market','Stop Limit'].map(x=><button key={x} onClick={()=>setKind(x)} className={kind===x?'active':''}>{x}</button>)}</div>{kind!=='Market'&&<label className="field"><span>Price</span><input type="number" min="0" placeholder="Enter price" value={price} onChange={e=>setPrice(e.target.value)}/><strong>USDT</strong></label>}<label className="field"><span>Amount</span><input type="number" min="0" placeholder="Enter amount" value={amount} onChange={e=>setAmount(e.target.value)}/><strong>BTC</strong></label><input className="percentage" type="range" min="0" max="100" step="25" value={percent} onChange={e=>setPercent(Number(e.target.value))}/><div className="rangelabel"><span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span></div><div className="formcaption"><span>Total</span><span>— USDT</span></div><button className={'tradeaction '+side} disabled>{side==='buy'?'Buy BTC':'Sell BTC'}</button><p className="loginprompt">Trading requires account connection</p></div>}
 function TradePanel(){const [side,setSide]=useState<BookSide>('buy');return <section className="panel tradepanel"><div className="tabs compact"><button className="active">Spot</button><button>Margin</button></div><div className="sidepicker"><button className={side==='buy'?'buy chosen':''} onClick={()=>setSide('buy')}>Buy</button><button className={side==='sell'?'sell chosen':''} onClick={()=>setSide('sell')}>Sell</button></div><TradingForm side={side}/></section>}
