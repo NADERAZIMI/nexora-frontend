@@ -21,7 +21,7 @@ export function attachSpotTokenInfo(root:HTMLElement):()=>void{
  const host=document.createElement('section');host.className='nexora-token-info';host.hidden=true;
  host.setAttribute('aria-label','NEXORA token information');
  chart.append(host);
- let selected='BTCUSDT',controller:AbortController|null=null,mounted=true,opened=false;
+ let selected='BTCUSDT',selectedQuote='USDT',controller:AbortController|null=null,mounted=true,opened=false;
  const baseFrom=(symbol:string,quote:string)=>symbol.endsWith(quote)?symbol.slice(0,-quote.length):symbol;
  const render=(base:string,quote:string,infoData:ExchangeDetail|null,ticker:Ticker24|null,error='')=>{
    host.replaceChildren();
@@ -33,7 +33,7 @@ export function attachSpotTokenInfo(root:HTMLElement):()=>void{
    const overview=document.createElement('div');const heading=document.createElement('h3');heading.textContent='Overview';overview.append(heading);
    const pct=number(ticker?.priceChangePercent);
    const facts:[string,string][]=[
-    ['Token',safe(infoData?.fullName)||base],
+    ['Token',infoData?.fullName?.trim()||base],
     ['Trading Pair',base+'/'+quote],
     ['Last Price',formatted(ticker?.lastPrice,' '+quote)],
     ['24h Change',pct===null?'—':(pct*100).toFixed(2)+'%'],
@@ -51,15 +51,15 @@ export function attachSpotTokenInfo(root:HTMLElement):()=>void{
  const load=async()=>{
    controller?.abort();controller=new AbortController();const signal=controller.signal;
    const id=selected;
-   render(baseFrom(id,'USDT'),'USDT',null,null,'Loading public market information…');
+   render(baseFrom(id,selectedQuote),selectedQuote,null,null,'Loading public market information…');
    try{
      const details=await Promise.allSettled([get<{symbols?:ExchangeDetail[]}>('exchangeInfo?symbol='+encodeURIComponent(id),signal),get<Ticker24>('ticker/24hr?symbol='+encodeURIComponent(id),signal)]);
      if(!mounted||signal.aborted||selected!==id)return;
      const metadata=details[0].status==='fulfilled'?details[0].value.symbols?.find(x=>x.symbol===id)??null:null;
      const ticker=details[1].status==='fulfilled'?details[1].value:null;
-     const quote=metadata?.quoteAsset??'USDT';const base=metadata?.baseAsset??baseFrom(id,quote);
+     const quote=metadata?.quoteAsset??selectedQuote;const base=metadata?.baseAsset??baseFrom(id,quote);
      render(base,quote,metadata,ticker,metadata||ticker?'':'Market data is currently unavailable.');
-   }catch(error){if(!signal.aborted&&mounted)render(baseFrom(id,'USDT'),'USDT',null,null,String(error));}
+   }catch(error){if(!signal.aborted&&mounted)render(baseFrom(id,selectedQuote),selectedQuote,null,null,String(error));}
  };
  const show=()=>{opened=true;host.hidden=false;void load()};
  const hide=()=>{opened=false;host.hidden=true;controller?.abort()};
@@ -69,7 +69,7 @@ export function attachSpotTokenInfo(root:HTMLElement):()=>void{
   if(info.contains(t)){event.preventDefault();event.stopImmediatePropagation();info.setAttribute('aria-selected','true');chartTab.setAttribute('aria-selected','false');show();}
   else if(tabs.some(tab=>tab.contains(t))){hide();info.setAttribute('aria-selected','false');}
  };
- const onSelect=(event:Event)=>{const symbol=(event as CustomEvent<{symbol?:string}>).detail?.symbol;if(symbol&&/^[A-Z0-9]{3,30}$/.test(symbol)){selected=symbol;if(opened)void load()}};
+ const onSelect=(event:Event)=>{const detail=(event as CustomEvent<{symbol?:string;quote?:string}>).detail;const symbol=detail?.symbol;if(symbol&&/^[A-Z0-9]{3,30}$/.test(symbol)){selected=symbol;selectedQuote=detail?.quote&&/^[A-Z0-9]{2,12}$/.test(detail.quote)?detail.quote:'USDT';if(opened)void load()}};
  root.addEventListener('click',onClick,true);
  root.addEventListener('nexora:market-selected',onSelect);
  return ()=>{mounted=false;controller?.abort();host.remove();root.removeEventListener('click',onClick,true);root.removeEventListener('nexora:market-selected',onSelect)};
