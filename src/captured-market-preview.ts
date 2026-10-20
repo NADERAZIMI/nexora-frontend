@@ -29,21 +29,21 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
   const search = document.createElement('input');
   search.className = 'nexora-market-preview-search';
   search.type = 'search';
-  search.placeholder = 'Search pair';
+  search.placeholder = 'Search all MEXC Spot pairs (e.g. BTC, ETH, USDT)';
   search.setAttribute('aria-label', 'Search captured pairs');
   const columns = document.createElement('div');
   columns.className = 'nexora-market-preview-columns';
   columns.innerHTML = '<span>Pair</span><span>Captured price (USDT)</span><span>Precision</span>';
   const tabs = document.createElement('div');
   tabs.className = 'nexora-market-preview-tabs';
-  const quoteTabs = ['Favorites', 'Holdings', 'USDT', 'USDC', 'ETH', 'BTC'];
-  let activeQuote = 'USDT';
+  const quoteTabs = ['All', 'USDT', 'USDC', 'ETH', 'BTC'];
+  let activeQuote = 'All';
   const tabButtons = quoteTabs.map(quote => {
     const button = document.createElement('button');
     button.type = 'button'; button.textContent = quote;
     button.setAttribute('aria-pressed', String(quote === activeQuote));
     button.addEventListener('click', event => {
-      event.stopPropagation(); activeQuote = quote;
+      event.stopPropagation(); activeQuote = quote; visibleLimit=120;
       tabButtons.forEach(b => b.setAttribute('aria-pressed', String(b.textContent === quote)));
       refresh();
     });
@@ -100,7 +100,7 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
   function refresh() {
     const q = search.value.trim().toUpperCase();
     for (const { id, button } of buttons) {
-      button.hidden = activeQuote !== 'USDT' || (q !== '' && !id.includes(q));
+      button.hidden = liveLoaded || (activeQuote !== 'All' && activeQuote !== 'USDT') || (q !== '' && !id.includes(q));
     }
     const sorted = [...buttons].sort((a,b) => {
       const v = sortKey === 'pair' ? a.id.localeCompare(b.id)
@@ -109,7 +109,7 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
     });
     sorted.forEach(x => choices.append(x.button));
     liveRows.replaceChildren();
-    const liveFiltered=liveMarkets.filter(m=>m.quote===activeQuote && (q==='' || m.symbol.includes(q) || m.id.includes(q)));
+    const liveFiltered=liveMarkets.filter(m=>(activeQuote==='All'||m.quote===activeQuote) && (q==='' || m.symbol.includes(q) || m.quote.includes(q) || m.id.includes(q)));
     liveFiltered.sort((a,b)=>sortDirection*(sortKey==='pair'?a.symbol.localeCompare(b.symbol):comparePrice(a.price,b.price)));
     for(const market of liveFiltered.slice(0,visibleLimit)) {
       const row=document.createElement('button'); row.type='button';
@@ -123,6 +123,7 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
     showMore.textContent='Show more markets ('+Math.min(visibleLimit,liveFiltered.length)+' / '+liveFiltered.length+')';
     const noResults = buttons.every(x => x.button.hidden) && liveRows.children.length===0;
     empty.hidden = !noResults;
+    empty.textContent = liveLoaded ? 'No MEXC Spot pairs match this filter' : 'No saved sample pairs match this filter';
     sortButtons.forEach((button,i) => button.setAttribute('aria-pressed', String(i === (sortKey === 'pair' ? 0 : 1))));
   }
   function comparePrice(a:string,b:string) {
@@ -203,12 +204,13 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
     try {
       liveMarkets=await getMexcSpotMarkets(loadController.signal);
       liveLoaded=true;
-      headingLine.textContent='MEXC public Spot prices · '+liveMarkets.length+' pairs';
-      warning.textContent='All eligible MEXC Spot symbols are searchable. Prices may be unavailable for some pairs. Experimental frontend only.';
+      headingLine.textContent='Live MEXC Spot catalog · '+liveMarkets.length+' pairs';
+      choices.hidden=true;
+      warning.textContent='Complete public MEXC Spot catalog · choose All or filter by quote asset · prices may be unavailable for some pairs. Read-only test feed.';
       refresh();
     } catch(error) {
       if(loadController.signal.aborted)return;
-      headingLine.textContent='MEXC API error';
+      headingLine.textContent='MEXC API error — reopen to retry';
       warning.textContent=error instanceof Error?error.message:String(error);
       console.error('[NEXORA market catalog]',error);
     } finally {liveLoading=false}
