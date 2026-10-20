@@ -26,7 +26,7 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
     button.type = 'button';
     button.textContent = market.symbol;
     button.setAttribute('aria-pressed', String(market.id === 'BTC_USDT'));
-    button.addEventListener('click', () => show(market.id));
+    button.addEventListener('click', event => { event.stopPropagation(); show(market.id); });
     choices.append(button);
     return { id: market.id, button };
   });
@@ -43,10 +43,10 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
   }
   show('BTC_USDT');
   const close = () => { panel.hidden = true; heading.setAttribute('aria-expanded', 'false'); };
-  const toggle = () => { panel.hidden = !panel.hidden; heading.setAttribute('aria-expanded', String(!panel.hidden)); };
+  const toggle = (event?: Event) => { event?.stopPropagation(); panel.hidden = !panel.hidden; heading.setAttribute('aria-expanded', String(!panel.hidden)); };
   const key = (event: KeyboardEvent) => {
     if (event.key === 'Escape') { close(); return; }
-    if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggle(); }
+    if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggle(event); }
   };
   const outside = (event: MouseEvent) => {
     if (!panel.hidden && !anchor.contains(event.target as Node)) close();
