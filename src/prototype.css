@@ -239,3 +239,20 @@ font:13px/1.55 Arial,sans-serif;scrollbar-width:thin;scrollbar-color:#353943 #10
 .nexora-chart-timeframes button:hover{color:#f4f6fa;background:#20242d}
 .nexora-chart-timeframes button[aria-pressed="true"]{color:#f4f6fa;background:#20242d}
 .nexora-live-chart canvas{min-height:0}
+
+
+/* Editable timeframe picker, matching NEXORA reference layout. */
+.nexora-live-chart{overflow:visible}
+.nexora-timeframe-toggle{font-weight:700!important;min-width:28px}
+.nexora-timeframe-menu[hidden]{display:none!important}
+.nexora-timeframe-menu{position:absolute;top:45px;left:145px;z-index:55;width:min(390px,calc(100vw - 40px));
+  padding:18px 20px;background:#1c2029;color:#f4f6fa;border:1px solid #292e3a;
+  border-radius:6px;box-shadow:0 12px 24px #0008;box-sizing:border-box}
+.nexora-timeframe-menu-top{display:flex;align-items:center;justify-content:space-between;color:#929aaa;margin-bottom:14px;font-size:14px}
+.nexora-timeframe-menu-top button{border:0;background:transparent;color:#3d6bff;font-size:14px;cursor:pointer;padding:0}
+.nexora-timeframe-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.nexora-timeframe-grid button{border:1px solid #303746;background:transparent;color:#f4f6fa;border-radius:5px;padding:9px 4px;
+font-size:13px;cursor:pointer}
+.nexora-timeframe-grid button:hover,.nexora-timeframe-grid button.is-active{border-color:#7e8697;background:#252a35}
+.nexora-timeframe-subtitle{color:#929aaa;margin:20px 0 14px;font-size:14px}
+.nexora-timeframe-hint{margin:16px 0 0;color:#929aaa;font-size:11px;line-height:1.5}
