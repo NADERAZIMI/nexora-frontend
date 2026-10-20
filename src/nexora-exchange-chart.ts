@@ -105,9 +105,21 @@ export function attachNexoraExchangeChart(wrapper:HTMLElement,root:HTMLElement):
   message('Loading '+symbol+' · '+frame.value+' historical candles…');
   const qs=new URLSearchParams({category:'spot',symbol,interval:frames[frame.value],limit:'1000'});
   try{
-   const response=await fetch('/bybit-public/v5/market/kline?'+qs,{credentials:'omit',cache:'no-store',signal:abort.signal});
-   if(!response.ok)throw Error('HTTP '+response.status);
-   const result=await response.json() as {retCode:number;result?:{list?:string[][]}};
+   // The local dev proxy is preferred. Production can use an Nginx same-origin
+   // location; direct Bybit REST is a fallback where browser CORS is permitted.
+   const endpoints=['/bybit-public/v5/market/kline?'+qs,'https://api.bybit.com/v5/market/kline?'+qs];
+   let result:{retCode:number;result?:{list?:string[][]}}|null=null;
+   let lastError:unknown;
+   for(const endpoint of endpoints){
+    try{
+     const response=await fetch(endpoint,{credentials:'omit',cache:'no-store',signal:abort.signal});
+     if(!response.ok)throw Error('HTTP '+response.status);
+     const payload=await response.json() as {retCode:number;result?:{list?:string[][]}};
+     if(payload.retCode!==0||!Array.isArray(payload.result?.list))throw Error('Invalid candle payload');
+     result=payload;break;
+    }catch(err){if(abort.signal.aborted)throw err;lastError=err}
+   }
+   if(!result)throw lastError instanceof Error?lastError:Error('No working public candle endpoint');
    if(result.retCode!==0||!Array.isArray(result.result?.list))throw Error('Invalid OHLCV response');
    const bars=result.result.list.map(x=>({time:Math.floor(Number(x[0])/1000),open:Number(x[1]),high:Number(x[2]),low:Number(x[3]),close:Number(x[4]),volume:Number(x[5])}))
     .filter(b=>Object.values(b).every(Number.isFinite)&&b.time>0&&b.low>0&&b.high>=b.low&&b.open>0&&b.close>0)
