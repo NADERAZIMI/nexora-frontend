@@ -55,6 +55,14 @@ export function attachReadOnlyMarketFeed(root:HTMLElement){
  const book=root.querySelector<HTMLElement>('[class*="__orderbookDealsWrapper"]');
  if(!chart||!book)return ()=>{};
  const overlay=document.createElement('div');overlay.className='nexora-live-chart';overlay.hidden=true;
+ overlay.classList.add('nexora-embedded-kline');
+ const embedded=document.createElement('iframe');
+ embedded.className='nexora-embedded-kline-frame';
+ embedded.title='NEXORA Spot candlestick chart and indicators';
+ embedded.setAttribute('loading','eager');
+ embedded.setAttribute('referrerpolicy','same-origin');
+ embedded.src='/kline-preview.html?embedded=1&symbol=BTCUSDT';
+ overlay.append(embedded);
  const label=document.createElement('div');label.className='nexora-live-chart-label';
  const canvas=document.createElement('canvas');canvas.setAttribute('aria-label','Spot chart');
  const state=document.createElement('div');state.className='nexora-live-state';const retry=document.createElement('button');retry.type='button';retry.className='nexora-feed-retry';retry.textContent='Retry';retry.hidden=true;retry.addEventListener('click',()=>{void refresh()});overlay.append(label,canvas,state,retry);chart.append(overlay);
@@ -161,13 +169,17 @@ export function attachReadOnlyMarketFeed(root:HTMLElement){
  const choose=(event:Event)=>{
    const id=(event as CustomEvent<{symbol:string}>).detail?.symbol;
    if(!id||!/^[A-Z0-9]{3,30}$/.test(id))return;
-   selected=id;latestCandles=[];interactive.setCandles([],true);restore();overlay.hidden=false;label.textContent='' ;
+   selected=id;
+   if(embedded.contentWindow)embedded.contentWindow.postMessage({type:'nexora:chart-market',symbol:id},location.origin);
+   if(!embedded.contentWindow||embedded.dataset.loaded!=='true')embedded.src='/kline-preview.html?embedded=1&symbol='+encodeURIComponent(id);
+   latestCandles=[];interactive.setCandles([],true);restore();overlay.hidden=false;label.textContent='' ;
    for(const side of ['asks','bids'])for(const row of book.querySelectorAll<HTMLElement>('[class*="__'+side+'Wrapper"] [class*="__tableRow"]'))row.style.visibility='hidden';
    if(price)price.textContent='—';
    const ctx=canvas.getContext('2d');ctx?.clearRect(0,0,canvas.width,canvas.height);
    if(interval!==undefined)clearInterval(interval);
    void refresh();interval=window.setInterval(()=>{void refresh()},15000);
  };
+ embedded.addEventListener('load',()=>{embedded.dataset.loaded='true';embedded.contentWindow?.postMessage({type:'nexora:chart-market',symbol:selected},location.origin);});
  root.addEventListener('nexora:market-selected',choose);
  const dismiss=(event:PointerEvent)=>{if(!menu.hidden&&!menu.contains(event.target as Node)&&!toolbar.contains(event.target as Node)){menu.hidden=true;renderToolbar()}};
  document.addEventListener('pointerdown',dismiss);
