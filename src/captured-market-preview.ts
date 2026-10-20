@@ -3,6 +3,11 @@ import { CAPTURED_MARKETS, capturedMarketDisplay } from './captured-market-catal
 export function attachCapturedMarketPreview(root: HTMLElement): () => void {
   const heading = root.querySelector<HTMLElement>('[class*="__symbolInfoBox"] [class*="__bigName"]');
   const anchor = heading?.closest<HTMLElement>('[class*="__infoWrapper"]');
+  const originalHeading = heading?.querySelector('h1')?.textContent ?? 'BTC/USDT';
+  const titleNode = heading?.querySelector<HTMLElement>('h1');
+  const originalSubname = anchor?.querySelector<HTMLElement>('[class*="__fullName"]')?.textContent ?? '';
+  const subname = anchor?.querySelector<HTMLElement>('[class*="__fullName"]');
+  const arrow = anchor?.querySelector<HTMLElement>('[class*="__arrowBox"]');
   if (!heading || !anchor) return () => {};
   heading.setAttribute('role', 'button');
   heading.setAttribute('tabindex', '0');
@@ -15,7 +20,7 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
   panel.setAttribute('aria-label', 'Captured market price examples');
   const headingLine = document.createElement('div');
   headingLine.className = 'nexora-market-preview-title';
-  headingLine.textContent = 'Offline market examples — not live data';
+  headingLine.textContent = 'Spot markets · Captured samples (not live)';
   const sample = document.createElement('div');
   sample.className = 'nexora-market-preview-value';
   sample.setAttribute('aria-live', 'polite');
@@ -27,8 +32,30 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
   const columns = document.createElement('div');
   columns.className = 'nexora-market-preview-columns';
   columns.innerHTML = '<span>Pair</span><span>Captured price (USDT)</span><span>Precision</span>';
+  const tabs = document.createElement('div');
+  tabs.className = 'nexora-market-preview-tabs';
+  const quoteTabs = ['Favorites', 'Holdings', 'USDT', 'USDC', 'ETH', 'BTC'];
+  let activeQuote = 'USDT';
+  const tabButtons = quoteTabs.map(quote => {
+    const button = document.createElement('button');
+    button.type = 'button'; button.textContent = quote;
+    button.setAttribute('aria-pressed', String(quote === activeQuote));
+    button.addEventListener('click', event => {
+      event.stopPropagation(); activeQuote = quote;
+      tabButtons.forEach(b => b.setAttribute('aria-pressed', String(b.textContent === quote)));
+      refresh();
+    });
+    tabs.append(button);
+    return button;
+  });
+  const filterBar = document.createElement('div');
+  filterBar.className = 'nexora-market-preview-filters';
+  filterBar.textContent = 'All     Main';
   const choices = document.createElement('div');
   choices.className = 'nexora-market-preview-choices';
+  let selected = 'BTC_USDT';
+  let sortKey: 'pair' | 'price' = 'pair';
+  let sortDirection = 1;
   const buttons = CAPTURED_MARKETS.map(market => {
     const button = document.createElement('button');
     button.type = 'button';
@@ -39,18 +66,56 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
     button.children[2].textContent = display.formattedPrecision;
     button.setAttribute('aria-label', market.symbol);
     button.setAttribute('aria-pressed', String(market.id === 'BTC_USDT'));
-    button.addEventListener('click', event => { event.stopPropagation(); show(market.id); });
+    button.addEventListener('click', event => { event.stopPropagation(); show(market.id); close(); });
     choices.append(button);
     return { id: market.id, button };
   });
   const warning = document.createElement('div');
   warning.className = 'nexora-market-preview-warning';
   warning.textContent = 'Price examples only. The order book remains the saved BTC/USDT snapshot.';
-  search.addEventListener('input', () => {
-    const query = search.value.trim().toUpperCase();
-    buttons.forEach(({ id, button }) => { button.hidden = !id.includes(query); });
-  });
-  panel.append(headingLine, search, columns, choices, sample, warning);
+  const sortButtons: HTMLButtonElement[] = [];
+  for (const [key, text] of [['pair', 'Pair ↕'], ['price', 'Price ↕'], ['none', 'Change']] as const) {
+    const button = document.createElement('button'); button.type = 'button';
+    button.textContent = text; button.className = 'nexora-market-sort';
+    if (key === 'none') button.disabled = true;
+    else button.addEventListener('click', event => {
+      event.stopPropagation();
+      if (sortKey === key) sortDirection *= -1;
+      else { sortKey = key; sortDirection = 1; }
+      refresh();
+    });
+    columns.append(button); sortButtons.push(button);
+  }
+  columns.querySelectorAll('span').forEach(node => node.remove());
+  function refresh() {
+    const q = search.value.trim().toUpperCase();
+    for (const { id, button } of buttons) {
+      button.hidden = activeQuote !== 'USDT' || (q !== '' && !id.includes(q));
+    }
+    const sorted = [...buttons].sort((a,b) => {
+      const v = sortKey === 'pair' ? a.id.localeCompare(b.id)
+        : comparePrice(capturedMarketDisplay(a.id).price, capturedMarketDisplay(b.id).price);
+      return sortDirection * v;
+    });
+    sorted.forEach(x => choices.append(x.button));
+    const noResults = buttons.every(x => x.button.hidden);
+    empty.hidden = !noResults;
+    sortButtons.forEach((button,i) => button.setAttribute('aria-pressed', String(i === (sortKey === 'pair' ? 0 : 1))));
+  }
+  function comparePrice(a:string,b:string) {
+    const norm = (x:string) => {
+      const [whole, frac = ''] = x.split('.');
+      return BigInt(whole + frac.padEnd(30,'0'));
+    };
+    const x=norm(a), y=norm(b);
+    return x < y ? -1 : x > y ? 1 : 0;
+  }
+  const empty = document.createElement('div');
+  empty.className = 'nexora-market-preview-empty';
+  empty.textContent = 'No captured spot markets in this category';
+  empty.hidden = true;
+  search.addEventListener('input', refresh);
+  panel.append(headingLine, search, tabs, filterBar, columns, choices, empty, sample, warning);
   // The archived headline sits inside transformed, clipped layout wrappers.
   // Portal the menu to body so it overlays the chart instead of being clipped.
   document.body.append(panel);
@@ -65,9 +130,18 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
   function show(id: 'BTC_USDT' | 'SHIDO_USDT' | 'WOJAK_USDT') {
     const item = capturedMarketDisplay(id);
     sample.textContent = item.label + ': ' + item.formattedPrice + ' USDT | displayed precision: ' + item.formattedPrecision;
+    selected = id;
     buttons.forEach(choice => choice.button.setAttribute('aria-pressed', String(choice.id === id)));
+    if (titleNode) titleNode.textContent = item.label;
+    if (subname) subname.textContent = item.id === 'BTC_USDT' ? originalSubname : 'Offline sample';
+    root.dataset.localSelectedMarket = id;
+    root.dataset.localMarketDataUnavailable = String(id !== 'BTC_USDT');
+    refresh();
   }
   show('BTC_USDT');
+  arrow?.setAttribute('role','button');
+  arrow?.setAttribute('tabindex','0');
+  arrow?.setAttribute('aria-label','Open spot market selector');
   const close = () => { panel.hidden = true; heading.setAttribute('aria-expanded', 'false'); };
   const toggle = (event?: Event) => { event?.stopPropagation(); if (panel.hidden) positionPanel(); panel.hidden = !panel.hidden; heading.setAttribute('aria-expanded', String(!panel.hidden)); };
   const key = (event: KeyboardEvent) => {
@@ -78,10 +152,14 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
     if (!panel.hidden && !anchor.contains(event.target as Node) && !panel.contains(event.target as Node)) close();
   };
   heading.addEventListener('click', toggle);
+  arrow?.addEventListener('click', toggle);
+  arrow?.addEventListener('keydown', key);
   heading.addEventListener('keydown', key);
   document.addEventListener('click', outside);
   return () => {
     heading.removeEventListener('click', toggle);
+    arrow?.removeEventListener('click', toggle);
+    arrow?.removeEventListener('keydown', key);
     heading.removeEventListener('keydown', key);
     document.removeEventListener('click', outside);
     heading.removeAttribute('role');
@@ -90,6 +168,11 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
     heading.removeAttribute('aria-expanded');
     window.removeEventListener('resize', positionPanel);
     window.removeEventListener('scroll', positionPanel, true);
+    arrow?.removeAttribute('role'); arrow?.removeAttribute('tabindex'); arrow?.removeAttribute('aria-label');
+    if(titleNode) titleNode.textContent = originalHeading;
+    if(subname) subname.textContent = originalSubname;
+    delete root.dataset.localSelectedMarket;
+    delete root.dataset.localMarketDataUnavailable;
     panel.remove();
   };
 }
