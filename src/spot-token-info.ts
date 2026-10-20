@@ -28,7 +28,7 @@ export function attachSpotTokenInfo(root:HTMLElement):()=>void{
    host.replaceChildren();
    const top=document.createElement('div');top.className='nexora-token-info-heading';
    const title=document.createElement('h2');title.textContent=profile?.name||base;
-   const note=document.createElement('span');note.textContent=profile?'Project data: CoinGecko':'NEXORA Spot Info';
+   const note=document.createElement('span');note.textContent=profile?'Project data: CoinGecko':'Market prices: MEXC';
    top.append(title,note);host.append(top);
    const layout=document.createElement('div');layout.className='nexora-token-info-grid';
    const overview=document.createElement('div');const heading=document.createElement('h3');heading.textContent='Overview';overview.append(heading);
@@ -53,7 +53,7 @@ export function attachSpotTokenInfo(root:HTMLElement):()=>void{
    ];
    for(const [label,value] of facts){const row=document.createElement('div');row.className='nexora-token-info-fact';const key=document.createElement('span');key.textContent=label;const val=document.createElement('strong');val.textContent=value;row.append(key,val);overview.append(row);}
    const about=document.createElement('div');const sub=document.createElement('h3');sub.textContent='Introduction';about.append(sub);
-   const paragraph=document.createElement('p');paragraph.textContent=profile?.description||'Project introduction is not currently available.';about.append(paragraph);
+   if(profile?.description){const paragraph=document.createElement('p');paragraph.textContent=profile.description;about.append(paragraph);}
    if(profile){
     const links=document.createElement('div');links.className='nexora-info-links';
     for(const [name,href] of [['Website',profile.homepage],['Explorer',profile.explorer],['X',profile.twitter],['Telegram',profile.telegram],['Reddit',profile.reddit],['GitHub',profile.github]]){
@@ -65,6 +65,7 @@ export function attachSpotTokenInfo(root:HTMLElement):()=>void{
     const credit=document.createElement('p');credit.className='nexora-info-credit';credit.textContent='Project metadata: CoinGecko · market data: public Spot feed';about.append(credit);
    }
    if(error&&error!=='Loading project information…'){const warn=document.createElement('p');warn.className='nexora-token-info-error';warn.textContent=error;about.append(warn);}
+   if(!profile?.description){const unavailable=document.createElement('p');unavailable.textContent='Introduction unavailable for this asset';unavailable.className='nexora-info-credit';about.append(unavailable);}
    layout.append(overview,about);host.append(layout);
  };
  const load=async()=>{
@@ -83,7 +84,7 @@ export function attachSpotTokenInfo(root:HTMLElement):()=>void{
    const coinTask=getCoinProfile(baseAtStart,signal).then(data=>{
      if(signal.aborted)return;
      profile=data;
-     coinStatus=data?'':('CoinGecko profile not mapped for '+baseAtStart+'.');
+     coinStatus=''; // A missing unverified mapping is not an API failure.
      draw();
    }).catch(error=>{
      if(signal.aborted)return;
