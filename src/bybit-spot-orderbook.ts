@@ -84,8 +84,7 @@ export function attachBybitSpotOrderbook(root:HTMLElement):()=>void{
    }
    if(pkt.type!=='delta'||!snapshot)return;
    if(d.seq!<=lastSeq||d.u!<=lastUpdate)return;
-   // A non-consecutive update ID indicates missed depth changes: reconnect for a new snapshot.
-   if(d.u!==lastUpdate+1){connect();return}
+   // Bybit update IDs are monotonically increasing but not guaranteed contiguous.
    update(bidMap,validLevels(d.b));update(askMap,validLevels(d.a));
    lastSeq=d.seq!;lastUpdate=d.u!;lastFrame=Date.now();scheduleRender();
   };
