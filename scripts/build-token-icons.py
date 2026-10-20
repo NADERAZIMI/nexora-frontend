@@ -2,8 +2,6 @@
 """Cache token images into static frontend assets; never hotlink from users' browsers."""
 import io,json,pathlib,tarfile,urllib.request
 ROOT=pathlib.Path(__file__).resolve().parents[1]
-catalog=json.loads((ROOT/"public/spot-markets.json").read_text(encoding="utf-8"))
-symbols={str(p["base"]).lower() for p in catalog["pairs"]}|{str(p["quote"]).lower() for p in catalog["pairs"]}
 out=ROOT/"public/token-icons"
 out.mkdir(parents=True,exist_ok=True)
 # The CI cache restores previously validated assets. Avoid redownloading the archive.
@@ -20,7 +18,7 @@ with tarfile.open(fileobj=io.BytesIO(archive),mode="r:gz") as tar:
         if not item.isfile() or not item.name.startswith("cryptocurrency-icons-master/128/color/"):
             continue
         name=item.name.rsplit("/",1)[-1]
-        if not name.endswith(".png") or name[:-4] not in symbols:continue
+        if not name.endswith(".png") :continue
         data=tar.extractfile(item).read()
         if not (data.startswith(b"\x89PNG\r\n\x1a\n") and 100<len(data)<200000):continue
         (out/name).write_bytes(data)
@@ -30,4 +28,4 @@ for essential in ["btc","eth","usdt","sol","xrp"]:
     if not (out/(essential+".png")).is_file():
         print("Icon absent from upstream set:",essential)
 (out/"manifest.json").write_text(json.dumps({"symbols":sorted(p.stem.upper() for p in out.glob("*.png"))},separators=(",",":")),encoding="utf-8")
-print(f"Cached {count} distinct token logos locally for {len(symbols)} unique assets; other assets use a letter placeholder")
+print(f"Cached {count} distinct token logos locally for available cryptocurrency symbols; other assets use a letter placeholder")
