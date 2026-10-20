@@ -32,6 +32,7 @@ jobs:
         run: |
           mkdir -p dist/build-tools
           cp scripts/build-spot-catalog.py dist/build-tools/build-spot-catalog.py
+          cp scripts/build-kline-cache.py dist/build-tools/build-kline-cache.py
       - uses: actions/upload-artifact@v4
         with:
           name: nexora-frontend-dist
@@ -83,6 +84,7 @@ jobs:
           case "$release" in *[!a-f0-9]*|'') exit 1;; esac
           cd "$HOME/nexora-frontend/releases/$release"
           python3 build-tools/build-spot-catalog.py
+          python3 build-tools/build-kline-cache.py
           test -s public/spot-markets.json
           mv public/spot-markets.json spot-markets.json
           rm -rf public
