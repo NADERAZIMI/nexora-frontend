@@ -106,6 +106,25 @@ jobs:
           crontab /tmp/nexora-spot-cron-$
           rm -f /tmp/nexora-spot-cron-$
           REMOTE
+          # Verify ticker JSON is valid and scheduled refresh targets the active release.
+          ssh $SSH_OPTS "$USER@$HOST" bash -s -- "$RELEASE" <<'REMOTE'
+          set -euo pipefail
+          release="$1"
+          cd "$HOME/nexora-frontend"
+          NEXORA_RELEASE="$release" python3 - <<'PY'
+          import json,os,pathlib,time
+          release=os.environ["NEXORA_RELEASE"]
+          root=pathlib.Path.home()/"nexora-frontend"
+          path=root/"releases"/release/"spot-tickers.json"
+          print("Ticker file:",path,"exists:",path.is_file(),"symlink:",path.is_symlink())
+          data=json.loads(path.read_text())
+          count=len(data.get("tickers",{}))
+          age=(time.time()*1000-float(data.get("updatedAt",0)))/1000
+          print("Ticker entries:",count,"snapshot age seconds:",round(age))
+          assert count>=100 and 0<=age<180,"Ticker payload invalid or stale"
+          PY
+          crontab -l | grep 'NEXORA_SPOT_TICKERS'
+          REMOTE
           # Persist token images independently of frontend releases (once per symbol).
           # A fresh release links back to the dedicated NEXORA asset directory.
           ssh $SSH_OPTS "$USER@$HOST" bash -s -- "$RELEASE" <<'REMOTE'
