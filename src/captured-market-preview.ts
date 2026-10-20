@@ -203,7 +203,7 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
       const liveVisual=panel.matches('[class*="__chartWrapper"],[class*="__orderbookDealsWrapper"]');
       if(liveVisual){delete panel.dataset.nexoraUnavailable;delete panel.dataset.nexoraUnavailableLabel;}
     }
-    root.dispatchEvent(new CustomEvent('nexora:market-selected',{detail:{symbol:market.id}}));
+    root.dispatchEvent(new CustomEvent('nexora:market-selected',{detail:{symbol:market.id,base:market.symbol,quote:market.quote}}));
     buttons.forEach(choice=>choice.button.setAttribute('aria-pressed','false'));
   }
   let loadController:AbortController|null=null;
