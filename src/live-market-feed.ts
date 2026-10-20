@@ -119,7 +119,6 @@ export function attachReadOnlyMarketFeed(root:HTMLElement){
  };
  const topRow=document.createElement('div');topRow.className='nexora-chart-top-row';topRow.append(toolbar);
  overlay.prepend(topRow,menu);renderToolbar();renderMenu();
- const disposeChartTypePicker=attachChartTypePicker(topRow);
  const price=book.querySelector<HTMLElement>('[class*="__newPrice"] [class*="__priceEllipsis"] > div');
  const originalPrice=price?.textContent??'';
  const originals: {node:HTMLElement;text:string}[]=[];
@@ -133,6 +132,7 @@ export function attachReadOnlyMarketFeed(root:HTMLElement){
  let controller:AbortController|null=null, interval:number|undefined,selected='BTCUSDT',mounted=true,scale=1;
  const restore=()=>{originals.forEach(x=>{x.node.textContent=x.text});if(price)price.textContent=originalPrice};
  const interactive=createInteractiveSpotChart(canvas,topRow);
+ const disposeChartTypePicker=attachChartTypePicker(topRow,type=>interactive.setChartType(type as Parameters<typeof interactive.setChartType>[0]));
  const paint=(candles:Candle[])=>interactive.setCandles(candles);
  const refresh=async()=>{
   controller?.abort();controller=new AbortController();const signal=controller.signal;
