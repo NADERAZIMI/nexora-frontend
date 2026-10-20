@@ -128,3 +128,18 @@ section[data-local-hide-other-pairs] .ant-checkbox-v2-checked .ant-checkbox-v2-i
 .nexora-market-preview-choices button span.nexora-change-positive{color:#16B89A}
 .nexora-market-preview-choices button span.nexora-change-negative{color:#F05A70}
 .nexora-market-preview-choices button span.nexora-change-neutral{color:#929AAA}
+
+/* Token marks in the live NEXORA Spot selector. */
+.nexora-market-preview-choices button .nexora-market-pair{
+  display:flex;align-items:center;gap:9px;min-width:0;text-align:left;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;
+}
+.nexora-market-logo,.nexora-market-logo-fallback{
+  flex:0 0 20px;width:20px;height:20px;border-radius:50%;object-fit:contain;
+}
+.nexora-market-logo-fallback{
+  align-items:center;justify-content:center;background:#242834;color:#b5bfd1;
+  font:600 10px/20px Arial,sans-serif;text-align:center;
+}
+.nexora-market-logo[hidden],.nexora-market-logo-fallback[hidden]{display:none!important}
+.nexora-live-chart-label:empty,.nexora-live-state:empty{display:none!important}
