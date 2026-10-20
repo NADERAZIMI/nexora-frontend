@@ -54,3 +54,9 @@
 .markets-catalog-note strong{font-size:12px}
 .markets-catalog-note span{color:var(--nx-muted);font-size:11px}
 @media(max-width:950px){.markets-overview-cards{grid-template-columns:1fr}.markets-highlights{grid-template-columns:1fr}.markets-highlight{border-right:0;border-bottom:1px solid var(--nx-border)}.markets-section-title input{max-width:50%}}
+
+/* Text-only market category selection: no active background or border. */
+.markets-nav{background:transparent;border-bottom:0}
+.markets-nav button,.markets-nav button.active{background:transparent!important;border:0!important;box-shadow:none!important;border-radius:0!important}
+.markets-nav button{color:var(--nx-muted)}
+.markets-nav button.active{color:var(--nx-blue)}
