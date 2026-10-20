@@ -525,3 +525,28 @@ test('single-side book rows start below headers with no opposite slot and a cont
     assert.deepEqual(await measure(),original,'Combined restores exact captured placement');
   }
 });
+
+test('Order Book precision menu opens by mouse and keyboard without inventing ticks or changing rows', async t => {
+  const page = await pageFor(t), book = page.locator('[data-local-orderbook-mode]');
+  const trigger = book.getByRole('button', { name:'Order Book price precision' });
+  const menu = book.getByRole('menu', { name:'Price precision options' });
+  const originalRows = await book.locator('[class*="__tableRow"]').allTextContents();
+  assert.equal(await trigger.getAttribute('aria-expanded'), 'false');
+  await trigger.click();
+  assert.equal(await trigger.getAttribute('aria-expanded'), 'true');
+  assert.equal(await menu.isVisible(), true);
+  assert.deepEqual(await menu.getByRole('menuitemradio').allTextContents(), ['0.01']);
+  assert.equal(await menu.getByRole('menuitemradio').getAttribute('aria-checked'), 'true');
+  await trigger.press('Escape');
+  assert.equal(await menu.isVisible(), false);
+  await trigger.press('Enter');
+  assert.equal(await menu.isVisible(), true);
+  await menu.getByRole('menuitemradio', { name:'0.01' }).click();
+  assert.equal(await menu.isVisible(), false);
+  await trigger.press('Space');
+  assert.equal(await menu.isVisible(), true);
+  await page.locator('[data-local-order-side="sell"]').click();
+  assert.equal(await menu.isVisible(), false);
+  assert.deepEqual(await book.locator('[class*="__tableRow"]').allTextContents(), originalRows);
+  assert.equal(await page.locator('[data-testid="spot-trade-buyPrice"]').isVisible(), true);
+});
