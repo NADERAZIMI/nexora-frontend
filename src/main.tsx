@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {useSpotMarkets,useFilteredPairs,type SpotPair} from './spot-markets';
 import {useSpotTickers,type MarketTicker} from './spot-tickers';
+import {TokenIcon} from './TokenIcon';
 import { createRoot } from 'react-dom/client';
 import './styles.css';
 import {useBybitSpotBook} from './useBybitSpotBook';
@@ -40,7 +41,7 @@ function MarketBar({pair,onSelect,pairs,source,tickers,pricesReady}:{pair:SpotPa
  return <div className={'market-table-row '+(active?'active':'')} key={p.symbol}>
  <button className={'market-star '+(star?'saved':'')} title={star?'Remove favorite':'Add favorite'} aria-label={'Favorite '+p.symbol} onClick={()=>setFavorites(prev=>star?prev.filter(x=>x!==p.symbol):[...prev,p.symbol])}>{star?'★':'☆'}</button>
  <button className="market-row-select" onClick={()=>{onSelect(p);setOpen(false);setSearch('');}}>
- <span className="market-symbol-cell"><span className="market-token-icon">{p.base.slice(0,1)}</span><span className="market-coin-name"><strong>{p.base}</strong><small>{p.quote}</small></span></span>
+ <span className="market-symbol-cell"><TokenIcon symbol={p.base}/><span className="market-coin-name"><strong>{p.base}</strong><small>{p.quote}</small></span></span>
  <span className="market-numeric">{tick?formatPrice(tick.lastPrice):'—'}</span>
  <span className={'market-numeric '+(tick?(tick.change>=0?'positive':'negative'):'')}>{tick?(tick.change>=0?'+':'')+(tick.change*100).toFixed(2)+'%':'—'}</span>
  <span className="market-numeric">{tick?formatVolume(tick.turnover)+' ('+p.quote+')':'—'}</span>
