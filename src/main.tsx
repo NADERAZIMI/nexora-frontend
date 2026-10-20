@@ -78,28 +78,41 @@ function FundraisingPanel({base}:{base:string}){
  </section>)}
  </div>;
 }
-const overviewSections=['Info','Fundraising','Tokenomics','Network'] as const;
-function OverviewPanel({pair}:{pair:SpotPair}){
- const [section,setSection]=useState<(typeof overviewSections)[number]>('Info');
- const [expanded,setExpanded]=useState(false);
+function TokenInfoPanel({pair}:{pair:SpotPair}){
  const {info,status}=useTokenOverview(pair.base);
- const number=(n:number|undefined)=>n===undefined?'—':n.toLocaleString('en-US',{maximumFractionDigits:2});
- const dollars=(n:number|undefined)=>n===undefined?'—':'$'+number(n);
- const labelLinks=(values:string[]|undefined)=>values?.map(url=>{try{return {url,label:new URL(url).hostname.replace(/^www\./,'')};}catch{return null;}}).filter((x):x is {url:string;label:string}=>Boolean(x))||[];
- const link=(url:string|undefined,title:string)=>url?<a href={url} target="_blank" rel="noopener noreferrer">{title}</a>:null;
- return <div className="overview-panel">
-  <div className="overview-subtabs">{overviewSections.map(x=><button type="button" key={x} className={section===x?'active':''} onClick={()=>setSection(x)}>{x}</button>)}</div>
-  {section==='Info'?<div className="overview-info-grid">
-   <div className="overview-token-details"><h3>Token details</h3><div className="overview-data-row"><span>Market Cap</span><strong>{dollars(info?.marketCap)}</strong></div><div className="overview-data-row"><span><abbr title="Fully Diluted Valuation">FDV</abbr></span><strong>{dollars(info?.fdv)}</strong></div><hr/><div className="overview-data-row"><span>Circulating Supply</span><strong>{number(info?.circulating)}</strong></div><div className="overview-data-row"><span>Total Supply</span><strong>{number(info?.total)}</strong></div><div className="overview-data-row"><span>Max. Supply</span><strong>{number(info?.max)}</strong></div>{status==='unavailable'&&<p className="overview-status">Public token metadata unavailable</p>}</div>
-   <div className="overview-token-about"><h3>About {pair.base}</h3>{info?.description?<><p className={expanded?'overview-description expanded':'overview-description'}>{info.description}</p><button className="overview-show-more" type="button" onClick={()=>setExpanded(v=>!v)}>{expanded?'Show Less ⌃':'Show More ⌄'}</button></>:<p className="overview-description muted">{status==='loading'?'Loading public token details…':'Description unavailable'}</p>}
-   <h3>Explore</h3><div className="overview-links">{labelLinks(info?.explorers).map(x=><a href={x.url} target="_blank" rel="noopener noreferrer" key={x.url}>{x.label}</a>)}</div>
-   <h3>Socials</h3><div className="overview-links">{link(info?.socials?.github,'GitHub')}{link(info?.socials?.twitter,'X')}{link(info?.socials?.reddit,'Reddit')}</div>
-   <h3>Official Links</h3><div className="overview-links">{link(info?.homepage,'◎ Website')}{link(info?.whitepaper,'▤ Whitepaper')}</div></div>
-  </div>:section==='Fundraising'?<FundraisingPanel base={pair.base}/>:<div className="overview-empty"><h3>{section}</h3><p>Verified {pair.base} {section.toLowerCase()} data is not connected yet. No estimated values are shown.</p></div>}
+ const fmt=(n:number|undefined,dec=2)=>n===undefined?'—':n.toLocaleString('en-US',{maximumFractionDigits:dec});
+ const usd=(n:number|undefined)=>n===undefined?'—':'$'+fmt(n,n<1?8:2);
+ const pct=(n:number|undefined)=>n===undefined?'—':n.toFixed(2)+'%';
+ const date=(v:string|undefined)=>v?new Date(v).toLocaleDateString('en-CA'):'—';
+ const circulation=info?.circulating!==undefined&&info.total?100*info.circulating/info.total:undefined;
+ const volRatio=info?.volume24h!==undefined&&info.marketCap?100*info.volume24h/info.marketCap:undefined;
+ const links=[{text:'White Paper',url:info?.whitepaper},{text:'Official Website',url:info?.homepage},{text:'Block Explorer',url:info?.explorers?.[0]},{text:'Github',url:info?.socials?.github}];
+ return <div className="token-info-screen">
+  <div className="token-info-header"><TokenIcon symbol={pair.base}/><strong>{pair.base}</strong></div>
+  <div className="token-info-columns">
+   <div className="token-info-facts"><h3>Overview</h3>
+   {([['Rank',info?.rank!==undefined?'No.'+fmt(info.rank,0):'—'],
+    ['Market Cap',usd(info?.marketCap)],['Fully Diluted Market Cap',usd(info?.fdv)],
+    ['Market Share',pct(info?.marketShare)],['Trading Vol/Market Cap (24H)',pct(volRatio)],
+    ['Circulating Supply',fmt(info?.circulating,0)],['Max Supply',fmt(info?.max,0)],
+    ['Total Supply',fmt(info?.total,0)],['Circulation Rate',pct(circulation)],
+    ['Issue Date',info?.genesisDate||'—'],['Issue Price','—'],
+    ['All-Time High',usd(info?.ath)],['ATH Date',date(info?.athDate)],
+    ['Lowest Price',usd(info?.atl)],['ATL Date',date(info?.atlDate)],
+    ['Public Blockchain',pair.base]] as [string,string][]).map(([name,value])=><div className="token-info-fact" key={name}><span>{name}</span><strong>{value}</strong></div>)}
+   </div>
+   <div className="token-info-intro"><h3>Introduction</h3>
+    <p>{info?.description|| (status==='loading'?'Loading token information…':'Verified introduction is currently unavailable.')}</p>
+    <h3>Sector</h3><div className="token-info-tags">{info?.categories?.length?info.categories.map(x=><span key={x}>{x}</span>):<span className="token-info-missing">—</span>}</div>
+    <h3>Social Media</h3><div className="token-info-links">{info?.socials?.reddit&&<a href={info.socials.reddit} target="_blank" rel="noopener noreferrer">Reddit</a>}{info?.socials?.twitter&&<a href={info.socials.twitter} target="_blank" rel="noopener noreferrer">X</a>}</div>
+    <h3>Related Links</h3><div className="token-info-links">{links.filter((x):x is {text:string;url:string}=>Boolean(x.url?.startsWith('https://'))).map(x=><a key={x.text} href={x.url} target="_blank" rel="noopener noreferrer">{x.text}</a>)}</div>
+    <p className="token-info-source">Token metadata: CoinGecko. Market figures can differ from Bybit. Information is not investment advice.</p>
+   </div>
+  </div>
  </div>;
 }
-const tabs=['Chart','Overview','Data','Feed','Trade Analysis'] as const;
-function ChartPanel({pair}:{pair:SpotPair}){const [tab,setTab]=useState<(typeof tabs)[number]>('Chart');const [frame,setFrame]=useState('1h');return <section className="panel chart"><div className="tabs">{tabs.map(x=><button key={x} onClick={()=>setTab(x)} className={tab===x?'active':''}>{x}</button>)}<span className="paneltools">⚙　⛶</span></div>{tab==='Overview'?<OverviewPanel pair={pair}/>:tab==='Chart'?<><div className="chart-toolbar"><span className="active-blue">Trading Chart</span><div className="timeframes">{['1m','5m','15m','30m','1h','4h','1d','1w'].map(x=><button key={x} onClick={()=>setFrame(x)} className={frame===x?'on':''}>{x}</button>)}</div><span className="muted">Indicators　⌄</span></div><div className="chart-area"><div className="chart-grid"/><div className="chart-message"><span className="chart-icon">▥</span><b>Chart ready for market-data integration</b><p>React chart container · {frame} · {pair.base}/{pair.quote}</p><small>No simulated candles or prices are displayed.</small></div><span className="axis axis-top">Price ({pair.quote})</span><span className="axis axis-bottom">Time (UTC)</span></div></>:<div className="waiting">{tab} panel · React component ready for live data</div>}</section>}
+const tabs=['Chart','Info','Data','Feed','Trade Analysis'] as const;
+function ChartPanel({pair}:{pair:SpotPair}){const [tab,setTab]=useState<(typeof tabs)[number]>('Chart');const [frame,setFrame]=useState('1h');return <section className="panel chart"><div className="tabs">{tabs.map(x=><button key={x} onClick={()=>setTab(x)} className={tab===x?'active':''}>{x}</button>)}<span className="paneltools">⚙　⛶</span></div>{tab==='Info'?<TokenInfoPanel pair={pair}/>:tab==='Chart'?<><div className="chart-toolbar"><span className="active-blue">Trading Chart</span><div className="timeframes">{['1m','5m','15m','30m','1h','4h','1d','1w'].map(x=><button key={x} onClick={()=>setFrame(x)} className={frame===x?'on':''}>{x}</button>)}</div><span className="muted">Indicators　⌄</span></div><div className="chart-area"><div className="chart-grid"/><div className="chart-message"><span className="chart-icon">▥</span><b>Chart ready for market-data integration</b><p>React chart container · {frame} · {pair.base}/{pair.quote}</p><small>No simulated candles or prices are displayed.</small></div><span className="axis axis-top">Price ({pair.quote})</span><span className="axis axis-bottom">Time (UTC)</span></div></>:<div className="waiting">{tab} panel · React component ready for live data</div>}</section>}
 function OrderBook({pair}:{pair:SpotPair}){
  const [mode,setMode]=useState('Order Book');
  const [stepMultiplier,setStepMultiplier]=useState(1);
