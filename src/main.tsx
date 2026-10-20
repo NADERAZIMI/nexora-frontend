@@ -64,7 +64,7 @@ function MarketBar({pair,onSelect,pairs,source,tickers,pricesReady,book,livePric
  <span className="market-numeric">{tick?formatVolume(tick.turnover)+' ('+p.quote+')':'—'}</span>
  </button></div>;})}{found.length===0&&category!=='TradFi'&&<div className="market-noresults">No matching Spot pairs</div>}</div>
  </div>}
- </div><div className={'price market-last '+lastClass}><strong>{livePrice!==undefined?formatLivePrice(livePrice):'—'}</strong><small>{livePrice!==undefined?'≈'+formatLivePrice(livePrice)+' '+pair.quote:'Waiting for live trades…'}</small></div>
+ </div><div className={'price market-last '+lastClass}><strong>{livePrice!==null?formatLivePrice(livePrice):'—'}</strong><small>{livePrice!==null?'≈'+formatLivePrice(livePrice)+' '+pair.quote:'Waiting for live trades…'}</small></div>
  <div className="marketstat market-change"><small>24H Change</small><strong className={changeClass}>{signedChange}</strong></div>
  <div className="marketstat"><small>24H High</small><strong>{marketPrice(selectedTicker?.high)}</strong></div>
  <div className="marketstat"><small>24H Low</small><strong>{marketPrice(selectedTicker?.low)}</strong></div>
