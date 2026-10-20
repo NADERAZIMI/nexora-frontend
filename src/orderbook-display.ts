@@ -5,6 +5,8 @@ export function attachOrderBookDisplay(root: HTMLElement) {
   const book = root.querySelector<HTMLElement>('[class*="__orderbookDealsWrapper"]');
   const asks = book?.querySelector<HTMLElement>('[class*="__asksWrapper"]');
   const bids = book?.querySelector<HTMLElement>('[class*="__bidsWrapper"]');
+  const header = book?.querySelector<HTMLElement>('[class*="__hVXrWq__tableHeader"]');
+  const body = book?.querySelector<HTMLElement>('[class*="__hVXrWq__tableBody"]');
   const definitions = [
     ['combined', 'IconOrderbookUpgreen', 'Combined Buy + Sell'],
     ['buy', 'IconOrderbookBuy', 'Buy Only'],
@@ -13,7 +15,18 @@ export function attachOrderBookDisplay(root: HTMLElement) {
   const controls = definitions.map(([mode, icon, label]) => ({
     mode, label, element: book?.querySelector(`[data-icon="${icon}"]`)?.closest<HTMLElement>('[class*="__orderMode"]'),
   }));
-  if (!book || !asks || !bids || controls.some(control => !control.element)) return () => {};
+  if (!book || !asks || !bids || !header || !body || controls.some(control => !control.element)) return () => {};
+
+  const alignContent = () => {
+    const parent = body.offsetParent;
+    if (!(parent instanceof HTMLElement)) return;
+    const top = header.getBoundingClientRect().bottom - parent.getBoundingClientRect().top - parent.clientTop + parent.scrollTop;
+    book.style.setProperty('--local-orderbook-content-top', `${top}px`);
+  };
+  alignContent();
+  const resize = new ResizeObserver(alignContent);
+  resize.observe(book);
+  resize.observe(header);
 
   const group = controls[0].element!.parentElement!;
   const activeClass = 'index-module-scss-module__hVXrWq__active';
@@ -23,8 +36,8 @@ export function attachOrderBookDisplay(root: HTMLElement) {
       control.element!.classList.toggle(activeClass, control.mode === mode);
       control.element!.setAttribute('aria-pressed', String(control.mode === mode));
     }
-    // Visibility is inherited by current and future rows, without moving nodes
-    // or collapsing the captured side heights and mid-price position.
+    // Mode-scoped CSS removes the excluded section from flow without moving,
+    // rewriting or recreating any captured row nodes.
     asks.setAttribute('aria-hidden', String(mode === 'buy'));
     bids.setAttribute('aria-hidden', String(mode === 'sell'));
   };
@@ -48,5 +61,5 @@ export function attachOrderBookDisplay(root: HTMLElement) {
   });
   const savedMode = book.dataset.localOrderbookMode;
   select(savedMode === 'buy' || savedMode === 'sell' ? savedMode : 'combined');
-  return () => { cleanup.forEach(dispose => dispose()); };
+  return () => { resize.disconnect(); cleanup.forEach(dispose => dispose()); };
 }

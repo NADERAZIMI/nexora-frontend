@@ -410,7 +410,7 @@ test('all Order Book modes support mouse, Enter and Space with one selected mode
 
 test('Order Book display modes retain panel geometry, typography, prices and existing local control states', async t => {
   const page = await pageFor(t), group = page.getByRole('group', { name:'Order Book display mode' });
-  const geometry = () => page.locator('[class*="__chartWrapper"],[class*="__orderbookDealsWrapper"],[class*="__actionWrapper"],[class*="__asksWrapper"],[class*="__bidsWrapper"],[class*="__newPrice"],[data-local-orderbook-control],input[type="number"]').evaluateAll(els => els.map(el => {
+  const geometry = () => page.locator('[class*="__chartWrapper"],[class*="__orderbookDealsWrapper"],[class*="__actionWrapper"],[data-local-orderbook-control],input[type="number"]').evaluateAll(els => els.map(el => {
     const r = el.getBoundingClientRect(), c = getComputedStyle(el);
     return { x:r.x,y:r.y,width:r.width,height:r.height,font:c.font,padding:c.padding,radius:c.borderRadius,border:c.borderWidth };
   }));
@@ -467,4 +467,59 @@ test('Order Book listeners are scoped, disposable and reattach to the existing m
   });
   assert.deepEqual(result, { nested:'buy',scoped:'buy',disposed:'buy',restored:'buy',rebound:'sell',retained:true });
   assert.equal(await page.locator('[data-local-orderbook-mode]').getAttribute('data-local-orderbook-mode'), 'combined');
+});
+
+test('single-side book rows start below headers with no opposite slot and a contiguous mid-price', async t => {
+  const page = await pageFor(t), book = page.locator('[data-local-orderbook-mode]');
+  const group = page.getByRole('group', { name:'Order Book display mode' });
+  const measure = () => book.evaluate(el => {
+    const rect = node => { const r = node.getBoundingClientRect(); return { x:r.x,y:r.y,width:r.width,height:r.height,bottom:r.bottom }; };
+    const section = side => el.querySelector(`[class*="__${side}Wrapper"]`);
+    return {
+      panel:rect(el), header:rect(el.querySelector('[class*="__hVXrWq__tableHeader"]')),
+      body:rect(el.querySelector('[class*="__hVXrWq__tableBody"]')),
+      price:rect(el.querySelector('[class*="__newPrice"]')),
+      children:[...el.querySelector('[class*="__hVXrWq__tableBody"]').children].map(node => ({className:node.className,...rect(node),display:getComputedStyle(node).display,order:getComputedStyle(node).order})),
+      asks:rect(section('asks')), bids:rect(section('bids')),
+      askDisplay:getComputedStyle(section('asks')).display, bidDisplay:getComputedStyle(section('bids')).display,
+      rows:Object.fromEntries(['asks','bids'].map(side => [side,[...section(side).querySelectorAll('[class*="__tableRow"]')].map(node => {
+        const style = getComputedStyle(node); return { ...rect(node),font:style.font,color:style.color,padding:style.padding };
+      })])),
+    };
+  });
+  const original = await measure();
+  // Removing only the mode attribute proves Combined is still the captured CSS layout.
+  const captured = await book.evaluate(el => {
+    const targets = [el,...el.querySelectorAll('[class*="__asksWrapper"],[class*="__bidsWrapper"],[class*="__newPrice"],[class*="__tableRow"]')];
+    const geometry = () => targets.map(node => { const r = node.getBoundingClientRect(); return [r.x,r.y,r.width,r.height]; });
+    const combined = geometry(); el.removeAttribute('data-local-orderbook-mode');
+    const reference = geometry(); el.dataset.localOrderbookMode = 'combined';
+    return { combined,reference };
+  });
+  assert.deepEqual(captured.combined,captured.reference);
+  for (const [mode,name,side,excluded] of [['buy','Buy Only','bids','asks'],['sell','Sell Only','asks','bids']]) {
+    await group.getByRole('button', { name,exact:true }).press('Enter');
+    const current = await measure();
+    assert.deepEqual(current.panel,original.panel); assert.deepEqual(current.header,original.header);
+    assert.equal(current.body.x,original.body.x); assert.equal(current.body.width,original.body.width);
+    assert.equal(current.body.bottom,original.body.bottom);
+    assert.equal(current[excluded].height,0); assert.equal(current[excluded].width,0);
+    assert.equal(current[excluded === 'asks' ? 'askDisplay' : 'bidDisplay'],'none');
+    assert.equal(current[side].y,current.body.y,'visible section starts at content top');
+    assert.ok(current.body.y >= current.header.bottom - 1,`content does not overlap column headings: ${JSON.stringify({header:current.header,body:current.body})}`);
+    assert.ok(current.body.y - current.header.bottom <= 2,'no reserved gap beneath headers');
+    assert.equal(current.rows[side].length,9);
+    assert.equal(current.rows[side][0].y-current[side].y,original.rows[side][0].y-original[side].y);
+    for (let i=0;i<9;i++) {
+      const row=current.rows[side][i], before=original.rows[side][i];
+      for (const key of ['height','width','font','color','padding']) assert.equal(row[key],before[key]);
+      if (i) assert.equal(row.y-current.rows[side][i-1].y,21,'original row pitch');
+    }
+    assert.equal(current.price.y,current[side].bottom,`mid-price directly follows visible side: ${JSON.stringify(current.children)}`);
+    assert.ok(current.price.height>0); assert.ok(current.price.height<original.asks.height,'mid-price does not reserve a side slot');
+    assert.ok(current.price.bottom<=current.body.bottom,'mid-price remains in content area');
+    assert.equal(await book.locator('[class*="__newPrice"]').isVisible(),true);
+    await group.getByRole('button', { name:'Combined Buy + Sell',exact:true }).press('Space');
+    assert.deepEqual(await measure(),original,'Combined restores exact captured placement');
+  }
 });

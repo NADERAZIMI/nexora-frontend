@@ -19,14 +19,15 @@
     "src/fidelity.css": "2b1f0137bea24d3378c7301e2a50e5d936d2cd995391d16d334f25b2177fdcc2",
     "src/main.tsx": "22629050fd150a4a355708382c00cd58d5d82909cf86f895b72988bdcdd11613",
     "src/palette.css": "1c3d95509331246188c74a55e792542040e4ed12a98721de6a0be355c498a775",
-    "src/prototype.css": "abf4780610e846a39bd04c99402e1ef4b0388f0141047f30f3369ce32ea55a3d",
+    "src/prototype.css": "6e8b2c73da67a0e938db97101a1ac4c04c271c1177b9592c8ebbc2c06107d5be",
     "src/reference.css": "aaa1e46672300d6c410465cd1a0f26d7b567939ac01a04bb3bcb226a5935fa76",
     "src/snapshot.html": "11181f22d37a7c00ca90d665e2e9cab429d0787087dd112fce2aa0f91aa8f8b9",
     "src/vite-env.d.ts": "424faf9241dd699dda995b367ed36665732da1e6ec1f33b2fd40394488ecac92",
     "src/spot-local-controls.ts": "943646fc4634cd794050bde3d777dc20a2890705649cfddd0c7d933cf4b7dfd8",
-    "src/orderbook-display.ts": "6bac9fbf3b834043ba8b24e9075108fd61a2557dec130bca88c959df5a6f7671"
+    "src/orderbook-display.ts": "34e5ebb9e7889cecc025efec72a8920e10c90fb524bb935b7361834b87be09b7"
   },
   "phase02cReviewedFrom": "1acc95bdb3a45053d9117e6282b81f833ef268ad",
   "phase02dReviewedFrom": "99410fea21c1e77edd0540b7c3acf35b379b5ae0",
-  "phase02eReviewedFrom": "d077dfc12f6fadeea80f52c4b4d9e63bf50cd822"
+  "phase02eReviewedFrom": "d077dfc12f6fadeea80f52c4b4d9e63bf50cd822",
+  "phase02eHotfixReviewedFrom": "d424a86b3f82b50e7372ad151b9869693cf964fb"
 }
