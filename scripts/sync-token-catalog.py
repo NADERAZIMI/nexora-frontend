@@ -122,8 +122,8 @@ def main():
 
     completed = 0
     # Stable identities first, then unique ticker identities.
-    ids = dict(by_symbol)
-    ids.update(KNOWN)
+    ids = dict(KNOWN)
+    ids.update({sym: ident for sym, ident in by_symbol.items() if sym not in ids})
     for symbol, ident in ids.items():
         if completed >= args.profiles_limit:
             break
