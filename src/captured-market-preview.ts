@@ -184,7 +184,7 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
     if(subname) subname.textContent='MEXC Spot · public ticker';
     root.dataset.localSelectedMarket=market.id;
     root.dataset.localMarketDataUnavailable='true';
-    sample.textContent=label+': '+formatPrice(market.price)+' '+market.quote+' (MEXC public price)';
+    sample.textContent=label+': '+(market.price?formatPrice(market.price):'Price unavailable')+' '+market.quote+' (MEXC public price)';
     // Public market data can populate the chart/depth; forms stay unavailable.
     for(const panel of btcOnlyPanels) {
       const liveVisual=panel.matches('[class*="__chartWrapper"],[class*="__orderbookDealsWrapper"]');
