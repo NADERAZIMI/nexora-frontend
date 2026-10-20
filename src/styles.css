@@ -207,3 +207,13 @@ main{isolation:isolate}
 html,body,#root,button,input,select,textarea{font-family:'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif}
 .marketbar,.market-dropdown,.workspace,.orders,.orderbook,.overview-panel,.tradepanel{font-family:inherit}
 .book-number,.market-numeric,.marketstat strong,.price strong,.midprice,.overview-data-row strong,.market-row-select,.book-ratio{font-variant-numeric:tabular-nums lining-nums;font-feature-settings:"tnum" 1,"lnum" 1}
+
+/* Unified compact dark scrollbars across the document and every scrollable panel. */
+html{scrollbar-color:#343840 #101014;scrollbar-width:thin}
+body,body *,#root{scrollbar-color:#343840 #101014;scrollbar-width:thin}
+body *::-webkit-scrollbar,html::-webkit-scrollbar,body::-webkit-scrollbar{width:5px;height:5px}
+body *::-webkit-scrollbar-track,html::-webkit-scrollbar-track,body::-webkit-scrollbar-track{background:#101014}
+body *::-webkit-scrollbar-thumb,html::-webkit-scrollbar-thumb,body::-webkit-scrollbar-thumb{background:#343840;border-radius:8px}
+body *::-webkit-scrollbar-thumb:hover,html::-webkit-scrollbar-thumb:hover,body::-webkit-scrollbar-thumb:hover{background:#4a505b}
+body *::-webkit-scrollbar-corner,html::-webkit-scrollbar-corner,body::-webkit-scrollbar-corner{background:#101014}
+.market-type-tabs,.market-filter-tabs{scrollbar-width:none}
