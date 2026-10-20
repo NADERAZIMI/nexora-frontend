@@ -18,7 +18,7 @@ function loadLibrary():Promise<KLib>{
   script.onload=()=>window.klinecharts?.init?resolve(window.klinecharts):reject(new Error('KLineChart unavailable'));
   script.onerror=()=>reject(new Error('KLineChart CDN unavailable'));document.head.append(script);
  }).catch(error=>{libraryPromise=undefined;throw error});
- return libraryPromise;
+ return libraryPromise!;
 }
 export function attachSpotKlineChart(wrapper:HTMLElement,root:HTMLElement):()=>void{
  const overlay=document.createElement('section');overlay.className='nexora-kline-panel';
