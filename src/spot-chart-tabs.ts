@@ -27,7 +27,6 @@ export function attachSpotChartTabs(root:HTMLElement):()=>void{
   if(disposed)return;
   const title='<div class="nexora-analytics-title">'+escapeText(base+'/'+quote)+' · NEXORA Spot <span>'+(lastUpdate?'Live public market data':'Waiting for live market data')+'</span></div>';
   const entries=[...candles.values()].sort((a,b)=>(a.start||0)-(b.start||0));
-  const closes=entries.map(c=>numeric(c.close)).filter((x):x is number=>x!==null);
   // The approved interactive candlestick chart belongs to the existing chart engine.
   // Keep this analytics overlay completely out of its way when Chart is selected.
   view.hidden=active===0;
