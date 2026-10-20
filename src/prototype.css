@@ -51,3 +51,10 @@ section[data-local-hide-other-pairs] .ant-checkbox-v2-checked .ant-checkbox-v2-i
 .nexora-market-preview-empty{padding:20px 10px;color:var(--text-secondary,#929AAA);text-align:center}
 .nexora-market-preview-empty[hidden]{display:none}
 [data-local-market-data-unavailable=true] [class*="__orderbookDealsWrapper"]{opacity:.4}
+
+/* Guard against presenting the archived BTC chart/depth/form as another asset. */
+.nexora-market-status[hidden]{display:none!important}
+.nexora-market-status{display:inline-block;margin-left:12px;padding:5px 9px;border:1px solid #313747;border-radius:4px;color:var(--text-secondary,#929AAA);background:var(--bg-secondary,#101014);font:11px/1.4 Arial,sans-serif;vertical-align:middle}
+[data-nexora-unavailable=true]{position:relative!important;isolation:isolate}
+[data-nexora-unavailable=true]>*{visibility:hidden!important}
+[data-nexora-unavailable=true]::after{content:attr(data-nexora-unavailable-label);position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:14px;box-sizing:border-box;background:var(--bg-secondary,#101014);color:var(--text-secondary,#929AAA);font:13px/1.5 Arial,sans-serif;z-index:12}
