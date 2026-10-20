@@ -1,7 +1,7 @@
 /** NEXORA exchange chart: open-source Lightweight Charts with public Bybit Spot OHLCV. */
 type Bar={time:number;open:number;high:number;low:number;close:number;volume:number};
-type Series={setData:(bars:unknown[])=>void;update:(bar:unknown)=>void;createPriceLine?:(opts:object)=>unknown;removePriceLine?:(line:unknown)=>void};
-type Chart={addSeries:(type:unknown,opts?:object,paneIndex?:number)=>Series;removeSeries:(s:Series)=>void;timeScale:()=>{fitContent:()=>void};applyOptions:(opts:object)=>void;remove:()=>void};
+type Series={setData:(bars:unknown[])=>void;update:(bar:unknown)=>void;createPriceLine?:(opts:object)=>unknown;removePriceLine?:(line:unknown)=>void;coordinateToPrice?:(coordinate:number)=>number|null;priceScale?:(id?:string)=>{applyOptions:(opts:object)=>void}};
+type Chart={addSeries:(type:unknown,opts?:object,paneIndex?:number)=>Series;removeSeries:(s:Series)=>void;timeScale:()=>{fitContent:()=>void};applyOptions:(opts:object)=>void;remove:()=>void;subscribeClick?:(callback:(param:{point?:{x:number;y:number}})=>void)=>void;unsubscribeClick?:(callback:(param:{point?:{x:number;y:number}})=>void)=>void};
 type Lib={createChart:(node:HTMLElement,opts:object)=>Chart;CandlestickSeries:unknown;HistogramSeries:unknown;LineSeries:unknown};
 declare global{interface Window{LightweightCharts?:Lib}}
 const src='https://cdn.jsdelivr.net/npm/lightweight-charts@5.0.9/dist/lightweight-charts.standalone.production.js';
@@ -59,7 +59,7 @@ export function attachNexoraExchangeChart(wrapper:HTMLElement,root:HTMLElement):
   if(visible.has('Volume')){
    if(!volume)volume=chart.addSeries(window.LightweightCharts!.HistogramSeries,{priceFormat:{type:'volume'},priceScaleId:'volume',lastValueVisible:false,priceLineVisible:false});
    volume.setData(data.map(b=>({time:b.time,value:b.volume,color:b.close>=b.open?'#16b89a70':'#f05a7070'})));
-   chart.applyOptions({rightPriceScale:{visible:true},overlayPriceScales:{scaleMargins:{top:0.8,bottom:0}}});
+   volume.priceScale?.().applyOptions({scaleMargins:{top:0.82,bottom:0}});
   }else if(volume){chart.removeSeries(volume);volume=null}
   for(const [name,length,color,expo] of [['MA 20',20,'#3d6bff',false],['EMA 50',50,'#e3a044',true]] as const){
    let series=name==='MA 20'?ma:ema;
@@ -120,7 +120,7 @@ export function attachNexoraExchangeChart(wrapper:HTMLElement,root:HTMLElement):
    const lib=await library();if(disposed)return;
    chart=lib.createChart(plot,{autoSize:true,layout:{background:{type:'solid',color:'#121212'},textColor:'#929aaa',fontFamily:'Arial'},grid:{vertLines:{color:'#24262c'},horzLines:{color:'#24262c'}},crosshair:{mode:0},timeScale:{timeVisible:true,secondsVisible:false,borderColor:'#30343e'},rightPriceScale:{borderColor:'#30343e'},localization:{locale:'en-US'}});
    candles=chart.addSeries(lib.CandlestickSeries,{upColor:'#16b89a',downColor:'#f05a70',borderVisible:false,wickUpColor:'#16b89a',wickDownColor:'#f05a70'});
-   observer.observe(plot);await load();
+   observer.observe(plot);registerClick();await load();
   }catch(err){if(!disposed)message('Chart initialization failed: '+String(err),true)}
  };
  const market=(e:Event)=>{const d=(e as CustomEvent<{symbol?:string;category?:string}>).detail;
@@ -132,8 +132,14 @@ export function attachNexoraExchangeChart(wrapper:HTMLElement,root:HTMLElement):
  full.addEventListener('click',()=>{if(document.fullscreenElement===host)void document.exitFullscreen();else void host.requestFullscreen()});
  draw.addEventListener('click',()=>{lineMode=!lineMode;draw.setAttribute('aria-pressed',String(lineMode));message(lineMode?'Click a candle to add a horizontal price line':'Drawing disabled')});
  clear.addEventListener('click',()=>{if(candles)for(const line of priceLines)candles.removePriceLine?.(line);priceLines=[]});
- // Clicking a chart price will use the price-axis coordinate when an approved price is supplied.
- plot.addEventListener('dblclick',()=>{if(lineMode)message('Use chart crosshair price for precise drawing; tool coming next')});
+ const onChartClick=(param:{point?:{x:number;y:number}})=>{if(!lineMode||!candles||!param.point)return;
+  const price=candles.coordinateToPrice?.(param.point.y);
+  if(price===null||price===undefined||!Number.isFinite(price)||price<=0)return;
+  const line=candles.createPriceLine?.({price,color:'#5865f2',lineWidth:1,lineStyle:2,axisLabelVisible:true,title:'Level'});
+  if(line)priceLines.push(line);
+ };
+ // Register after the asynchronous chart mounts.
+ const registerClick=()=>chart?.subscribeClick?.(onChartClick);
  root.addEventListener('nexora:market-selected',market);void mount();
- return()=>{disposed=true;job++;abort?.abort();if(ws){ws.onclose=null;ws.close()}if(retry!==undefined)clearTimeout(retry);observer.disconnect();root.removeEventListener('nexora:market-selected',market);chart?.remove();host.remove()};
+ return()=>{disposed=true;job++;abort?.abort();if(ws){ws.onclose=null;ws.close()}if(retry!==undefined)clearTimeout(retry);observer.disconnect();chart?.unsubscribeClick?.(onChartClick);root.removeEventListener('nexora:market-selected',market);chart?.remove();host.remove()};
 }
