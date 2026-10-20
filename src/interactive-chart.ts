@@ -1,3 +1,4 @@
+import { drawChartType, heikinAshi, isDirectChartType, type DirectChartType } from './chart-renderers';
 import type { Candle } from './live-market-feed';
 
 type Point={time:number;price:number};
@@ -6,7 +7,7 @@ type Mode='pan'|'trend';
 export function createInteractiveSpotChart(canvas:HTMLCanvasElement, host:HTMLElement){
  let data:Candle[]=[],visible=85,offset=0,vertical=1,mode:Mode='pan',pointer:{x:number;y:number}|null=null;
  let drag:{x:number;y:number;offset:number;vertical:number}|null=null;
- let draft:Point|null=null,lines:Line[]=[],ma=true,ema=true,livePrice:number|null=null;
+ let draft:Point|null=null,lines:Line[]=[],ma=true,ema=true,livePrice:number|null=null,chartType:DirectChartType='Candles';
  const controls=document.createElement('div');controls.className='nexora-chart-tools';
  const button=(title:string,handler:()=>void)=>{const b=document.createElement('button');b.type='button';b.textContent=title;b.onclick=handler;controls.append(b);return b};
  const panButton=button('Move',()=>{mode='pan';sync()});
@@ -40,12 +41,8 @@ export function createInteractiveSpotChart(canvas:HTMLCanvasElement, host:HTMLEl
    ctx.fillStyle='#929aaa';ctx.fillText(fmt(val),g.w-g.right+6,yy);
   }
   if(!g.bars.length){ctx.fillStyle='#929aaa';ctx.fillText('No candles available',20,40);return}
-  for(let i=0;i<g.bars.length;i++){
-   const c=g.bars[i],xx=g.x(i),green=c.close>=c.open;
-   ctx.strokeStyle=ctx.fillStyle=green?'#16b89a':'#f05a70';ctx.beginPath();ctx.moveTo(xx,g.y(c.low));ctx.lineTo(xx,g.y(c.high));ctx.stroke();
-   const top=Math.min(g.y(c.open),g.y(c.close)),bottom=Math.max(g.y(c.open),g.y(c.close));
-   ctx.fillRect(xx-Math.min(8,g.step*.32),top,Math.max(1,Math.min(16,g.step*.64)),Math.max(1,bottom-top));
-  }
+  const renderBars=chartType==='Heikin Ashi'?heikinAshi(data).slice(g.start,g.start+g.bars.length):g.bars;
+  drawChartType(ctx,{...g,bars:renderBars},chartType);
   const indicator=(color:string,value:(idx:number)=>number|null)=>{ctx.strokeStyle=color;ctx.lineWidth=1.35;ctx.beginPath();let drawn=false;
    for(let i=0;i<g.bars.length;i++){const v=value(g.start+i);if(v===null)continue;const xx=g.x(i),yy=g.y(v);if(!drawn){ctx.moveTo(xx,yy);drawn=true}else ctx.lineTo(xx,yy)}
    if(drawn)ctx.stroke();ctx.lineWidth=1};
@@ -112,7 +109,7 @@ export function createInteractiveSpotChart(canvas:HTMLCanvasElement, host:HTMLEl
  canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove',move);canvas.addEventListener('pointerup',up);
  canvas.addEventListener('pointercancel',up);canvas.addEventListener('pointerleave',leave);canvas.addEventListener('wheel',wheel,{passive:false});
  window.addEventListener('resize',resize);sync();
- return {setLivePrice(value:number|null){livePrice=value;draw()},setCandles(next:Candle[],reset=false){data=next;if(reset){offset=0;visible=85;vertical=1;draft=null;lines=[]}draw()},
+ return {setChartType(type:DirectChartType){if(isDirectChartType(type)){chartType=type;draw()}},setLivePrice(value:number|null){livePrice=value;draw()},setCandles(next:Candle[],reset=false){data=next;if(reset){offset=0;visible=85;vertical=1;draft=null;lines=[]}draw()},
  redraw:draw,dispose(){controls.remove();canvas.removeEventListener('pointerdown',down);canvas.removeEventListener('pointermove',move);
  canvas.removeEventListener('pointerup',up);canvas.removeEventListener('pointercancel',up);canvas.removeEventListener('pointerleave',leave);canvas.removeEventListener('wheel',wheel);window.removeEventListener('resize',resize)}};
 }
