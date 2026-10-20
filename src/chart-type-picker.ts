@@ -1,18 +1,13 @@
 import { isDirectChartType } from './chart-renderers';
-/** Visual-only chart-type selector. Rendering modes are intentionally not changed in this phase. */
+/** Compact chart type selector, limited to the seven approved rendering modes. */
 export function attachChartTypePicker(topRow:HTMLElement,onChange:(type:string)=>void):()=>void {
  const TYPES=[
-  ['Bars','Bars'],['Candles','Candles'],['Hollow candles','Hollow candles'],['Volume candles','Volume candles'],
-  ['Line','Line'],['Line with markers','Line with markers'],['Step line','Step line'],
-  ['Area','Area'],['HLC area','HLC area'],['Baseline','Baseline'],
-  ['Columns','Columns'],['High-low','High-low'],['Volume footprint','Volume footprint'],
-  ['Time price opportunity','Time price opportunity'],['Session volume profile','Session volume profile'],
-  ['Heikin Ashi','Heikin Ashi'],['Renko','Renko'],['Line break','Line break'],['Kagi','Kagi'],
-  ['Point & figure','Point & figure'],['Range','Range']
+  ['Bars','Bars'],['Candles','Candles'],['Hollow candles','Hollow Candles'],
+  ['Heikin Ashi','Heikin Ashi'],['Line','Line'],['Area','Area'],['Baseline','Baseline']
  ] as const;
  const key='nexora-spot-chart-type';
  let current='Candles';
- try{const saved=localStorage.getItem(key);if(saved&&isDirectChartType(saved))current=saved}catch{}
+ try{const saved=localStorage.getItem(key);if(saved&&TYPES.some(t=>t[0]===saved))current=saved}catch{}
  const wrap=document.createElement('div');wrap.className='nexora-chart-type-picker';
  const trigger=document.createElement('button');trigger.type='button';trigger.className='nexora-chart-type-trigger';
  trigger.setAttribute('aria-label','Chart type');trigger.setAttribute('aria-haspopup','menu');trigger.setAttribute('aria-expanded','false');
@@ -20,12 +15,9 @@ export function attachChartTypePicker(topRow:HTMLElement,onChange:(type:string)=
  for(let i=0;i<2;i++){const bar=document.createElement('i');glyph.append(bar)}
  trigger.append(glyph);
  const menu=document.createElement('div');menu.className='nexora-chart-type-menu';menu.setAttribute('role','menu');menu.setAttribute('aria-label','Choose chart type');menu.hidden=true;
- let previousGroup=0;
- const groups=[0,4,7,10,12,15,16];
  TYPES.forEach(([id,label],index)=>{
-  if(groups.includes(index)&&index!==0){const divider=document.createElement('div');divider.className='nexora-chart-type-divider';menu.append(divider);previousGroup++}
   const item=document.createElement('button');item.type='button';item.className='nexora-chart-type-item';item.setAttribute('role','menuitemradio');
-  const icon=document.createElement('span');icon.className='nexora-chart-type-item-icon';icon.textContent=index<4?'♜':index<10?'⌁':index<16?'▥':'♧';
+  const icon=document.createElement('span');icon.className='nexora-chart-type-item-icon';icon.textContent=index<4?'♜':'⌁';
   const text=document.createElement('span');text.textContent=label;
   item.append(icon,text);
   item.dataset.chartType=id;
