@@ -1,5 +1,5 @@
 import {useEffect,useState} from 'react';
-export type MarketTicker={lastPrice:number;change:number;turnover:number};
+export type MarketTicker={lastPrice:number;change:number;turnover:number;high?:number;low?:number;volume?:number};
 type Payload={source?:string;updatedAt?:number;tickers?:Record<string,MarketTicker>};
 export function useSpotTickers(){
  const [tickers,setTickers]=useState<Record<string,MarketTicker>>({});
