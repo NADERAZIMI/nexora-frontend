@@ -2,7 +2,7 @@
 """Refresh read-only Bybit Spot tickers to a same-origin JSON file atomically."""
 import json,os,pathlib,tempfile,urllib.request
 ROOT=pathlib.Path(__file__).resolve().parents[2]
-DEST=ROOT/"shared"/"spot-tickers.json"
+DEST=pathlib.Path(os.environ.get("NEXORA_TICKER_TARGET",str(ROOT/"current"/"spot-tickers.json")))
 errors=[]
 for origin in ("https://api.bybit.com","https://api.bytick.com"):
     try:
