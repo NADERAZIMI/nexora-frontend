@@ -196,3 +196,35 @@ section[data-local-hide-other-pairs] .ant-checkbox-v2-checked .ant-checkbox-v2-i
   visibility:hidden!important;
 }
 [class*="__symbolAvatarWrapper"] img[hidden]{display:none!important}
+
+
+/* Read-only sampled public spot trade activity; no fabricated 5-day flow. */
+.nexora-trading-data[hidden]{display:none!important}
+[class*="__chartWrapper"] .nexora-trading-data{
+position:absolute;inset:47px 0 0;z-index:2147482200;overflow-y:auto;overflow-x:hidden;
+box-sizing:border-box;padding:20px 22px;background:#101014;color:#f4f6fa;
+font:13px/1.55 Arial,sans-serif;scrollbar-width:thin;scrollbar-color:#353943 #101014;
+}
+.nexora-trading-data .nexora-trading-grid{display:grid;grid-template-columns:1fr 1fr;gap:36px}
+.nexora-trading-data h3{font-size:19px;margin:14px 0 20px;font-weight:650}
+.nexora-trading-intro{font-size:12px;color:#929aaa;padding-bottom:12px;border-bottom:1px solid #292d35}
+.nexora-trading-intervals{display:flex;gap:6px;margin-bottom:18px}
+.nexora-trading-intervals button{border:0;border-radius:4px;background:transparent;color:#929aaa;padding:7px 9px;cursor:pointer}
+.nexora-trading-intervals button.is-active{color:#f4f6fa;background:#252a35}
+.nexora-trading-donut{margin:14px auto 25px;width:185px;height:185px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.nexora-trading-donut span{background:#101014;width:125px;height:125px;display:flex;align-items:center;justify-content:center;border-radius:50%;color:#f4f6fa}
+.nexora-trading-table{border-top:1px solid #292d35}
+.nexora-trading-row{display:flex;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid #242831}
+.nexora-trading-row span,.nexora-trading-note{color:#929aaa}
+.nexora-flow-buy{color:#16b89a!important}.nexora-flow-sell{color:#f05a70!important}
+.nexora-trading-note{font-size:12px;line-height:1.6;margin:12px 0 20px}
+.nexora-trading-bars{height:175px;display:flex;justify-content:space-around;align-items:flex-end;gap:7px;border-bottom:1px solid #30343b;margin-bottom:32px}
+.nexora-trading-bar-group{display:flex;align-items:flex-end;gap:3px;height:155px;position:relative;padding-bottom:19px}
+.nexora-trading-bar{width:14px;align-self:flex-end;border-radius:2px 2px 0 0}
+.nexora-trading-bar.buy{background:#16b89a}.nexora-trading-bar.sell{background:#f05a70}
+.nexora-trading-bar-group small{position:absolute;bottom:0;left:50%;transform:translateX(-50%);color:#929aaa}
+[class*="__chartWrapper"][data-nexora-trading-open="true"] .nexora-live-chart{visibility:hidden!important;pointer-events:none!important}
+[class*="__chartWrapper"][data-nexora-trading-open="true"] .ant-tabs-v2-ink-bar,
+[class*="__chartWrapper"][data-nexora-trading-open="true"] .ant-tabs-v2-motion-ink-overlay{visibility:hidden!important}
+[class*="__chartWrapper"][data-nexora-trading-open="true"] #rc-tabs-0-tab-tradeInfo{color:#f4f6fa!important;border-bottom:2px solid #f4f6fa!important}
+@media(max-width:700px){.nexora-trading-data .nexora-trading-grid{grid-template-columns:1fr;gap:18px}}
