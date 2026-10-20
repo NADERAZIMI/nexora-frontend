@@ -58,9 +58,9 @@ jobs:
           SSH_KNOWN_HOSTS: ${{ secrets.NEXORA_SSH_KNOWN_HOSTS }}
         run: |
           install -m 700 -d ~/.ssh
-          printf '%s' "$SSH_KEY_B64" | base64 --decode > ~/.ssh/id_ed25519
-          ssh-keygen -y -f ~/.ssh/id_ed25519 > /dev/null || { echo '::error::Decoded SSH private key is invalid'; exit 1; }
+          printf '%s' "$SSH_KEY_B64" | base64 --decode > ~/.ssh/id_ed25519 || { echo '::error::Base64 SSH secret is invalid or incomplete'; exit 1; }
           chmod 600 ~/.ssh/id_ed25519
+          ssh-keygen -y -f ~/.ssh/id_ed25519 > /dev/null || { echo '::error::Decoded SSH private key is invalid'; exit 1; }
           printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
       - name: Deploy only inside dedicated NEXORA directory
