@@ -72,3 +72,52 @@ section[data-local-hide-other-pairs] .ant-checkbox-v2-checked .ant-checkbox-v2-i
 
 .nexora-market-show-more[hidden]{display:none!important}
 .nexora-market-show-more{display:block;width:100%;padding:12px;border:0;border-top:1px solid #2a2c33;background:transparent;color:var(--color-primary,#3D6BFF);font:12px Arial,sans-serif;cursor:pointer;text-align:center}
+
+
+/* NEXORA Spot picker: one restrained inner scrollbar, readable live prices. */
+.nexora-market-preview{
+  display:flex;
+  flex-direction:column;
+  box-sizing:border-box;
+  height:min(540px,calc(100vh - 110px));
+  max-height:calc(100vh - 110px);
+  overflow:hidden;
+  background:#101014;
+  color:#F4F6FA;
+  padding:14px 16px 10px;
+}
+.nexora-market-preview-title,
+.nexora-market-preview-search,
+.nexora-market-preview-tabs,
+.nexora-market-preview-filters,
+.nexora-market-preview-columns,
+.nexora-market-show-more {flex:0 0 auto}
+.nexora-market-preview-title{color:#929AAA}
+.nexora-market-preview-search{background:#1c1d24;color:#F4F6FA}
+.nexora-market-preview-search::placeholder{color:#929AAA;opacity:1}
+.nexora-market-preview-choices{
+  min-height:0;
+  max-height:none;
+  flex:1 1 auto;
+  overflow-x:hidden;
+  overflow-y:auto;
+  scrollbar-width:thin;
+  scrollbar-color:#36383f #101014;
+  margin-bottom:0;
+}
+.nexora-market-preview-choices[hidden]{display:none!important}
+.nexora-market-preview-choices::-webkit-scrollbar{width:5px}
+.nexora-market-preview-choices::-webkit-scrollbar-track{background:#101014}
+.nexora-market-preview-choices::-webkit-scrollbar-thumb{background:#36383f;border-radius:8px}
+.nexora-market-preview-choices::-webkit-scrollbar-thumb:hover{background:#494c55}
+.nexora-market-preview-choices button{color:#F4F6FA;font-weight:500}
+.nexora-market-preview-choices button span:nth-child(2){color:#F4F6FA}
+.nexora-market-preview-choices button span:nth-child(3){color:#A8B0BF}
+.nexora-market-preview-choices button:hover,
+.nexora-market-preview-choices button[aria-pressed=true]{background:#20232b}
+.nexora-market-sort{color:#A8B0BF}
+.nexora-market-sort:disabled{opacity:.9}
+.nexora-market-preview-tabs{scrollbar-width:none}
+.nexora-market-preview-tabs::-webkit-scrollbar{display:none}
+/* Selecting a real public market must not dim its successfully loaded book. */
+[data-local-market-data-unavailable=true] [class*="__orderbookDealsWrapper"]{opacity:1}
