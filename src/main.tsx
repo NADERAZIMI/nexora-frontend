@@ -21,7 +21,7 @@ function Header({page,setPage,theme,toggleTheme}:{page:Page;setPage:(page:Page)=
 }
 const display='—';
 const formatLivePrice=(value:number)=>value.toLocaleString('en-US',{maximumFractionDigits:12});
-function MarketBar({pair,onSelect,pairs,source,tickers,pricesReady,book}:{pair:SpotPair;onSelect:(pair:SpotPair)=>void;pairs:SpotPair[];source:'loading'|'live'|'fallback';tickers:Record<string,MarketTicker>;pricesReady:boolean;book:BookState}){
+function MarketBar({pair,onSelect,pairs,source,tickers,pricesReady,book}:{pair:SpotPair;onSelect:(pair:SpotPair)=>void;pairs:SpotPair[];source:'loading'|'live'|'fallback';tickers:Record<string,MarketTicker>;pricesReady:boolean;book:BookState;livePrice:number|null}){
  const [open,setOpen]=useState(false),[search,setSearch]=useState('');
  const [category,setCategory]=useState<'Favorites'|'Crypto'|'TradFi'>('Crypto');
  const [quote,setQuote]=useState('All');
@@ -40,7 +40,6 @@ function MarketBar({pair,onSelect,pairs,source,tickers,pricesReady,book}:{pair:S
  const formatVolume=(v:number)=>v>=1e9?(v/1e9).toFixed(2)+'B':v>=1e6?(v/1e6).toFixed(2)+'M':v>=1000?(v/1000).toFixed(2)+'K':v.toFixed(2);
  const selectedTicker=book.ticker;
  const trade=book.trades[0];
- const livePrice=trade?.price??selectedTicker?.lastPrice;
  const lastClass=trade?(trade.side==='Buy'?'market-up':'market-down'):'market-flat';
  const marketPrice=(v:number|undefined)=>v===undefined||!Number.isFinite(v)?'—':formatPrice(v);
  const signedChange=selectedTicker?(selectedTicker.change>=0?'+':'')+(selectedTicker.change*100).toFixed(2)+'%':'—';
@@ -107,8 +106,8 @@ function TokenInfoPanel({pair}:{pair:SpotPair}){
  </div>;
 }
 const tabs=['Chart','Info','Data','Feed','Trade Analysis'] as const;
-function ChartPanel({pair}:{pair:SpotPair}){const [tab,setTab]=useState<(typeof tabs)[number]>('Chart');const [frame,setFrame]=useState('1h');return <section className="panel chart"><div className="tabs">{tabs.map(x=><button key={x} onClick={()=>setTab(x)} className={tab===x?'active':''}>{x}</button>)}<span className="paneltools">⚙　⛶</span></div>{tab==='Feed'?<FeedPanel symbol={pair.symbol}/>:tab==='Data'?<DataPanel symbol={pair.symbol}/>:tab==='Info'?<TokenInfoPanel pair={pair}/>:tab==='Chart'?<><div className="chart-toolbar"><span className="active-blue">Trading Chart</span><div className="timeframes">{['1m','5m','15m','30m','1h','4h','1d','1w'].map(x=><button key={x} onClick={()=>setFrame(x)} className={frame===x?'on':''}>{x}</button>)}</div><span className="muted">Indicators　⌄</span></div><div className="chart-area"><SpotProChart pair={pair} frame={frame}/></div></>:<div className="waiting">{tab} panel · React component ready for live data</div>}</section>}
-function OrderBook({pair,book}:{pair:SpotPair;book:BookState}){
+function ChartPanel({pair,livePrice}:{pair:SpotPair;livePrice:number|null}){const [tab,setTab]=useState<(typeof tabs)[number]>('Chart');const [frame,setFrame]=useState('1h');return <section className="panel chart"><div className="tabs">{tabs.map(x=><button key={x} onClick={()=>setTab(x)} className={tab===x?'active':''}>{x}</button>)}<span className="paneltools">⚙　⛶</span></div>{tab==='Feed'?<FeedPanel symbol={pair.symbol}/>:tab==='Data'?<DataPanel symbol={pair.symbol}/>:tab==='Info'?<TokenInfoPanel pair={pair}/>:tab==='Chart'?<><div className="chart-toolbar"><span className="active-blue">Trading Chart</span><div className="timeframes">{['1m','5m','15m','30m','1h','4h','1d','1w'].map(x=><button key={x} onClick={()=>setFrame(x)} className={frame===x?'on':''}>{x}</button>)}</div><span className="muted">Indicators　⌄</span></div><div className="chart-area"><SpotProChart pair={pair} frame={frame} livePrice={livePrice}/></div></>:<div className="waiting">{tab} panel · React component ready for live data</div>}</section>}
+function OrderBook({pair,book,livePrice}:{pair:SpotPair;book:BookState;livePrice:number|null}){
  const [mode,setMode]=useState('Order Book');
  const [stepMultiplier,setStepMultiplier]=useState(1);
  const [layout,setLayout]=useState<'both'|'split'|'bids'|'asks'>('both');
@@ -143,7 +142,7 @@ function OrderBook({pair,book}:{pair:SpotPair;book:BookState}){
    <span className="book-number">{qtyText(r.amount)}</span>
    <span className="book-number">{qtyText(r.total)}</span>
  </div>);
- const last=book.trades[0],mid=last?.price??book.ticker?.lastPrice??null;
+ const last=book.trades[0],mid=livePrice;
  const askQty=book.asks.reduce((n,x)=>n+x.amount,0),bidQty=book.bids.reduce((n,x)=>n+x.amount,0);
  const buyPercent=bidQty+askQty?Math.round(100*bidQty/(bidQty+askQty)):0;
  return <section className={'panel orderbook depth-layout-'+layout}>
@@ -167,7 +166,8 @@ function TradePanel({pair}:{pair:SpotPair}){const [side,setSide]=useState<BookSi
 function Orders(){const [tab,setTab]=useState('Open Orders (0)');return <section className="panel orders"><div className="tabs compact">{['Open Orders (0)','Order History','Trade History','Assets'].map(x=><button key={x} className={tab===x?'active':''} onClick={()=>setTab(x)}>{x}</button>)}</div><div className="orders-empty">Sign in to view your {tab.toLowerCase()}</div></section>}
 function ActiveMarket({pair,onSelect,pairs,source,tickers,pricesReady}:{pair:SpotPair;onSelect:(pair:SpotPair)=>void;pairs:SpotPair[];source:'loading'|'live'|'fallback';tickers:Record<string,MarketTicker>;pricesReady:boolean}){
  const book=useBybitSpotBook(pair.symbol);
- return <main><MarketBar pair={pair} onSelect={onSelect} pairs={pairs} source={source} tickers={tickers} pricesReady={pricesReady} book={book}/><div className="workspace"><ChartPanel pair={pair}/><OrderBook pair={pair} book={book}/><TradePanel pair={pair}/><Orders/></div></main>;
+ const livePrice=book.connected?(book.trades[0]?.price??book.ticker?.lastPrice??null):null;
+ return <main><MarketBar pair={pair} onSelect={onSelect} pairs={pairs} source={source} tickers={tickers} pricesReady={pricesReady} book={book} livePrice={livePrice}/><div className="workspace"><ChartPanel pair={pair} livePrice={livePrice}/><OrderBook pair={pair} book={book} livePrice={livePrice}/><TradePanel pair={pair}/><Orders/></div></main>;
 }
 function App(){const {pairs,source}=useSpotMarkets();const {tickers,ready:pricesReady}=useSpotTickers(pairs);const [pair,setPair]=useState<SpotPair>({symbol:'BTCUSDT',base:'BTC',quote:'USDT'});const [page,setPage]=useState<Page>(()=>window.location.pathname.startsWith('/markets')?'markets':'trade');const [theme,setTheme]=useState<Theme>(()=>{try{return localStorage.getItem('nexora-theme')==='light'?'light':'dark'}catch{return 'dark'}});
  const toggleTheme=()=>setTheme(t=>{const next=t==='dark'?'light':'dark';try{localStorage.setItem('nexora-theme',next)}catch{}return next});
