@@ -55,7 +55,7 @@ const SnapshotSurface = memo(function SnapshotSurface({ onNotice }: { onNotice: 
       }
       if (target.closest('[class*="__symbolInfoBox"] [class*="__bigName"]')) return;
       const interval = target.closest('[class*="__favInterval"], [class*="__chartType"], [class*="__bigName"]');
-      if (interval) { onNotice('NEXORA: Bybit chart integration is the next phase.'); return; }
+      if (interval) { onNotice('NEXORA: Chart integration is in progress.'); return; }
       const action = target.closest('button,a');
       if (action) {
         event.preventDefault();
