@@ -550,3 +550,35 @@ test('Order Book precision menu opens by mouse and keyboard without inventing ti
   assert.deepEqual(await book.locator('[class*="__tableRow"]').allTextContents(), originalRows);
   assert.equal(await page.locator('[data-testid="spot-trade-buyPrice"]').isVisible(), true);
 });
+
+test('price precision formatter preserves BTC, SHIDO and WOJAK exact decimal representations', async t => {
+  const page = await pageFor(t);
+  const result = await page.evaluate(async () => {
+    const p = await import('/src/price-precision.ts');
+    return {
+      btc:p.formatPrice('82106.17'),
+      btcTick:p.tickForDecimals(2),
+      shido:p.formatPrice('0.0000786'),
+      shidoTick:p.tickForDecimals(7),
+      wojak:p.formatPrice('0.00000004276'),
+      wojakCompact:p.formatPrice('0.0{7}4276'),
+      wojakPlain:p.decimalString('0.0{7}4276'),
+      wojakTick:p.tickForDecimals(11),
+      expanded:p.expandZeroRun('0.0{10}1'),
+      grouped:p.formatPrice('1234567.001'),
+      negative:p.formatPrice('-0.00000004276'),
+      trailing:p.formatPrice('0.00007860'),
+      invalid:(() => { try { p.formatPrice('1e-8'); return false; } catch { return true; } })(),
+      invalidTick:(() => { try { p.tickForDecimals(31); return false; } catch { return true; } })(),
+    };
+  });
+  assert.deepEqual(result, {
+    btc:'82,106.17', btcTick:'0.01',
+    shido:'0.0000786', shidoTick:'0.0000001',
+    wojak:'0.0{7}4276', wojakCompact:'0.0{7}4276',
+    wojakPlain:'0.00000004276', wojakTick:'0.00000000001',
+    expanded:'0.00000000001', grouped:'1,234,567.001',
+    negative:'-0.0{7}4276', trailing:'0.00007860',
+    invalid:true, invalidTick:true,
+  });
+});
