@@ -11,3 +11,12 @@
 .data-range-label{font-size:12px}
 .data-periods button{font-size:12px}
 @media(max-width:880px){.data-grid{grid-auto-rows:auto}.data-card-wrap>.data-card{min-height:405px}}
+
+/* Real public-trade metrics: same-height panels and legible values. */
+.data-real-empty{margin:auto 6px;color:#929AAA;font-size:13px;line-height:1.7;text-align:center}
+.data-flow-sums>div{min-width:0;flex:1;font-size:12px}
+.data-flow-sums strong{font-size:13px}
+.data-flow-sums p{display:flex;gap:10px;justify-content:space-between}
+.data-flow-sums>div:last-child p{flex-direction:row}
+.data-range-label{line-height:1.5}
+.data-demo-label{color:#929AAA}
