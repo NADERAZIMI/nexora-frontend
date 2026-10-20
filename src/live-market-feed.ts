@@ -2,13 +2,14 @@
 export interface DepthLevel { price:string; qty:string }
 export interface Candle { time:number; open:number;high:number;low:number;close:number }
 const valid=(v:unknown):v is string=>typeof v==='string' && /^\d+(?:\.\d+)?$/.test(v);
-export async function fetchMarketFrame(symbol:string, signal:AbortSignal):Promise<{asks:DepthLevel[];bids:DepthLevel[];candles:Candle[]}> {
+export async function fetchMarketFrame(symbol:string, signal:AbortSignal):Promise<{asks:DepthLevel[];bids:DepthLevel[];candles:Candle[];lastPrice:string}> {
  if(!/^[A-Z0-9]{3,30}$/.test(symbol))throw Error('Invalid market symbol');
  const base='/mexc-public/api/v3/';
  const get=async(path:string)=>{const r=await fetch(base+path,{signal,credentials:'omit'});if(!r.ok)throw Error('MEXC '+r.status+' '+r.statusText+' ('+path.split('?')[0]+')');const data=await r.json() as unknown;if(data&&typeof data==='object'&&'code' in data&&data.code!==200&&data.code!==0)throw Error('MEXC API '+String(data.code));return data};
- const [depthResult, candlesResult] = await Promise.allSettled([
+ const [depthResult, candlesResult, tickerResult] = await Promise.allSettled([
    get('depth?symbol='+symbol+'&limit=20'),
-   get('klines?symbol='+symbol+'&interval=1m&limit=120')
+   get('klines?symbol='+symbol+'&interval=1m&limit=120'),
+   get('ticker/price?symbol='+symbol)
  ]);
  if(depthResult.status==='rejected'&&candlesResult.status==='rejected') {
    throw Error('Market depth and candles unavailable: '+String(depthResult.reason));
@@ -19,8 +20,10 @@ export async function fetchMarketFrame(symbol:string, signal:AbortSignal):Promis
  const asks=depth&&typeof depth==='object'&&'asks' in depth&&Array.isArray(depth.asks)?levels(depth.asks):[];
  const bids=depth&&typeof depth==='object'&&'bids' in depth&&Array.isArray(depth.bids)?levels(depth.bids):[];
  const candles:Candle[]=Array.isArray(klines)?klines.filter((row):row is [number,string,string,string,string]=>Array.isArray(row)&&typeof row[0]==='number'&&row.slice(1,5).every(valid)).map(row=>({time:row[0],open:Number(row[1]),high:Number(row[2]),low:Number(row[3]),close:Number(row[4])})).filter(x=>Object.values(x).every(Number.isFinite)&&x.low>0):[];
- if(!asks.length&&!bids.length&&!candles.length)throw Error('No usable market depth or candles');
- return {asks,bids,candles};
+ const ticker=tickerResult.status==='fulfilled'?tickerResult.value:null;
+ const lastPrice=ticker&&typeof ticker==='object'&&'price' in ticker&&valid(ticker.price)?ticker.price:'';
+ if(!asks.length&&!bids.length&&!candles.length&&!lastPrice)throw Error('No usable MEXC market data');
+ return {asks,bids,candles,lastPrice};
 }
 export function attachReadOnlyMarketFeed(root:HTMLElement){
  const chart=root.querySelector<HTMLElement>('[class*="__chartWrapper"]');
@@ -74,7 +77,7 @@ export function attachReadOnlyMarketFeed(root:HTMLElement){
     });
    };
    paintSide('asks',frame.asks);paintSide('bids',frame.bids);
-   if(price){const last=frame.candles.at(-1);price.textContent=last?String(last.close):(frame.bids[0]?.price??frame.asks[0]?.price??'—');}
+   if(price){const last=frame.candles.at(-1);price.textContent=frame.lastPrice||(last?String(last.close):(frame.bids[0]?.price??frame.asks[0]?.price??'—'));}
    paint(frame.candles);
    retry.hidden=true;
    state.textContent=selected+' · MEXC public · '+(frame.candles.length?'1m candles':'candles unavailable')+' · '+(frame.asks.length+frame.bids.length?'depth snapshot':'depth unavailable')+' · no trading';
