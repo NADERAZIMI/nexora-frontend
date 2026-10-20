@@ -582,3 +582,20 @@ test('price precision formatter preserves BTC, SHIDO and WOJAK exact decimal rep
     invalid:true, invalidTick:true,
   });
 });
+
+test('offline market chooser previews exact small prices without relabeling the BTC order book', async t => {
+  const page = await pageFor(t);
+  const opener = page.getByRole('button', { name:'Inspect captured market examples' });
+  const region = page.getByRole('region', { name:'Captured market price examples' });
+  await opener.click();
+  assert.equal(await region.isVisible(),true);
+  await region.getByRole('button',{name:'WOJAK'}).click();
+  assert.match(await region.textContent(), /0\.0\{7\}4276/);
+  assert.match(await region.textContent(), /not live data/);
+  assert.match(await page.locator('[class*="__bigName"] h1').first().textContent(), /BTC\/USDT/);
+  assert.equal(await page.locator('[data-local-orderbook-mode]').isVisible(),true);
+  await region.getByRole('button',{name:'SHIDO'}).click();
+  assert.match(await region.textContent(), /0\.0000786/);
+  await opener.press('Escape');
+  assert.equal(await region.isVisible(),false);
+});
