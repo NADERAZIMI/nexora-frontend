@@ -1,5 +1,5 @@
 import {useEffect,useRef,useState} from 'react';
-import {KLineChartPro} from '@klinecharts/pro';
+import type {KLineChartPro} from '@klinecharts/pro';
 import '@klinecharts/pro/dist/klinecharts-pro.css';
 import type {SpotPair} from './spot-markets';
 import './SpotProChart.css';
@@ -32,11 +32,17 @@ class BybitChartDatafeed{
   const start=from>0?(from<1e11?from*1000:from):0;
   if(end>0)query.set('end',String(Math.floor(end)));
   if(start>0&&start<end)query.set('start',String(Math.floor(start)));
-  const response=await fetch('https://api.bybit.com/v5/market/kline?'+query.toString());
-  if(!response.ok)throw new Error('Bybit candle history HTTP '+response.status);
-  const data=await response.json() as {retCode?:number;result?:{list?:unknown[]}};
-  if(data.retCode!==0||!Array.isArray(data.result?.list))throw new Error('Bybit candle history unavailable');
-  return data.result.list.map(candle).filter((c):c is Candle=>c!==null).sort((a,b)=>a.timestamp-b.timestamp);
+  // Pro v0.1.1 does not catch datafeed errors and otherwise leaves its loader spinning forever.
+  // Bound the initial request and return an empty verified dataset on network failure.
+  const controller=new AbortController();
+  const timeout=setTimeout(()=>controller.abort(),6500);
+  try{
+   const response=await fetch('https://api.bybit.com/v5/market/kline?'+query.toString(),{signal:controller.signal});
+   if(!response.ok)return [];
+   const data=await response.json() as {retCode?:number;result?:{list?:unknown[]}};
+   if(data.retCode!==0||!Array.isArray(data.result?.list))return [];
+   return data.result.list.map(candle).filter((c):c is Candle=>c!==null).sort((a,b)=>a.timestamp-b.timestamp);
+  }catch{return []}finally{clearTimeout(timeout)}
  }
  subscribe(symbol:SymbolInfo,period:Period,callback:(c:Candle)=>void){
   if(this.closed||!validSymbol(symbol.ticker))return;
@@ -71,15 +77,19 @@ export default function SpotProChart({pair,frame}:{pair:SpotPair;frame:string}){
  useEffect(()=>{
   const node=container.current;if(!node)return;
   let chart:KLineChartPro|null=null;
+  let disposed=false;
   const datafeed=new BybitChartDatafeed([pair]);
-  try{
+  const init=async()=>{try{
+   const {KLineChartPro}=await import('@klinecharts/pro');
+   if(disposed)return;
    const period=periods.find(p=>p.text.toLowerCase()===frame.toLowerCase())||periods[4];
    chart=new KLineChartPro({container:node,symbol:symbolInfo(pair),period,periods,datafeed,theme:document.documentElement.dataset.nxTheme==='light'?'light':'dark',locale:'en-US',timezone:'Etc/UTC',watermark:'NEXORA',drawingBarVisible:true,mainIndicators:['MA'],subIndicators:['VOL']});
    setError(null);
-  }catch(e){setError(e instanceof Error?e.message:'Chart could not initialize')}
+  }catch(e){if(!disposed)setError(e instanceof Error?e.message:'Chart could not initialize')}};
+  void init();
   const obs=new MutationObserver(()=>{try{chart?.setTheme(document.documentElement.dataset.nxTheme==='light'?'light':'dark')}catch{/* chart already unmounted */}});
   obs.observe(document.documentElement,{attributes:true,attributeFilter:['data-nx-theme']});
-  return()=>{obs.disconnect();datafeed.dispose();node.replaceChildren();chart=null};
+  return()=>{disposed=true;obs.disconnect();datafeed.dispose();node.replaceChildren();chart=null};
  },[pair.symbol,frame]);
  return <div className="nexora-pro-chart">{error&&<div className="nexora-chart-error" role="alert">{error}</div>}<div ref={container} className="nexora-pro-chart-container"/></div>;
 }
