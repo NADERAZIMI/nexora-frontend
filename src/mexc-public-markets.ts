@@ -28,7 +28,7 @@ export async function getMexcSpotMarkets(signal?:AbortSignal):Promise<MexcSpotMa
   const rows=await request('ticker/24hr',signal);
   if(Array.isArray(rows))for(const row of rows as ChangeTicker[]) {
    const change=Number(row.priceChangePercent);
-   if(typeof row.symbol==='string'&&row.priceChangePercent!==undefined&&row.priceChangePercent!==null&&Number.isFinite(change))changes.set(row.symbol,change);
+   if(typeof row.symbol==='string'&&row.priceChangePercent!==undefined&&row.priceChangePercent!==null&&Number.isFinite(change))changes.set(row.symbol,change*100);
   }
  }catch(error){if(signal?.aborted)throw error;console.warn('[NEXORA] 24h change unavailable',error);}
  const result:MexcSpotMarket[]=[];
