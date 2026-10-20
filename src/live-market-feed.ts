@@ -6,12 +6,21 @@ export async function fetchMarketFrame(symbol:string, signal:AbortSignal):Promis
  if(!/^[A-Z0-9]{3,30}$/.test(symbol))throw Error('Invalid market symbol');
  const base='/mexc-public/api/v3/';
  const get=async(path:string)=>{const r=await fetch(base+path,{signal,credentials:'omit'});if(!r.ok)throw Error('MEXC '+r.status+' '+r.statusText+' ('+path.split('?')[0]+')');const data=await r.json() as unknown;if(data&&typeof data==='object'&&'code' in data&&data.code!==200&&data.code!==0)throw Error('MEXC API '+String(data.code));return data};
- const [depth,klines]=await Promise.all([get('depth?symbol='+symbol+'&limit=20'),get('klines?symbol='+symbol+'&interval=1m&limit=120')]);
- if(!depth||typeof depth!=='object'||!('asks' in depth)||!('bids' in depth)||!Array.isArray(depth.asks)||!Array.isArray(depth.bids))throw Error('Invalid depth data');
+ const [depthResult, candlesResult] = await Promise.allSettled([
+   get('depth?symbol='+symbol+'&limit=20'),
+   get('klines?symbol='+symbol+'&interval=1m&limit=120')
+ ]);
+ if(depthResult.status==='rejected'&&candlesResult.status==='rejected') {
+   throw Error('Market depth and candles unavailable: '+String(depthResult.reason));
+ }
+ const depth=depthResult.status==='fulfilled'?depthResult.value:null;
+ const klines=candlesResult.status==='fulfilled'?candlesResult.value:null;
  const levels=(rows:unknown[]):DepthLevel[]=>rows.filter((row):row is [string,string]=>Array.isArray(row)&&valid(row[0])&&valid(row[1])).slice(0,9).map(row=>({price:row[0],qty:row[1]}));
- if(!Array.isArray(klines))throw Error('Invalid candles');
- const candles:Candle[]=klines.filter((row):row is [number,string,string,string,string]=>Array.isArray(row)&&typeof row[0]==='number'&&row.slice(1,5).every(valid)).map(row=>({time:row[0],open:Number(row[1]),high:Number(row[2]),low:Number(row[3]),close:Number(row[4])})).filter(x=>Object.values(x).every(Number.isFinite)&&x.low>0);
- return {asks:levels(depth.asks),bids:levels(depth.bids),candles};
+ const asks=depth&&typeof depth==='object'&&'asks' in depth&&Array.isArray(depth.asks)?levels(depth.asks):[];
+ const bids=depth&&typeof depth==='object'&&'bids' in depth&&Array.isArray(depth.bids)?levels(depth.bids):[];
+ const candles:Candle[]=Array.isArray(klines)?klines.filter((row):row is [number,string,string,string,string]=>Array.isArray(row)&&typeof row[0]==='number'&&row.slice(1,5).every(valid)).map(row=>({time:row[0],open:Number(row[1]),high:Number(row[2]),low:Number(row[3]),close:Number(row[4])})).filter(x=>Object.values(x).every(Number.isFinite)&&x.low>0):[];
+ if(!asks.length&&!bids.length&&!candles.length)throw Error('No usable market depth or candles');
+ return {asks,bids,candles};
 }
 export function attachReadOnlyMarketFeed(root:HTMLElement){
  const chart=root.querySelector<HTMLElement>('[class*="__chartWrapper"]');
@@ -49,7 +58,10 @@ export function attachReadOnlyMarketFeed(root:HTMLElement){
  };
  const refresh=async()=>{
   controller?.abort();controller=new AbortController();const signal=controller.signal;
-  retry.hidden=true;state.textContent='Loading MEXC public market data…';
+  retry.hidden=true;state.textContent='Loading '+selected+' live market data…';
+  for(const side of ['asks','bids']) for(const row of book.querySelectorAll<HTMLElement>('[class*="__'+side+'Wrapper"] [class*="__tableRow"]'))row.style.visibility='hidden';
+  if(price)price.textContent='—';
+  const ctx=canvas.getContext('2d');ctx?.clearRect(0,0,canvas.width,canvas.height);
   try{
    const frame=await fetchMarketFrame(selected,signal);if(signal.aborted||!mounted)return;
    const paintSide=(side:'asks'|'bids',levels:DepthLevel[])=>{
@@ -62,16 +74,16 @@ export function attachReadOnlyMarketFeed(root:HTMLElement){
     });
    };
    paintSide('asks',frame.asks);paintSide('bids',frame.bids);
-   if(price&&frame.candles.length)price.textContent=frame.candles.at(-1)!.close.toString();
+   if(price){const last=frame.candles.at(-1);price.textContent=last?String(last.close):(frame.bids[0]?.price??frame.asks[0]?.price??'—');}
    paint(frame.candles);
    retry.hidden=true;
-   state.textContent='Public MEXC data · 1m candles · depth snapshot · no trading';
+   state.textContent=selected+' · MEXC public · '+(frame.candles.length?'1m candles':'candles unavailable')+' · '+(frame.asks.length+frame.bids.length?'depth snapshot':'depth unavailable')+' · no trading';
   }catch(e){if(signal.aborted||!mounted)return;const message=e instanceof Error?e.message:String(e);state.textContent='MEXC feed failed: '+message;retry.hidden=false;console.warn('[NEXORA public market feed]',message);}
  };
  const choose=(event:Event)=>{
    const id=(event as CustomEvent<{symbol:string}>).detail?.symbol;
    if(!id||!/^[A-Z0-9]{3,30}$/.test(id))return;
-   selected=id;restore();overlay.hidden=false;label.textContent=id+' · MEXC spot (test feed)';
+   selected=id;restore();overlay.hidden=false;label.textContent=id+' · MEXC spot (live read-only)';
    if(interval!==undefined)clearInterval(interval);
    void refresh();interval=window.setInterval(()=>{void refresh()},15000);
  };
