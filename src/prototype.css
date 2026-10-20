@@ -283,3 +283,21 @@ font-size:13px;cursor:pointer}
 .nexora-chart-top-row .nexora-chart-tools button[aria-pressed=true]{background:#20242d;color:#f4f6fa}
 .nexora-chart-top-row .nexora-timeframe-toggle{flex-shrink:0}
 .nexora-live-chart>.nexora-timeframe-menu{top:43px}
+
+
+/* Chart type picker: separate from render modes for the visual-only phase. */
+.nexora-chart-type-picker{position:relative;flex:0 0 auto;display:flex;align-items:center;margin-left:0;padding-left:9px;border-left:1px solid #30333b}
+.nexora-chart-type-trigger{display:flex;align-items:center;gap:6px;border:0;background:transparent;color:#9ca5b4;height:29px;padding:3px 6px;border-radius:4px;cursor:pointer}
+.nexora-chart-type-trigger:hover,.nexora-chart-type-trigger[aria-expanded=true]{background:#20242d;color:#fff}
+.nexora-chart-type-glyph{display:flex;align-items:center;gap:3px;height:19px}
+.nexora-chart-type-glyph i{position:relative;display:block;width:5px;height:14px;border:1px solid currentColor;border-radius:1px}
+.nexora-chart-type-glyph i:first-child{height:10px}.nexora-chart-type-glyph i:last-child{height:12px}
+.nexora-chart-type-glyph i:after{content:'';position:absolute;top:-4px;bottom:-4px;left:1px;border-left:1px solid currentColor}
+.nexora-chart-type-chevron{font-size:12px}
+.nexora-chart-type-menu[hidden]{display:none!important}
+.nexora-chart-type-menu{position:fixed;top:auto;left:auto;margin-top:0;width:190px;max-height:min(650px,80vh);overflow-y:auto;z-index:2147483000;
+ background:#1d2025;border:1px solid #32363e;box-shadow:0 12px 30px #0009;padding:5px 0;border-radius:4px;scrollbar-width:thin;scrollbar-color:#3c414b #1d2025}
+.nexora-chart-type-item{display:flex;align-items:center;gap:10px;width:100%;min-height:27px;background:transparent;border:0;color:#e4e7ec;text-align:left;padding:5px 12px;cursor:pointer;font:11px Arial,sans-serif}
+.nexora-chart-type-item:hover{background:#2b303a}.nexora-chart-type-item.is-selected{background:#e7e7e9;color:#171a20;border-radius:3px}
+.nexora-chart-type-item-icon{display:inline-flex;align-items:center;justify-content:center;width:17px;flex:0 0 17px;font-size:14px;opacity:.7}
+.nexora-chart-type-divider{border-top:1px solid #383b44;margin:5px 8px}
