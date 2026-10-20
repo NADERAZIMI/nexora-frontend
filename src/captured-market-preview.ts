@@ -246,7 +246,7 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
       const data:unknown=await response.json();
       if(!Array.isArray(data))throw Error('Unexpected price data');
       const prices=new Map<string,string>();
-      for(const row of data)if(row&&typeof row.symbol==='string'&&typeof row.price==='string'&&/^\\d+(?:\\.\\d+)?$/.test(row.price))prices.set(row.symbol,row.price);
+      for(const row of data)if(row&&typeof row.symbol==='string'&&typeof row.price==='string'&&Number.isFinite(Number(row.price))&&Number(row.price)>0)prices.set(row.symbol,row.price);
       if(panel.hidden)return;
       for(const market of liveMarkets){const newPrice=prices.get(market.id);if(newPrice)market.price=newPrice}
       refresh();
