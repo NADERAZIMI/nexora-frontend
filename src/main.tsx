@@ -161,5 +161,5 @@ function ActiveMarket({pair,onSelect,pairs,source,tickers,pricesReady}:{pair:Spo
  const book=useBybitSpotBook(pair.symbol);
  return <main><MarketBar pair={pair} onSelect={onSelect} pairs={pairs} source={source} tickers={tickers} pricesReady={pricesReady} book={book}/><div className="workspace"><ChartPanel pair={pair}/><OrderBook pair={pair} book={book}/><TradePanel pair={pair}/><Orders/></div></main>;
 }
-function App(){const {pairs,source}=useSpotMarkets();const {tickers,ready:pricesReady}=useSpotTickers();const [pair,setPair]=useState<SpotPair>({symbol:'BTCUSDT',base:'BTC',quote:'USDT'});return <><Header/><ActiveMarket key={pair.symbol} pair={pair} onSelect={setPair} pairs={pairs} source={source} tickers={tickers} pricesReady={pricesReady}/><footer>NEXORA Spot · Public Bybit market catalog and orderbook</footer></>}
+function App(){const {pairs,source}=useSpotMarkets();const {tickers,ready:pricesReady}=useSpotTickers(pairs);const [pair,setPair]=useState<SpotPair>({symbol:'BTCUSDT',base:'BTC',quote:'USDT'});return <><Header/><ActiveMarket key={pair.symbol} pair={pair} onSelect={setPair} pairs={pairs} source={source} tickers={tickers} pricesReady={pricesReady}/><footer>NEXORA Spot · Public Bybit market catalog and orderbook</footer></>}
 createRoot(document.getElementById('root')!).render(<React.StrictMode><App/></React.StrictMode>);
