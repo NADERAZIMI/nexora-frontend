@@ -2,6 +2,7 @@ import { memo, useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import snapshot from './snapshot.html?raw';
 import { attachSpotLocalControls } from './spot-local-controls';
+import { attachOrderBookDisplay } from './orderbook-display';
 import './reference.css';
 import './palette.css';
 import './prototype.css';
@@ -13,6 +14,7 @@ const SnapshotSurface = memo(function SnapshotSurface({ onNotice }: { onNotice: 
   useEffect(() => {
     const root = surface.current!;
     const disposeLocalControls = attachSpotLocalControls(root);
+    const disposeOrderBookDisplay = attachOrderBookDisplay(root);
     root.querySelector('input.ant-input-sm')?.setAttribute('aria-label', 'Search markets (local snapshot)');
     const click = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
@@ -39,7 +41,7 @@ const SnapshotSurface = memo(function SnapshotSurface({ onNotice }: { onNotice: 
     };
     root.addEventListener('click', click);
     root.addEventListener('keydown', key);
-    return () => { disposeLocalControls(); root.removeEventListener('click', click); root.removeEventListener('keydown', key); };
+    return () => { disposeOrderBookDisplay(); disposeLocalControls(); root.removeEventListener('click', click); root.removeEventListener('keydown', key); };
   }, [onNotice]);
   return <div className="snapshot-surface" ref={surface} dangerouslySetInnerHTML={{ __html: snapshot }} />;
 });

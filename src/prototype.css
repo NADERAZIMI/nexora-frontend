@@ -5,3 +5,6 @@
 /* Existing checkbox geometry is retained; only its checked state is revealed. */
 section[data-local-hide-other-pairs] .ant-checkbox-v2-checked .ant-checkbox-v2-inner{background:var(--color-primary);border-color:var(--color-primary)}
 section[data-local-hide-other-pairs] .ant-checkbox-v2-checked .ant-checkbox-v2-inner:after{opacity:1;border-color:var(--text-primary);transform:rotate(45deg) scale(1) translate(-50%,-50%)}
+/* Preserve captured side slots and panel geometry in single-side book modes. */
+[data-local-orderbook-mode=buy] [class*="__asksWrapper"],
+[data-local-orderbook-mode=sell] [class*="__bidsWrapper"]{visibility:hidden}

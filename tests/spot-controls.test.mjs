@@ -357,3 +357,114 @@ test('all approved tokens and computed application/input colors retain exact val
     assert.deepEqual(await page.locator(selector).evaluate(el => ({ background: getComputedStyle(el).backgroundColor, text: getComputedStyle(el).color, placeholder: getComputedStyle(el,'::placeholder').color })), { background:'rgb(16, 16, 20)', text:'rgb(244, 246, 250)', placeholder:'rgb(146, 154, 170)' });
   }
 });
+
+test('all Order Book modes support mouse, Enter and Space with one selected mode and preserved row identity', async t => {
+  const page = await pageFor(t), book = page.locator('[data-local-orderbook-mode]');
+  const group = page.getByRole('group', { name: 'Order Book display mode' });
+  const asks = book.locator('[class*="__asksWrapper"] [class*="__tableRow"]');
+  const bids = book.locator('[class*="__bidsWrapper"] [class*="__tableRow"]');
+  const rows = book.locator('[class*="__tableRow"]');
+  const originalNodes = await book.evaluateHandle(el => [...el.querySelectorAll('[class*="__tableRow"]')]);
+  const originalContent = await rows.evaluateAll(els => els.map(el => el.outerHTML));
+  assert.equal(await asks.count(), 9); assert.equal(await bids.count(), 9);
+  const verify = async mode => {
+    assert.equal(await book.getAttribute('data-local-orderbook-mode'), mode);
+    assert.equal(await group.getByRole('button', { pressed:true }).count(), 1);
+    assert.equal(await group.locator('.index-module-scss-module__hVXrWq__active').count(), 1);
+    for (const value of ['combined','buy','sell']) {
+      const control = group.locator(`[data-local-orderbook-control="${value}"]`);
+      assert.equal(await control.getAttribute('role'), 'button'); assert.equal(await control.getAttribute('tabindex'), '0');
+      assert.equal(await control.getAttribute('aria-pressed'), String(value === mode));
+      assert.equal(await control.evaluate(el => el.classList.contains('index-module-scss-module__hVXrWq__active')), value === mode);
+    }
+    assert.equal(await asks.filter({ visible:true }).count(), mode === 'buy' ? 0 : 9);
+    assert.equal(await bids.filter({ visible:true }).count(), mode === 'sell' ? 0 : 9);
+    assert.equal(await book.locator('[class*="__asksWrapper"]').getAttribute('aria-hidden'), String(mode === 'buy'));
+    assert.equal(await book.locator('[class*="__bidsWrapper"]').getAttribute('aria-hidden'), String(mode === 'sell'));
+    assert.deepEqual(await rows.evaluateAll(els => els.map(el => el.outerHTML)), originalContent);
+    assert.equal(await originalNodes.evaluate(saved => {
+      const current = [...document.querySelector('[data-local-orderbook-mode]').querySelectorAll('[class*="__tableRow"]')];
+      return saved.length === current.length && saved.every((node,i) => node === current[i]);
+    }), true);
+    assert.equal(await page.locator(selectors.notice).count(), 0);
+  };
+  await verify('combined');
+  for (const [mode,name,method] of [
+    ['buy','Buy Only','click'],['sell','Sell Only','click'],['combined','Combined Buy + Sell','click'],
+    ['buy','Buy Only','Enter'],['sell','Sell Only','Space'],['combined','Combined Buy + Sell','Enter'],
+    ['sell','Sell Only','Enter'],['buy','Buy Only','Space'],['combined','Combined Buy + Sell','Space'],
+    ['combined','Combined Buy + Sell','click'],
+  ]) {
+    const control = group.getByRole('button', { name, exact:true });
+    if (method === 'click') await control.click(); else await control.press(method);
+    await verify(mode);
+  }
+  const combined = group.getByRole('button', { name:'Combined Buy + Sell',exact:true });
+  await combined.focus(); await page.keyboard.press('Tab');
+  assert.equal(await group.getByRole('button', { name:'Buy Only',exact:true }).evaluate(el => el === document.activeElement), true);
+  await page.keyboard.press('Tab');
+  assert.equal(await group.getByRole('button', { name:'Sell Only',exact:true }).evaluate(el => el === document.activeElement), true);
+  const y = await page.evaluate(() => scrollY); await page.keyboard.press('Space'); assert.equal(await page.evaluate(() => scrollY), y);
+  await verify('sell');
+});
+
+test('Order Book display modes retain panel geometry, typography, prices and existing local control states', async t => {
+  const page = await pageFor(t), group = page.getByRole('group', { name:'Order Book display mode' });
+  const geometry = () => page.locator('[class*="__chartWrapper"],[class*="__orderbookDealsWrapper"],[class*="__actionWrapper"],[class*="__asksWrapper"],[class*="__bidsWrapper"],[class*="__newPrice"],[data-local-orderbook-control],input[type="number"]').evaluateAll(els => els.map(el => {
+    const r = el.getBoundingClientRect(), c = getComputedStyle(el);
+    return { x:r.x,y:r.y,width:r.width,height:r.height,font:c.font,padding:c.padding,radius:c.borderRadius,border:c.borderWidth };
+  }));
+  const before = await geometry();
+  const readouts = page.locator('[data-local-orderbook-mode] [class*="__newPrice"],[class*="__marketProportionWrapper"]');
+  const originalReadouts = await readouts.allTextContents();
+  await page.locator(selectors.slider).press('End'); await percent(page, 100);
+  await page.locator(selectors.checkbox).check();
+  await page.locator('[data-local-order-side="sell"]').press('Enter');
+  await page.locator(selectors.price).fill('99.125'); await page.locator(selectors.total).fill('3.875');
+  for (const name of ['Buy Only','Sell Only','Combined Buy + Sell']) {
+    await group.getByRole('button', { name,exact:true }).click();
+    assert.deepEqual(await geometry(), before);
+    assert.deepEqual(await readouts.allTextContents(), originalReadouts);
+    assert.equal(await page.locator(selectors.price).inputValue(), '99.125'); assert.equal(await page.locator(selectors.total).inputValue(), '3.875');
+    assert.equal(await page.locator(selectors.slider).getAttribute('aria-valuenow'), '100');
+    assert.equal(await page.locator(selectors.checkbox).isChecked(), true);
+    assert.equal(await page.locator('section[data-local-hide-other-pairs]').getAttribute('data-local-hide-other-pairs'), 'true');
+    assert.equal(await page.locator(selectors.form).getAttribute('data-local-side'), 'sell');
+    assert.equal(await page.locator('#rc-tabs-4-tab-market').getAttribute('aria-selected'), 'true');
+  }
+  await group.getByRole('button', { name:'Buy Only',exact:true }).press('Space');
+  await page.locator('#rc-tabs-1-tab-deals').click(); assert.match(await notice(page), /Market Trades contents are not included/);
+  await page.getByRole('button', { name:'Dismiss notice' }).click();
+  assert.equal(await page.locator('[data-local-orderbook-mode]').getAttribute('data-local-orderbook-mode'), 'buy');
+  await group.getByRole('button', { name:'Combined Buy + Sell',exact:true }).press('Enter');
+  // Book controls still do not fill fields or turn Deposit into an order action.
+  await page.locator('[data-local-orderbook-mode] [class*="__asksWrapper"] [class*="__tableRow"]').first().click();
+  assert.equal(await page.locator(selectors.price).inputValue(), '99.125'); assert.equal(await page.locator(selectors.total).inputValue(), '3.875');
+  await page.locator('[data-testid="spot-trade-orderBuyBtn"]').click(); assert.match(await notice(page), /Deposit has no connected service/);
+});
+
+test('Order Book listeners are scoped, disposable and reattach to the existing mode without rewriting rows', async t => {
+  const page = await pageFor(t);
+  const result = await page.evaluate(async () => {
+    const { attachOrderBookDisplay } = await import('/src/orderbook-display.ts');
+    const root = document.createElement('div');
+    root.append(document.querySelector('[data-local-orderbook-mode]').cloneNode(true));
+    const dispose = attachOrderBookDisplay(root), book = root.firstElementChild;
+    const controls = mode => book.querySelector(`[data-local-orderbook-control="${mode}"]`);
+    const originalRows = [...book.querySelectorAll('[class*="__tableRow"]')];
+    controls('buy').querySelector('path').dispatchEvent(new MouseEvent('click', { bubbles:true }));
+    const nested = book.dataset.localOrderbookMode;
+    const unrelated = document.createElement('span'); unrelated.dataset.localOrderbookControl = 'sell'; root.append(unrelated); unrelated.click();
+    const scoped = book.dataset.localOrderbookMode;
+    dispose(); controls('sell').click(); controls('sell').dispatchEvent(new KeyboardEvent('keydown', { key:' ',bubbles:true,cancelable:true }));
+    const disposed = book.dataset.localOrderbookMode;
+    const disposeAgain = attachOrderBookDisplay(root); const restored = book.dataset.localOrderbookMode;
+    controls('sell').dispatchEvent(new KeyboardEvent('keydown', { key:'Enter',bubbles:true,cancelable:true }));
+    const rebound = book.dataset.localOrderbookMode;
+    const current = [...book.querySelectorAll('[class*="__tableRow"]')];
+    const retained = originalRows.every((node,i) => node === current[i]); disposeAgain();
+    return { nested,scoped,disposed,restored,rebound,retained };
+  });
+  assert.deepEqual(result, { nested:'buy',scoped:'buy',disposed:'buy',restored:'buy',rebound:'sell',retained:true });
+  assert.equal(await page.locator('[data-local-orderbook-mode]').getAttribute('data-local-orderbook-mode'), 'combined');
+});
