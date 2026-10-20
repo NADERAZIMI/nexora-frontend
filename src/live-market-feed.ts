@@ -1,7 +1,7 @@
 /** Read-only MEXC public spot feed: never connects to trading/account endpoints. */
 export interface DepthLevel { price:string; qty:string }
 export interface Candle { time:number; open:number;high:number;low:number;close:number }
-const TIMEFRAMES=['1m','5m','15m','30m','1h','4h','1d'] as const;
+const TIMEFRAMES=['1m','5m','15m','30m','60m','4h','1d'] as const;
 type Timeframe=typeof TIMEFRAMES[number];
 const valid=(v:unknown):v is string=>typeof v==='string' && /^\d+(?:\.\d+)?$/.test(v);
 export async function fetchMarketFrame(symbol:string, signal:AbortSignal, timeframe:Timeframe='1m'):Promise<{asks:DepthLevel[];bids:DepthLevel[];candles:Candle[];lastPrice:string}> {
@@ -39,7 +39,7 @@ export function attachReadOnlyMarketFeed(root:HTMLElement){
  const chartButtons=new Map<Timeframe,HTMLButtonElement>();
  let timeframe:Timeframe='1m',latestCandles:Candle[]=[];
  for(const tf of TIMEFRAMES){
-  const button=document.createElement('button');button.type='button';button.textContent=tf;
+  const button=document.createElement('button');button.type='button';button.textContent=tf==='60m'?'1H':tf;
   button.dataset.timeframe=tf;button.setAttribute('aria-pressed',String(tf===timeframe));
   button.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();if(timeframe===tf)return;timeframe=tf;scale=1;chartButtons.forEach((b,key)=>b.setAttribute('aria-pressed',String(key===tf)));void refresh()});
   chartButtons.set(tf,button);toolbar.append(button);
