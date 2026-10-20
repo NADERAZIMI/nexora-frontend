@@ -596,6 +596,7 @@ test('offline market chooser previews exact small prices without relabeling the 
   assert.match(await region.textContent(), /not live data/);
   assert.match(await page.locator('[class*="__bigName"] h1').first().textContent(), /WOJAK\/USDT/);
   assert.equal(await page.locator('[data-local-orderbook-mode]').isVisible(),true);
+  await opener.click();
   await region.getByRole('button',{name:'SHIDO'}).click();
   assert.match(await region.textContent(), /0\.0000786/);
   await opener.press('Escape');
