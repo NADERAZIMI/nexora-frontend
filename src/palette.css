@@ -1,6 +1,6 @@
 :root {
   --bg-primary:#080808;
-  --bg-secondary:#101014;
+  --bg-secondary:#0D0D0D;
   --color-primary:#3D6BFF;
   --color-secondary:#5865F2;
   --color-success:#16B89A;
@@ -9,17 +9,17 @@
   --text-secondary:#929AAA;
 }
 html[data-theme=dark]{
-  --bg-primary:#080808;--bg-secondary:#101014;
+  --bg-primary:#080808;--bg-secondary:#080808;
   --bg-l0:#080808;--bg-l0-gray:#080808;--bg-level-primary:#080808;
-  --bg-l1:#101014;--bg-l1-white:#101014;--bg-level-secondary:#101014;
-  --bg-2:#101014;--bg-3:#101014;--bg-4:#101014;--bg-5:#101014;
-  --bg-modal:#101014;--bg-card:#101014;--bg-tooltip:#101014;--bg-tooltips:#101014;
-  --gray-18:#080808;--gray-17:#101014;--gray-16:#101014;--gray-16-atn:#101014;
-  --gray-15:#101014;--gray-14:#101014;--gray-13:#101014;
-  --fill-default:#101014;--fill-hover:#101014;--fill-pressed:#101014;
-  --fill-higher:#101014;--fill-elevation-higher:#101014;--fill-gray:#101014;
-  --fill-opacity-container:#101014;--fill-disable:#101014;--btn-secondary-bg:#101014;
-  --blue-0:#101014;--component-background:#101014;--third-menu-bg:#101014;--third-menu-hover-bg:#101014;
+  --bg-l1:#080808;--bg-l1-white:#080808;--bg-level-secondary:#080808;
+  --bg-2:#080808;--bg-3:#080808;--bg-4:#080808;--bg-5:#080808;
+  --bg-modal:#080808;--bg-card:#080808;--bg-tooltip:#080808;--bg-tooltips:#080808;
+  --gray-18:#080808;--gray-17:#080808;--gray-16:#080808;--gray-16-atn:#080808;
+  --gray-15:#080808;--gray-14:#080808;--gray-13:#080808;
+  --fill-default:#080808;--fill-hover:#080808;--fill-pressed:#080808;
+  --fill-higher:#080808;--fill-elevation-higher:#080808;--fill-gray:#080808;
+  --fill-opacity-container:#080808;--fill-disable:#080808;--btn-secondary-bg:#080808;
+  --blue-0:#080808;--component-background:#080808;--third-menu-bg:#080808;--third-menu-hover-bg:#080808;
   --line-base:#303644;--divider:#303644;--border-2:#303644;
   --gray-1-white:#F4F6FA;--gray-3:#F4F6FA;--gray-8:#929AAA;
   --content-primary:#F4F6FA;--content-white:#F4F6FA;--text-white:#F4F6FA;--text-primary:#F4F6FA;
@@ -37,7 +37,7 @@ html[data-theme=dark]{
   --error-6-seed:#F05A70;--error-6:#F05A70;--error-5:#F05A70;--error-7:#F05A70;
 }
 html[data-theme=dark][data-upcolor=upgreen]{--up:#16B89A;--up-hover:#16B89A;--up-active:#16B89A;--up-rgb:22,184,154;--down:#F05A70;--down-hover:#F05A70;--down-active:#F05A70;--down-rgb:240,90,112}
-html,body{background-color:#080808}
+html,body{background-color:#000000}
 html[data-theme=dark] ._wrapper_1fdt2_2,
 html[data-theme=dark] .content-module-scss-module__HNNBWW__wrapper,
 html[data-theme=dark] ._mediaItemContent_2nteh_6,
@@ -45,7 +45,7 @@ html[data-theme=dark] .ant-modal-content,
 html[data-theme=dark] .ant-modal-header,
 html[data-theme=dark] .ant-modal-body,
 html[data-theme=dark] .ant-modal-footer,
-[class*="__chartWrapper"],[class*="__chartContent"],.mxc-exchange-origin-kline-chart-element{background-color:#101014}
+[class*="__chartWrapper"],[class*="__chartContent"],.mxc-exchange-origin-kline-chart-element{background-color:#080808}
 html[data-theme=dark] .ant-tabs-v2-motion-ink-trail,
 html[data-theme=dark] .ant-tabs-v2-motion-ink-head{background-color:#F4F6FA}
 #root,.snapshot-surface{display:contents}
@@ -54,7 +54,7 @@ html[data-theme=dark] .ant-tabs-v2-motion-ink-head{background-color:#F4F6FA}
 [class*="__orderbookDealsWrapper"],
 [class*="__baBalance"],
 [class*="__feeLabelWrapper"],
-[class*="__chartType"].active{background-color:#101014}
+[class*="__chartType"].active{background-color:#080808}
 
 /* Keep the original field boxes; replace transparent/disabled fills only. */
 .mx-motion-input-container .mx-motion-input-inner.ant-input-affix-wrapper:has(> input[data-testid="spot-trade-buyPrice"]),
@@ -79,4 +79,30 @@ input[data-testid="spot-trade-buyTotal"]::-webkit-inner-spin-button,
 input[data-testid="spot-trade-buyTotal"]::-webkit-outer-spin-button{
   -webkit-appearance:none;
   margin:0;
+}
+
+/* NEXORA final three-layer dark palette:
+   #000000 canvas/gutters, #080808 page and panels, #0D0D0D inputs. */
+:root{--nexora-canvas:#000000;--nexora-surface:#080808;--nexora-field:#0D0D0D}
+html,body,#root{background-color:var(--nexora-canvas)!important}
+html[data-theme=dark] .snapshot-surface,
+html[data-theme=dark] [class*="__gridWrapper"],
+html[data-theme=dark] [class*="__chartWrapper"],
+html[data-theme=dark] [class*="__orderbookDealsWrapper"],
+html[data-theme=dark] [class*="__actionWrapper"],
+html[data-theme=dark] [class*="__panelWrapper"],
+html[data-theme=dark] [class*="__headlineWrapper"],
+html[data-theme=dark] #globalNav,
+html[data-theme=dark] .nexora-bybit-chart-pending,
+html[data-theme=dark] .nexora-spot-market-picker{
+  background-color:var(--nexora-surface)!important;
+}
+html[data-theme=dark] input,
+html[data-theme=dark] textarea,
+html[data-theme=dark] select,
+html[data-theme=dark] .ant-input,
+html[data-theme=dark] .ant-input-affix-wrapper,
+html[data-theme=dark] [class*="__inputWrapper"],
+html[data-theme=dark] .nexora-spot-market-picker input{
+  background-color:var(--nexora-field)!important;
 }
