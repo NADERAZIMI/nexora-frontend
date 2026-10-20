@@ -86,3 +86,12 @@ html[data-nx-theme="light"] .markets-period-picker button.active{background:var(
 .markets-change-header .markets-period-picker button{min-width:38px;padding:6px 8px;font-size:11px}
 .markets-table th{height:auto;min-height:50px}
 @media(max-width:1050px){.markets-table{min-width:950px}.markets-change-heading{min-width:395px}}
+
+/* Seven independent timeframe columns in the existing market table. */
+.markets-table{min-width:1250px;table-layout:auto}
+.markets-table th,.markets-table td{white-space:nowrap}
+.markets-period-column{min-width:95px}
+.markets-period-column button{font-size:12px;white-space:nowrap}
+.markets-table th:first-child,.markets-table td:first-child{text-align:left;min-width:155px}
+.markets-table th:last-child,.markets-table td:last-child{min-width:75px}
+.markets-table-scroll{width:100%;overflow-x:auto}
