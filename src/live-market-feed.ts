@@ -180,10 +180,17 @@ export function attachReadOnlyMarketFeed(root:HTMLElement){
    void refresh();interval=window.setInterval(()=>{void refresh()},15000);
  };
  embedded.addEventListener('load',()=>{embedded.dataset.loaded='true';embedded.contentWindow?.postMessage({type:'nexora:chart-market',symbol:selected},location.origin);});
+ const onTicker=(event:Event)=>{
+  const detail=(event as CustomEvent<{symbol?:string;price?:number}>).detail;
+  if(!detail||detail.symbol!==selected||typeof detail.price!=='number'||!Number.isFinite(detail.price)||detail.price<=0)return;
+  if(price)price.textContent=detail.price.toLocaleString('en-US',{maximumFractionDigits:detail.price>=100?2:8});
+  interactive.setLivePrice(detail.price);
+ };
+ root.addEventListener('nexora:live-ticker',onTicker);
  root.addEventListener('nexora:market-selected',choose);
  const dismiss=(event:PointerEvent)=>{if(!menu.hidden&&!menu.contains(event.target as Node)&&!toolbar.contains(event.target as Node)){menu.hidden=true;renderToolbar()}};
  document.addEventListener('pointerdown',dismiss);
  // Show verified public BTC candles immediately instead of the archived static chart.
  choose(new CustomEvent('nexora:market-selected',{detail:{symbol:'BTCUSDT'}}));
- return ()=>{mounted=false;controller?.abort();if(interval!==undefined)clearInterval(interval);restore();overlay.remove();root.removeEventListener('nexora:market-selected',choose);interactive.dispose();disposeChartTypePicker();document.removeEventListener('pointerdown',dismiss)};
+ return ()=>{mounted=false;controller?.abort();if(interval!==undefined)clearInterval(interval);restore();overlay.remove();root.removeEventListener('nexora:market-selected',choose);root.removeEventListener('nexora:live-ticker',onTicker);interactive.dispose();disposeChartTypePicker();document.removeEventListener('pointerdown',dismiss)};
 }
