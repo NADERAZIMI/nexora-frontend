@@ -28,7 +28,7 @@ export function attachSpotTokenInfo(root:HTMLElement):()=>void{
    host.replaceChildren();
    const top=document.createElement('div');top.className='nexora-token-info-heading';
    const title=document.createElement('h2');title.textContent=profile?.name||base;
-   const note=document.createElement('span');note.textContent=error?'Public market information unavailable':'Public Spot market information';
+   const note=document.createElement('span');note.textContent=profile?'Project data: CoinGecko':'NEXORA Spot Info';
    top.append(title,note);host.append(top);
    const layout=document.createElement('div');layout.className='nexora-token-info-grid';
    const overview=document.createElement('div');const heading=document.createElement('h3');heading.textContent='Overview';overview.append(heading);
@@ -53,7 +53,7 @@ export function attachSpotTokenInfo(root:HTMLElement):()=>void{
    ];
    for(const [label,value] of facts){const row=document.createElement('div');row.className='nexora-token-info-fact';const key=document.createElement('span');key.textContent=label;const val=document.createElement('strong');val.textContent=value;row.append(key,val);overview.append(row);}
    const about=document.createElement('div');const sub=document.createElement('h3');sub.textContent='Introduction';about.append(sub);
-   const paragraph=document.createElement('p');paragraph.textContent=profile?.description||'Verified project details are currently unavailable from the connected metadata provider.';about.append(paragraph);
+   const paragraph=document.createElement('p');paragraph.textContent=profile?.description||'Project introduction is not currently available.';about.append(paragraph);
    if(profile){
     const links=document.createElement('div');links.className='nexora-info-links';
     for(const [name,href] of [['Website',profile.homepage],['Explorer',profile.explorer],['X',profile.twitter],['Telegram',profile.telegram],['Reddit',profile.reddit],['GitHub',profile.github]]){
@@ -64,22 +64,42 @@ export function attachSpotTokenInfo(root:HTMLElement):()=>void{
     if(profile.image){const logo=document.createElement('img');logo.className='nexora-info-logo';logo.src=profile.image;logo.alt='';top.prepend(logo);}
     const credit=document.createElement('p');credit.className='nexora-info-credit';credit.textContent='Project metadata: CoinGecko · market data: public Spot feed';about.append(credit);
    }
-   if(error){const warn=document.createElement('p');warn.className='nexora-token-info-error';warn.textContent=error;about.append(warn);}
+   if(error&&error!=='Loading project information…'){const warn=document.createElement('p');warn.className='nexora-token-info-error';warn.textContent=error;about.append(warn);}
    layout.append(overview,about);host.append(layout);
  };
  const load=async()=>{
    controller?.abort();controller=new AbortController();const signal=controller.signal;
-   const id=selected;
-   render(baseFrom(id,selectedQuote),selectedQuote,null,null,'Loading public market information…');
-   try{
-     const details=await Promise.allSettled([get<{symbols?:ExchangeDetail[]}>('exchangeInfo?symbol='+encodeURIComponent(id),signal),get<Ticker24>('ticker/24hr?symbol='+encodeURIComponent(id),signal),getCoinProfile(baseFrom(id,selectedQuote),signal)]);
+   const id=selected,quoteAtStart=selectedQuote,baseAtStart=baseFrom(id,quoteAtStart);
+   let metadata:ExchangeDetail|null=null,ticker:Ticker24|null=null,profile:CoinProfile|null=null;
+   let coinStatus='Loading project information…';
+   const draw=()=>{
      if(!mounted||signal.aborted||selected!==id)return;
-     const metadata=details[0].status==='fulfilled'?details[0].value.symbols?.find(x=>x.symbol===id)??null:null;
-     const ticker=details[1].status==='fulfilled'?details[1].value:null;
-     const quote=metadata?.quoteAsset??selectedQuote;const base=metadata?.baseAsset??baseFrom(id,quote);
-     const profile=details[2].status==='fulfilled'?details[2].value:null;
-     render(base,quote,metadata,ticker,metadata||ticker||profile?'':'Market data is currently unavailable.',profile);
-   }catch(error){if(!signal.aborted&&mounted)render(baseFrom(id,selectedQuote),selectedQuote,null,null,String(error));}
+     const quote=metadata?.quoteAsset??quoteAtStart;
+     const base=metadata?.baseAsset??baseFrom(id,quote);
+     render(base,quote,metadata,ticker,coinStatus,profile);
+   };
+   draw();
+   // CoinGecko is independent: do not wait for slower Spot exchangeInfo/ticker requests.
+   const coinTask=getCoinProfile(baseAtStart,signal).then(data=>{
+     if(signal.aborted)return;
+     profile=data;
+     coinStatus=data?'':('CoinGecko profile not mapped for '+baseAtStart+'.');
+     draw();
+   }).catch(error=>{
+     if(signal.aborted)return;
+     coinStatus='CoinGecko request failed: '+(error instanceof Error?error.message:String(error));
+     draw();
+   });
+   const marketTask=Promise.allSettled([
+     get<{symbols?:ExchangeDetail[]}>('exchangeInfo?symbol='+encodeURIComponent(id),signal),
+     get<Ticker24>('ticker/24hr?symbol='+encodeURIComponent(id),signal)
+   ]).then(results=>{
+     if(signal.aborted)return;
+     metadata=results[0].status==='fulfilled'?results[0].value.symbols?.find(x=>x.symbol===id)??null:null;
+     ticker=results[1].status==='fulfilled'?results[1].value:null;
+     draw();
+   });
+   await Promise.allSettled([coinTask,marketTask]);
  };
  const markTabs=(active:HTMLElement)=>{
    for(const tab of tabs){
