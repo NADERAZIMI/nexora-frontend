@@ -58,6 +58,9 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
   let selected = 'BTC_USDT';
   let liveMarkets:MexcSpotMarket[] = [];
   let liveLoaded=false;
+  let visibleLimit=120;
+  const showMore=document.createElement('button');
+  showMore.type='button';showMore.className='nexora-market-show-more';showMore.hidden=true;
   const liveRows=document.createElement('div');
   liveRows.className='nexora-market-preview-choices';
   liveRows.setAttribute('aria-label','MEXC live spot market prices');
@@ -108,14 +111,16 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
     liveRows.replaceChildren();
     const liveFiltered=liveMarkets.filter(m=>m.quote===activeQuote && (q==='' || m.symbol.includes(q) || m.id.includes(q)));
     liveFiltered.sort((a,b)=>sortDirection*(sortKey==='pair'?a.symbol.localeCompare(b.symbol):comparePrice(a.price,b.price)));
-    for(const market of liveFiltered.slice(0,120)) {
+    for(const market of liveFiltered.slice(0,visibleLimit)) {
       const row=document.createElement('button'); row.type='button';
       row.setAttribute('aria-label',market.symbol+'/'+market.quote);
-      const cells=[market.symbol+'/'+market.quote,formatPrice(market.price),'Live price'];
+      const cells=[market.symbol+'/'+market.quote,market.price?formatPrice(market.price):'—',market.price?'Public price':'Price unavailable'];
       for(const value of cells){const span=document.createElement('span');span.textContent=value;row.append(span);}
       row.addEventListener('click', event=>{ event.stopPropagation();selectLive(market);close(); });
       liveRows.append(row);
     }
+    showMore.hidden=liveFiltered.length<=visibleLimit;
+    showMore.textContent='Show more markets ('+Math.min(visibleLimit,liveFiltered.length)+' / '+liveFiltered.length+')';
     const noResults = buttons.every(x => x.button.hidden) && liveRows.children.length===0;
     empty.hidden = !noResults;
     sortButtons.forEach((button,i) => button.setAttribute('aria-pressed', String(i === (sortKey === 'pair' ? 0 : 1))));
@@ -123,7 +128,7 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
   function comparePrice(a:string,b:string) {
     const norm = (x:string) => {
       const [whole, frac = ''] = x.split('.');
-      return BigInt(whole + frac.padEnd(30,'0'));
+      return x ? BigInt(whole + frac.padEnd(30,'0')) : -1n;
     };
     const x=norm(a), y=norm(b);
     return x < y ? -1 : x > y ? 1 : 0;
@@ -132,8 +137,9 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
   empty.className = 'nexora-market-preview-empty';
   empty.textContent = 'No captured spot markets in this category';
   empty.hidden = true;
-  search.addEventListener('input', refresh);
-  panel.append(headingLine, search, tabs, filterBar, columns, liveRows, choices, empty, sample, warning);
+  search.addEventListener('input', () => {visibleLimit=120;refresh()});
+  showMore.addEventListener('click',event=>{event.stopPropagation();visibleLimit+=120;refresh()});
+  panel.append(headingLine, search, tabs, filterBar, columns, liveRows, showMore, choices, empty, sample, warning);
   // The archived headline sits inside transformed, clipped layout wrappers.
   // Portal the menu to body so it overlays the chart instead of being clipped.
   document.body.append(panel);
@@ -198,7 +204,7 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
       liveMarkets=await getMexcSpotMarkets(loadController.signal);
       liveLoaded=true;
       headingLine.textContent='MEXC public Spot prices · '+liveMarkets.length+' pairs';
-      warning.textContent='Live public ticker only. Depth and chart require separate market feeds.';
+      warning.textContent='All eligible MEXC Spot symbols are searchable. Prices may be unavailable for some pairs. Experimental frontend only.';
       refresh();
     } catch(error) {
       if(loadController.signal.aborted)return;
