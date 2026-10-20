@@ -84,6 +84,15 @@ def main():
             return
         save_json(list_path, coins)
     by_symbol, duplicates = {}, set()
+    # Restrict detailed profile imports to symbols actually listed on MEXC Spot.
+    mexc_symbols = set()
+    try:
+        with urllib.request.urlopen('https://api.mexc.com/api/v3/exchangeInfo', timeout=35) as response:
+            mexc = json.load(response)
+        mexc_symbols = {str(row.get('baseAsset', '')).upper() for row in mexc.get('symbols', []) if isinstance(row, dict)}
+        print('MEXC Spot base assets:', len(mexc_symbols), flush=True)
+    except (OSError, ValueError, urllib.error.URLError) as error:
+        print('MEXC discovery unavailable; continuing with known symbols only:', error, flush=True)
     for coin in coins:
         if not isinstance(coin, dict):
             continue
@@ -123,7 +132,7 @@ def main():
     completed = 0
     # Stable identities first, then unique ticker identities.
     ids = dict(KNOWN)
-    ids.update({sym: ident for sym, ident in by_symbol.items() if sym not in ids})
+    ids.update({sym: ident for sym, ident in by_symbol.items() if sym in mexc_symbols and sym not in ids})
     for symbol, ident in ids.items():
         if completed >= args.profiles_limit:
             break
@@ -137,6 +146,12 @@ def main():
         if not isinstance(data, dict) or str(data.get("symbol", "")).upper() != symbol:
             continue
         save_json(file, data)
+        image = data.get('image', {})
+        image_url = image.get('small') if isinstance(image, dict) else None
+        icon_file = root / 'icons' / (ident + '.png')
+        if icon_file.exists() or icon_download(image_url, icon_file):
+            icons[symbol] = '/token-assets/icons/' + icon_file.name
+            save_json(icons_path, icons)
         completed += 1
         print("Saved", symbol, ident, flush=True)
         time.sleep(args.delay)
