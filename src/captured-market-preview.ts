@@ -127,6 +127,32 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
   positionPanel();
   window.addEventListener('resize', positionPanel);
   window.addEventListener('scroll', positionPanel, true);
+  // Do not misrepresent saved BTC book/chart/order-entry numbers as another pair.
+  const btcOnlyPanels = [
+    root.querySelector<HTMLElement>('[class*="__chartWrapper"]'),
+    root.querySelector<HTMLElement>('[class*="__orderbookDealsWrapper"]'),
+    root.querySelector<HTMLElement>('[class*="__actionWrapper"]')
+  ].filter((panel): panel is HTMLElement => panel !== null);
+  const marketStatus = document.createElement('div');
+  marketStatus.className = 'nexora-market-status';
+  marketStatus.setAttribute('role', 'status');
+  marketStatus.hidden = true;
+  const headline = anchor.parentElement ?? anchor;
+  headline.append(marketStatus);
+  const setDataAvailability = (id: string, label: string) => {
+    const unavailable = id !== 'BTC_USDT';
+    for (const panel of btcOnlyPanels) {
+      if (unavailable) {
+        panel.dataset.nexoraUnavailable = 'true';
+        panel.dataset.nexoraUnavailableLabel = label + ' market data not connected';
+      } else {
+        delete panel.dataset.nexoraUnavailable;
+        delete panel.dataset.nexoraUnavailableLabel;
+      }
+    }
+    marketStatus.hidden = !unavailable;
+    marketStatus.textContent = unavailable ? label + ' selected — price sample only; trading, chart and order book unavailable' : '';
+  };
   function show(id: 'BTC_USDT' | 'SHIDO_USDT' | 'WOJAK_USDT') {
     const item = capturedMarketDisplay(id);
     sample.textContent = item.label + ': ' + item.formattedPrice + ' USDT | displayed precision: ' + item.formattedPrecision;
@@ -136,6 +162,7 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
     if (subname) subname.textContent = item.id === 'BTC_USDT' ? originalSubname : 'Offline sample';
     root.dataset.localSelectedMarket = id;
     root.dataset.localMarketDataUnavailable = String(id !== 'BTC_USDT');
+    setDataAvailability(id, item.label);
     refresh();
   }
   show('BTC_USDT');
@@ -173,6 +200,8 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
     if(subname) subname.textContent = originalSubname;
     delete root.dataset.localSelectedMarket;
     delete root.dataset.localMarketDataUnavailable;
+    btcOnlyPanels.forEach(panel => { delete panel.dataset.nexoraUnavailable; delete panel.dataset.nexoraUnavailableLabel; });
+    marketStatus.remove();
     panel.remove();
   };
 }
