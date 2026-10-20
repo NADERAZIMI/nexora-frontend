@@ -17,6 +17,8 @@ jobs:
         with:
           node-version: '22'
           cache: npm
+      - name: Resolve chart dependencies with exact pinned versions
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
       - run: npm ci
       - name: Restore locally cached token logos
         uses: actions/cache@v4
