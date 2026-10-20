@@ -21,7 +21,7 @@ export function attachReadOnlyMarketFeed(root:HTMLElement){
  const label=document.createElement('div');label.className='nexora-live-chart-label';
  const canvas=document.createElement('canvas');canvas.setAttribute('aria-label','MEXC 1-minute candlestick chart (read-only)');
  const state=document.createElement('div');state.className='nexora-live-state';overlay.append(label,canvas,state);chart.append(overlay);
- const price=book.querySelector<HTMLElement>('[class*="__newPrice"] [class*="__bigPrice"]');
+ const price=book.querySelector<HTMLElement>('[class*="__newPrice"] [class*="__priceEllipsis"] > div');
  const originalPrice=price?.textContent??'';
  const originals: {node:HTMLElement;text:string}[]=[];
  for(const side of ['asks','bids'])for(const row of book.querySelectorAll<HTMLElement>('[class*="__'+side+'Wrapper"] [class*="__tableRow"]')){
