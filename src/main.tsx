@@ -60,24 +60,6 @@ function MarketBar({pair,onSelect,pairs,source,tickers,pricesReady}:{pair:SpotPa
  <div className="marketstat"><small>24H Turnover ({pair.quote})</small><strong>{selectedTicker?formatVolume(selectedTicker.turnover):'—'}</strong></div>
  <span className="marketstate"><i/>{pricesReady?'Live Bybit tickers':'Market data unavailable'}</span></section>
 }
-type FundraisingPerson={name:string;subtitle:string;avatar:string;links:{name:string;url:string}[]};
-const bitcoinFundraising:{team:FundraisingPerson[];investors:FundraisingPerson[]}={
- team:[{name:'Luke Dashjr',subtitle:'Bitcoin Core Developer',avatar:'LD',links:[{name:'X',url:'https://x.com/LukeDashjr'},{name:'in',url:'https://www.linkedin.com/search/results/all/?keywords=Luke%20Dashjr'}]}],
- investors:[{name:'Pantera Capital',subtitle:'United States · Bitcoin investor',avatar:'P',links:[{name:'Website',url:'https://panteracapital.com/'},{name:'X',url:'https://x.com/PanteraCapital'}]}]
-};
-function FundraisingPanel({base}:{base:string}){
- const data=base==='BTC'?bitcoinFundraising:null;
- return <div className="fundraising-content">
- {(['team','investors'] as const).map(group=><section className="fundraising-section" key={group}>
-  <h3>{group==='team'?'Team':'Investors'}</h3>
-  {data?.[group]?.length?data[group].map(p=><div className="fundraising-person" key={p.name}>
-    <span className={'fundraising-avatar '+(group==='investors'?'investor':'')}>{p.avatar}</span>
-    <div className="fundraising-identity"><strong>{p.name}</strong><small>{p.subtitle}</small></div>
-    <div className="fundraising-socials">{p.links.map(x=><a key={x.url} href={x.url} target="_blank" rel="noopener noreferrer" aria-label={p.name+' '+x.name} title={x.name}>{x.name==='Website'?'◎':x.name==='X'?'𝕏':x.name}</a>)}</div>
-  </div>):<p className="fundraising-unknown">Verified {base} {group==='team'?'team':'investor'} details are not available.</p>}
- </section>)}
- </div>;
-}
 function TokenInfoPanel({pair}:{pair:SpotPair}){
  const {info,status}=useTokenOverview(pair.base);
  const fmt=(n:number|undefined,dec=2)=>n===undefined?'—':n.toLocaleString('en-US',{maximumFractionDigits:dec});
