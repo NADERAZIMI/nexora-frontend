@@ -13,3 +13,10 @@ section[data-local-hide-other-pairs] .ant-checkbox-v2-checked .ant-checkbox-v2-i
 [data-local-orderbook-mode]:not([data-local-orderbook-mode=combined]) [class*="__bidsWrapper"]{order:0;flex-shrink:0}
 [data-local-orderbook-mode]:not([data-local-orderbook-mode=combined]) [class*="__newPrice"]{order:1;flex-shrink:0;height:auto!important}
 [data-local-orderbook-mode]:not([data-local-orderbook-mode=combined]) [class*="__marketProportionWrapper"]{order:2;flex-shrink:0}
+
+/* In single-side modes, shared mid-price and B/S ratio are mixed-side UI. */
+/* Hide them so Sell Only contains no visible Buy indicators (and vice versa). */
+[data-local-orderbook-mode=buy] [class*="__newPrice"],
+[data-local-orderbook-mode=sell] [class*="__newPrice"],
+[data-local-orderbook-mode=buy] [class*="__marketProportionWrapper"],
+[data-local-orderbook-mode=sell] [class*="__marketProportionWrapper"]{display:none!important}
