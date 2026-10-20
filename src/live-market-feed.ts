@@ -54,7 +54,7 @@ export function attachReadOnlyMarketFeed(root:HTMLElement){
  if(!chart||!book)return ()=>{};
  const overlay=document.createElement('div');overlay.className='nexora-live-chart';overlay.hidden=true;
  const label=document.createElement('div');label.className='nexora-live-chart-label';
- const canvas=document.createElement('canvas');canvas.setAttribute('aria-label','NEXORA spot candlestick chart');
+ const canvas=document.createElement('canvas');canvas.setAttribute('aria-label','Spot chart');
  const state=document.createElement('div');state.className='nexora-live-state';const retry=document.createElement('button');retry.type='button';retry.className='nexora-feed-retry';retry.textContent='Retry';retry.hidden=true;retry.addEventListener('click',()=>{void refresh()});overlay.append(label,canvas,state,retry);chart.append(overlay);
  const toolbar=document.createElement('div');toolbar.className='nexora-chart-timeframes';toolbar.setAttribute('aria-label','Chart timeframe');
  const LABELS:Record<Timeframe,string>={'1m':'1m','3m':'3m','5m':'5m','10m':'10m','15m':'15m','30m':'30m','60m':'1H','2h':'2H','4h':'4H','6h':'6H','8h':'8H','12h':'12H','1d':'1D','2d':'2D','3d':'3D','5d':'5D','1W':'1W','1M':'1M'};
@@ -114,9 +114,6 @@ export function attachReadOnlyMarketFeed(root:HTMLElement){
     else{selectTimeframe(tf);menu.hidden=true;renderToolbar();}
    });grid.append(btn);
   }
-  const unavailable=document.createElement('p');unavailable.className='nexora-timeframe-hint';
-  unavailable.textContent='Custom intervals use aggregation of real MEXC candles. Tick/Time mode requires live trade history.';
-  menu.append(unavailable);
  };
  overlay.prepend(toolbar,menu);renderToolbar();renderMenu();
  const price=book.querySelector<HTMLElement>('[class*="__newPrice"] [class*="__priceEllipsis"] > div');
