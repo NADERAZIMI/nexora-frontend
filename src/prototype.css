@@ -393,3 +393,14 @@ font-size:13px;cursor:pointer}
 .nexora-spot-market-row .down{color:#f05a70}
 .nexora-spot-market-state{flex:none;padding:9px 5px 0;color:#929aaa;font-size:11px}
 .nexora-spot-market-more{width:100%;padding:10px;border:0;background:#2b3342;color:#f4f6fa;cursor:pointer}
+
+/* Chart navigation from user's reference: local tabs only. */
+.nexora-chart-tabs{display:flex;align-items:stretch;gap:18px;height:42px;padding:0 14px;overflow-x:auto;scrollbar-width:none;white-space:nowrap;background:#121212}
+.nexora-chart-tabs::-webkit-scrollbar{display:none}
+.nexora-chart-tabs button{position:relative;flex:none;padding:0;background:transparent;border:0;color:#7e8796;font:500 13px/42px Arial,sans-serif;cursor:pointer}
+.nexora-chart-tabs button[aria-selected=true]{color:#fff;font-weight:600}
+.nexora-chart-tabs button[aria-selected=true]:after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:#5865f2}
+.nexora-chart-tabs button:focus-visible{outline:1px solid #5865f2;outline-offset:-2px}
+[class*="__chartWrapper"]{position:relative}
+.nexora-chart-tab-placeholder[hidden]{display:none!important}
+.nexora-chart-tab-placeholder{position:absolute;inset:42px 0 0;z-index:50;background:var(--nexora-surface,#121212);color:#929aaa;display:flex;align-items:center;justify-content:center;font:13px Arial,sans-serif;text-align:center}
