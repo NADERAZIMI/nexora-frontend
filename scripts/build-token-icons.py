@@ -6,6 +6,10 @@ catalog=json.loads((ROOT/"public/spot-markets.json").read_text(encoding="utf-8")
 symbols={str(p["base"]).lower() for p in catalog["pairs"]}|{str(p["quote"]).lower() for p in catalog["pairs"]}
 out=ROOT/"public/token-icons"
 out.mkdir(parents=True,exist_ok=True)
+# The CI cache restores previously validated assets. Avoid redownloading the archive.
+if (out/"manifest.json").is_file() and len(list(out.glob("*.png")))>=15:
+    print("Reusing validated cached token images:",len(list(out.glob("*.png"))))
+    raise SystemExit(0)
 url="https://codeload.github.com/spothq/cryptocurrency-icons/tar.gz/refs/heads/master"
 request=urllib.request.Request(url,headers={"User-Agent":"NEXORA-Asset-Build/1.0"})
 with urllib.request.urlopen(request,timeout=60) as response:
