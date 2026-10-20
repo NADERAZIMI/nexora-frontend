@@ -49,8 +49,8 @@ export function attachBybitSpotOrderbook(root:HTMLElement):()=>void{
    });
   };
   renderSide(asksRows,askMap,false);renderSide(bidsRows,bidMap,true);
-  const bestBid=Math.max(0,...bidMap.keys().map(Number));
-  const bestAsk=Math.min(Infinity,...askMap.keys().map(Number));
+  const bestBid=Math.max(0,...[...bidMap.keys()].map(Number));
+  const bestAsk=Math.min(Infinity,...[...askMap.keys()].map(Number));
   const mid=bestBid>0&&Number.isFinite(bestAsk)?(bestBid+bestAsk)/2:bestBid||bestAsk;
   if(Number.isFinite(mid)&&mid>0){
    if(centerPrice)centerPrice.textContent=mid.toLocaleString('en-US',{maximumFractionDigits:8});
