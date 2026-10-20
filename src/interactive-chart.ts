@@ -1,5 +1,5 @@
 import { drawChartType, heikinAshi, isDirectChartType, type DirectChartType } from './chart-renderers';
-import type { Candle } from './live-market-feed';
+import type { Candle } from './chart-types';
 
 type Point={time:number;price:number};
 type Line={a:Point;b:Point};
