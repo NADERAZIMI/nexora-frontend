@@ -1,43 +1,31 @@
-name: NEXORA Frontend — build and deploy Turkey VPS
-
+name: NEXORA Frontend — static reference deploy
 on:
   push:
     branches: [main]
   workflow_dispatch:
-
 permissions:
   contents: read
-
 concurrency:
   group: nexora-frontend-turkey
   cancel-in-progress: false
-
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: npm
-      - run: npm ci
-      - run: npm run build
-      - name: Bundle locally served exchange chart library
+      - name: Validate standalone HTML
         run: |
           set -euo pipefail
-          mkdir -p dist/vendor
-          curl --fail --show-error --location --retry 3 --connect-timeout 15 --max-time 90 \
-            'https://cdn.jsdelivr.net/npm/lightweight-charts@5.0.9/dist/lightweight-charts.standalone.production.js' \
-            -o dist/vendor/lightweight-charts.standalone.production.js
-          test "$(wc -c < dist/vendor/lightweight-charts.standalone.production.js)" -gt 100000
+          test -s index.html
+          grep -qi '<html' index.html
+          grep -qi 'nexora-identity-theme' index.html
+          mkdir -p dist
+          cp index.html dist/index.html
       - uses: actions/upload-artifact@v4
         with:
           name: nexora-frontend-dist
           path: dist/
           if-no-files-found: error
-          retention-days: 7
-
   deploy:
     needs: build
     runs-on: ubuntu-latest
@@ -47,7 +35,7 @@ jobs:
         with:
           name: nexora-frontend-dist
           path: dist/
-      - name: Verify deployment configuration
+      - name: Verify SSH configuration
         env:
           SSH_KEY_B64: ${{ secrets.NEXORA_DEPLOY_SSH_KEY_B64 }}
           SSH_HOST: ${{ secrets.NEXORA_DEPLOY_HOST }}
@@ -55,48 +43,25 @@ jobs:
           SSH_KNOWN_HOSTS: ${{ secrets.NEXORA_SSH_KNOWN_HOSTS }}
         run: |
           for var in SSH_KEY_B64 SSH_HOST SSH_USER SSH_KNOWN_HOSTS; do
-            if [ -z "${!var}" ]; then
-              echo "::error::Missing deployment secret: $var. Configure turkey-frontend environment."
-              exit 1
-            fi
+            if [ -z "${!var}" ]; then echo "::error::Missing $var"; exit 1; fi
           done
-      - name: Configure pinned SSH host identity
+      - name: Deploy standalone page into NEXORA release directory
         env:
-          SSH_KEY_B64: ${{ secrets.NEXORA_DEPLOY_SSH_KEY_B64 }}
-          SSH_KNOWN_HOSTS: ${{ secrets.NEXORA_SSH_KNOWN_HOSTS }}
-        run: |
-          install -m 700 -d ~/.ssh
-          printf '%s' "$SSH_KEY_B64" | base64 --decode > ~/.ssh/id_ed25519 || { echo '::error::Base64 SSH secret is invalid or incomplete'; exit 1; }
-          chmod 600 ~/.ssh/id_ed25519
-          ssh-keygen -y -f ~/.ssh/id_ed25519 > /dev/null || { echo '::error::Decoded SSH private key is invalid'; exit 1; }
-          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
-          chmod 600 ~/.ssh/known_hosts
-      - name: Deploy only inside dedicated NEXORA directory
-        env:
+          KEY_B64: ${{ secrets.NEXORA_DEPLOY_SSH_KEY_B64 }}
           HOST: ${{ secrets.NEXORA_DEPLOY_HOST }}
           USER: ${{ secrets.NEXORA_DEPLOY_USER }}
+          KNOWN_HOSTS: ${{ secrets.NEXORA_SSH_KNOWN_HOSTS }}
           PORT: ${{ vars.NEXORA_SSH_PORT || '22' }}
           RELEASE: ${{ github.sha }}
         run: |
           set -euo pipefail
-          case "$RELEASE" in *[!a-f0-9]*|'') exit 1;; esac
+          install -m 700 -d ~/.ssh
+          printf '%s' "$KEY_B64" | base64 --decode > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keygen -y -f ~/.ssh/id_ed25519 >/dev/null
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
           SSH_OPTS="-i $HOME/.ssh/id_ed25519 -p $PORT -o StrictHostKeyChecking=yes -o BatchMode=yes"
           ssh $SSH_OPTS "$USER@$HOST" "mkdir -p ~/nexora-frontend/releases/$RELEASE"
           rsync -az --delete -e "ssh -i $HOME/.ssh/id_ed25519 -p $PORT -o StrictHostKeyChecking=yes -o BatchMode=yes" dist/ "$USER@$HOST:nexora-frontend/releases/$RELEASE/"
-          # Fetch the public Bybit symbol catalog on the VPS so browsers never
-          # need cross-origin Bybit REST access. Fail safely before release switch.
-          ssh $SSH_OPTS "$USER@$HOST" bash -s -- "$RELEASE" <<'REMOTE'
-          set -euo pipefail
-          release="$1"
-          dest="$HOME/nexora-frontend/releases/$release/bybit-spot-catalog.json"
-          curl --fail --silent --show-error --location --connect-timeout 10 --max-time 35 --retry 2             'https://api.bybit.com/v5/market/instruments-info?category=spot' -o "$dest.tmp"
-          python3 - "$dest.tmp" <<'PY'
-          import json,sys
-          with open(sys.argv[1],encoding='utf-8') as f: obj=json.load(f)
-          rows=obj.get('result',{}).get('list',[])
-          assert obj.get('retCode')==0 and isinstance(rows,list) and len(rows)>100, 'Invalid Bybit Spot catalog'
-          print('Validated Bybit Spot instruments:',len(rows))
-          PY
-          mv "$dest.tmp" "$dest"
-          REMOTE
           ssh $SSH_OPTS "$USER@$HOST" "cd ~/nexora-frontend && ln -sfn releases/$RELEASE next && mv -Tf next current"
