@@ -315,3 +315,17 @@ font-size:13px;cursor:pointer}
 .nexora-chart-type-glyph i:after{top:-4px;bottom:-4px;left:1px}
 
 .nexora-chart-type-item:disabled{opacity:.38;cursor:not-allowed}.nexora-chart-type-item:disabled:hover{background:transparent}
+
+
+/* Spot chart's single-line toolbar follows the visual reference. */
+.nexora-chart-top-row{gap:8px;min-height:38px;padding:0 5px 4px;flex-wrap:nowrap}
+.nexora-chart-top-row .nexora-chart-tools{gap:3px;min-width:0}
+.nexora-chart-top-row .nexora-chart-tools button{font-size:16px;min-width:27px;height:27px;line-height:1;padding:3px 5px}
+.nexora-chart-top-row .nexora-chart-tools button:disabled{opacity:.56;cursor:default}
+.nexora-chart-display-modes{display:flex;align-items:center;gap:1px;margin-left:auto;background:#20242d;border-radius:5px;padding:3px;flex-shrink:0}
+.nexora-chart-display-modes button{font:12px Arial,sans-serif;color:#94a2b9;background:transparent;border:0;border-radius:4px;padding:5px 8px;white-space:nowrap}
+.nexora-chart-display-modes button.is-active{background:#353c4c;color:#f4f6fa;font-weight:700}
+.nexora-chart-display-modes button:disabled{cursor:default}
+.nexora-chart-fullscreen{font-size:19px;color:#8f9aac;background:transparent;border:0;min-width:25px;flex-shrink:0}
+.nexora-chart-fullscreen:disabled{opacity:.6;cursor:default}
+@media(max-width:900px){.nexora-chart-top-row{overflow-x:auto;scrollbar-width:thin}.nexora-chart-display-modes{margin-left:12px}}
