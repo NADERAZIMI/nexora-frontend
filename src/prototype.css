@@ -313,3 +313,5 @@ font-size:13px;cursor:pointer}
 .nexora-chart-type-glyph i:first-child{height:12px}
 .nexora-chart-type-glyph i:last-child{height:9px}
 .nexora-chart-type-glyph i:after{top:-4px;bottom:-4px;left:1px}
+
+.nexora-chart-type-item:disabled{opacity:.38;cursor:not-allowed}.nexora-chart-type-item:disabled:hover{background:transparent}
