@@ -46,3 +46,33 @@
 .orderbook .recent-trades .book-row{height:26px}
 .orderbook .recent-trades .book-number{font-size:11px}
 @media(max-width:1280px){.orderbook .book-row{font-size:11px}.orderbook .obhead{font-size:10px}}
+
+/* Four selectable Bybit-style depth layout controls */
+.depth-modes{display:flex;align-items:center;gap:7px}
+.depth-layout-button{width:25px;height:28px;padding:3px;display:flex;align-items:center;justify-content:center;border-radius:3px;border:1px solid transparent;background:transparent;color:#929AAA}
+.depth-layout-button:hover{background:#22252b}
+.depth-layout-button.selected{border-color:#3a404c;background:#21242c}
+.depth-layout-symbol{display:grid;width:19px;height:16px;grid-template-columns:5px repeat(2,4px);grid-template-rows:repeat(3,3px);gap:2px;align-content:center}
+.depth-layout-symbol i{height:3px;background:#5c6572;border-radius:.5px;display:block}
+.depth-layout-symbol i:nth-child(1),.depth-layout-symbol i:nth-child(4){grid-column:1}
+.depth-layout-symbol i:nth-child(2),.depth-layout-symbol i:nth-child(5){grid-column:2}
+.depth-layout-symbol i:nth-child(3),.depth-layout-symbol i:nth-child(6){grid-column:3}
+.depth-layout-symbol.both i:first-child{background:#F05A70}
+.depth-layout-symbol.both i:nth-child(4){background:#16B89A}
+.depth-layout-symbol.split i:first-child,.depth-layout-symbol.split i:nth-child(4){background:linear-gradient(90deg,#F05A70 50%,#16B89A 50%)}
+.depth-layout-symbol.bids i:first-child,.depth-layout-symbol.bids i:nth-child(4){background:#16B89A}
+.depth-layout-symbol.asks i:first-child,.depth-layout-symbol.asks i:nth-child(4){background:#F05A70}
+.orderbook.depth-layout-split:has(.depthblock){display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:43px 43px 34px minmax(0,1fr) 48px 40px}
+.orderbook.depth-layout-split .tabs,.orderbook.depth-layout-split .obtools,.orderbook.depth-layout-split .obhead,.orderbook.depth-layout-split .midprice,.orderbook.depth-layout-split .book-ratio{grid-column:1 / -1}
+.orderbook.depth-layout-split .tabs{grid-row:1}
+.orderbook.depth-layout-split .obtools{grid-row:2}
+.orderbook.depth-layout-split .obhead{grid-row:3}
+.orderbook.depth-layout-split .depthblock{grid-row:4}
+.orderbook.depth-layout-split .split-asks{grid-column:1;border-right:1px solid #292c34}
+.orderbook.depth-layout-split .split-bids{grid-column:2}
+.orderbook.depth-layout-split .midprice{grid-row:5}
+.orderbook.depth-layout-split .book-ratio{grid-row:6}
+.orderbook.depth-layout-split .depthblock .book-row{grid-template-columns:1fr 1fr;padding-inline:4px;gap:2px;font-size:10px}
+.orderbook.depth-layout-split .depthblock .book-row .book-number:last-child{display:none}
+.orderbook.depth-layout-split .depthblock .book-row .book-number:nth-child(3){text-align:right}
+.orderbook.depth-layout-bids .depthblock,.orderbook.depth-layout-asks .depthblock{flex:1}
