@@ -235,6 +235,25 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
     root.dispatchEvent(new CustomEvent('nexora:market-selected',{detail:{symbol:market.id,base:market.symbol,quote:market.quote}}));
     buttons.forEach(choice=>choice.button.setAttribute('aria-pressed','false'));
   }
+  // Refresh prices only while the market picker is visible; metadata is cached.
+  let priceRefreshBusy=false;
+  const refreshVisiblePrices=async()=>{
+    if(panel.hidden||!liveLoaded||priceRefreshBusy)return;
+    priceRefreshBusy=true;
+    try{
+      const response=await fetch('/mexc-public/api/v3/ticker/price',{credentials:'omit',cache:'no-store'});
+      if(!response.ok)throw Error('Ticker HTTP '+response.status);
+      const data:unknown=await response.json();
+      if(!Array.isArray(data))throw Error('Unexpected price data');
+      const prices=new Map<string,string>();
+      for(const row of data)if(row&&typeof row.symbol==='string'&&typeof row.price==='string'&&/^\\d+(?:\\.\\d+)?$/.test(row.price))prices.set(row.symbol,row.price);
+      if(panel.hidden)return;
+      for(const market of liveMarkets){const newPrice=prices.get(market.id);if(newPrice)market.price=newPrice}
+      refresh();
+    }catch(e){console.warn('[NEXORA] Market picker price refresh unavailable',e)}
+    finally{priceRefreshBusy=false}
+  };
+  const priceRefreshTimer=window.setInterval(()=>{void refreshVisiblePrices()},8000);
   let loadController:AbortController|null=null;
   let liveLoading=false;
   async function loadLive() {
@@ -310,6 +329,7 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
     arrow?.removeEventListener('keydown', key);
     heading.removeEventListener('keydown', key);
     document.removeEventListener('click', outside);
+    window.clearInterval(priceRefreshTimer);
     root.removeEventListener('nexora:close-market-picker',close);
     root.removeEventListener('nexora:open-market-search', onMarketSearch);
     heading.removeAttribute('role');
