@@ -20,9 +20,6 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
   panel.hidden = true;
   panel.setAttribute('role', 'region');
   panel.setAttribute('aria-label', 'Captured market price examples');
-  const headingLine = document.createElement('div');
-  headingLine.className = 'nexora-market-preview-title';
-  headingLine.textContent = 'Spot markets · Captured samples (not live)';
   const search = document.createElement('input');
   search.className = 'nexora-market-preview-search';
   search.type = 'search';
@@ -108,8 +105,10 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
     for(const market of liveFiltered.slice(0,visibleLimit)) {
       const row=document.createElement('button'); row.type='button';
       row.setAttribute('aria-label',market.symbol+'/'+market.quote);
-      const cells=[market.symbol+'/'+market.quote,market.price?formatPrice(market.price):'—',market.price?'Public price':'Price unavailable'];
+      const cells=[market.symbol+'/'+market.quote,market.price?formatPrice(market.price):'—',market.change24h===null?'—':(market.change24h>0?'+':'')+market.change24h.toFixed(2)+'%'];
       for(const value of cells){const span=document.createElement('span');span.textContent=value;row.append(span);}
+      const changeCell=row.lastElementChild;
+      if(changeCell&&market.change24h!==null)changeCell.className=market.change24h>0?'nexora-change-positive':market.change24h<0?'nexora-change-negative':'nexora-change-neutral';
       row.addEventListener('click', event=>{ event.stopPropagation();selectLive(market);close(); });
       liveRows.append(row);
     }
@@ -134,7 +133,7 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
   empty.hidden = true;
   search.addEventListener('input', () => {visibleLimit=120;refresh()});
   showMore.addEventListener('click',event=>{event.stopPropagation();visibleLimit+=120;refresh()});
-  panel.append(headingLine, search, tabs, filterBar, columns, liveRows, showMore, choices, empty);
+  panel.append(search, tabs, filterBar, columns, liveRows, showMore, choices, empty);
   // The archived headline sits inside transformed, clipped layout wrappers.
   // Portal the menu to body so it overlays the chart instead of being clipped.
   document.body.append(panel);
@@ -186,26 +185,25 @@ export function attachCapturedMarketPreview(root: HTMLElement): () => void {
     }
     root.dispatchEvent(new CustomEvent('nexora:market-selected',{detail:{symbol:market.id}}));
     buttons.forEach(choice=>choice.button.setAttribute('aria-pressed','false'));
-    refresh();
   }
   let loadController:AbortController|null=null;
   let liveLoading=false;
   async function loadLive() {
     if(liveLoaded||liveLoading)return;
     loadController=new AbortController();liveLoading=true;
-    headingLine.textContent='Loading MEXC Spot markets…';
+    panel.setAttribute('aria-busy','true');
     try {
       liveMarkets=await getMexcSpotMarkets(loadController.signal);
       liveLoaded=true;
-      headingLine.textContent='Live MEXC Spot catalog · '+liveMarkets.length+' pairs';
+      panel.dataset.marketCount=String(liveMarkets.length);
       choices.hidden=true;
       refresh();
     } catch(error) {
       if(loadController.signal.aborted)return;
-      headingLine.textContent='MEXC API error — reopen to retry';
-      headingLine.textContent='MEXC API error: '+(error instanceof Error?error.message:String(error));
+      empty.hidden=false;
+      empty.textContent='MEXC API error: '+(error instanceof Error?error.message:String(error));
       console.error('[NEXORA market catalog]',error);
-    } finally {liveLoading=false}
+    } finally {liveLoading=false;panel.removeAttribute('aria-busy')}
   }
   function show(id: 'BTC_USDT' | 'SHIDO_USDT' | 'WOJAK_USDT') {
     const item = capturedMarketDisplay(id);
