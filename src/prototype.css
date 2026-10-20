@@ -38,3 +38,16 @@ section[data-local-hide-other-pairs] .ant-checkbox-v2-checked .ant-checkbox-v2-i
 .nexora-market-preview-choices button[hidden]{display:none!important}
 .nexora-market-preview-choices button:hover,.nexora-market-preview-choices button[aria-pressed=true]{background:#252932;color:var(--text-primary,#F4F6FA)}
 .nexora-market-preview-choices button span:nth-child(n+2){text-align:right;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+
+/* Reference-style spot picker controls, all isolated to the overlay. */
+.nexora-market-preview-tabs{display:flex;gap:16px;overflow-x:auto;margin:0 0 12px;scrollbar-width:thin}
+.nexora-market-preview-tabs button{flex:0 0 auto;border:0;background:transparent;padding:8px 0 9px;color:var(--text-secondary,#929AAA);font-size:14px;font-weight:600;cursor:pointer}
+.nexora-market-preview-tabs button[aria-pressed=true]{color:var(--text-primary,#F4F6FA);border-bottom:2px solid var(--text-primary,#F4F6FA)}
+.nexora-market-preview-filters{padding:7px 5px 12px;white-space:pre;color:var(--text-secondary,#929AAA);font-size:12px}
+.nexora-market-preview-columns{display:grid;grid-template-columns:36% 37% 27%;padding:0;border-bottom:1px solid #2a2c33}
+.nexora-market-sort{min-width:0;border:0;background:transparent;padding:10px;color:var(--text-secondary,#929AAA);text-align:left;font:12px Arial,sans-serif;cursor:pointer}
+.nexora-market-sort:nth-child(n+2){text-align:right}
+.nexora-market-sort:disabled{cursor:default;opacity:.6}
+.nexora-market-preview-empty{padding:20px 10px;color:var(--text-secondary,#929AAA);text-align:center}
+.nexora-market-preview-empty[hidden]{display:none}
+[data-local-market-data-unavailable=true] [class*="__orderbookDealsWrapper"]{opacity:.4}
