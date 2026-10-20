@@ -156,3 +156,7 @@ main{isolation:isolate}
 .pair-open-button[aria-expanded=true] svg{transform:rotate(180deg)}
 .pair-open-button:focus-visible{outline:2px solid #5865F2;outline-offset:2px}
 @media(max-width:750px){.market-dropdown{position:fixed;top:105px;left:8px;z-index:9999}}
+
+.market-token-icon{overflow:hidden;flex:none}
+.market-token-icon img{width:100%;height:100%;display:block;object-fit:contain;border-radius:50%}
+.market-token-icon>span{display:grid;place-items:center;width:100%;height:100%}
