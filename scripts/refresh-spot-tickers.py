@@ -25,6 +25,7 @@ for origin in ("https://api.bybit.com","https://api.bytick.com"):
         fd,name=tempfile.mkstemp(prefix=".tickers-",suffix=".tmp",dir=DEST.parent)
         try:
             with os.fdopen(fd,"w",encoding="utf-8") as out:out.write(data)
+            os.chmod(name,0o644)  # Nginx must read the public market snapshot.
             os.replace(name,DEST)
         finally:
             if os.path.exists(name):os.unlink(name)
