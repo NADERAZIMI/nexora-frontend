@@ -89,7 +89,7 @@ jobs:
           ssh $SSH_OPTS "$USER@$HOST" bash -s -- <<'REMOTE'
           set -euo pipefail
           if command -v crontab >/dev/null 2>&1; then
-            (crontab -l 2>/dev/null || true) | grep -v '# NEXORA_SPOT_TICKERS' | crontab -
+            (crontab -l 2>/dev/null || true) | { grep -v '# NEXORA_SPOT_TICKERS' || true; } | crontab -
           fi
           REMOTE
           # Persist token images independently of frontend releases (once per symbol).
