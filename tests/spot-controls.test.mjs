@@ -589,6 +589,8 @@ test('offline market chooser previews exact small prices without relabeling the 
   const region = page.getByRole('region', { name:'Captured market price examples' });
   await opener.click();
   assert.equal(await region.isVisible(),true);
+  const placement = await page.evaluate(() => { const pair=document.querySelector('[class*="__symbolInfoBox"] [class*="__bigName"]'); const panel=document.querySelector('.nexora-market-preview'); const a=pair.getBoundingClientRect(), b=panel.getBoundingClientRect(); return { fixed:getComputedStyle(panel).position, portal:panel.parentElement===document.body, below:b.top>=a.bottom, wide:b.width>=500 }; });
+  assert.deepEqual(placement,{fixed:'fixed',portal:true,below:true,wide:true});
   await region.getByRole('button',{name:'WOJAK'}).click();
   assert.match(await region.textContent(), /0\.0\{7\}4276/);
   assert.match(await region.textContent(), /not live data/);
