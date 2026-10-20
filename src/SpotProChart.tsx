@@ -111,5 +111,5 @@ export default function SpotProChart({pair,frame,livePrice}:{pair:SpotPair;frame
   obs.observe(document.documentElement,{attributes:true,attributeFilter:['data-nx-theme']});
   return()=>{disposed=true;obs.disconnect();datafeed.dispose();if(feedRef.current===datafeed)feedRef.current=null;node.replaceChildren();chart=null};
  },[pair.symbol,frame]);
- return <div className="nexora-pro-chart">{error&&<div className="nexora-chart-error" role="alert">{error}</div>}<div ref={container} className="nexora-pro-chart-container"/></div>;
+ return <div className={"nexora-pro-chart"+(livePrice===null?" awaiting-live-price":"")}>{livePrice===null&&<div className="nexora-price-awaiting">Waiting for live Bybit price…</div>}{error&&<div className="nexora-chart-error" role="alert">{error}</div>}<div ref={container} className="nexora-pro-chart-container"/></div>;
 }
