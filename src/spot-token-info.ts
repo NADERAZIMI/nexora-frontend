@@ -81,16 +81,34 @@ export function attachSpotTokenInfo(root:HTMLElement):()=>void{
      render(base,quote,metadata,ticker,metadata||ticker||profile?'':'Market data is currently unavailable.',profile);
    }catch(error){if(!signal.aborted&&mounted)render(baseFrom(id,selectedQuote),selectedQuote,null,null,String(error));}
  };
- const show=()=>{opened=true;host.hidden=false;void load()};
- const hide=()=>{opened=false;host.hidden=true;controller?.abort()};
+ const markTabs=(active:HTMLElement)=>{
+   for(const tab of tabs){
+     const isActive=tab===active;
+     tab.setAttribute('aria-selected',String(isActive));
+     tab.parentElement?.classList.toggle('ant-tabs-v2-tab-active',isActive);
+   }
+ };
+ const show=()=>{
+   opened=true;
+   chart.dataset.nexoraInfoOpen='true';
+   host.hidden=false;
+   markTabs(info);
+   void load();
+ };
+ const hide=()=>{
+   opened=false;
+   delete chart.dataset.nexoraInfoOpen;
+   host.hidden=true;
+   controller?.abort();
+ };
  const onClick=(event:MouseEvent)=>{
   const t=event.target;
   if(!(t instanceof Element))return;
-  if(info.contains(t)){event.preventDefault();event.stopImmediatePropagation();info.setAttribute('aria-selected','true');chartTab.setAttribute('aria-selected','false');show();}
-  else if(tabs.some(tab=>tab.contains(t))){hide();info.setAttribute('aria-selected','false');}
+  if(info.contains(t)){event.preventDefault();event.stopImmediatePropagation();show();}
+  else if(tabs.some(tab=>tab.contains(t))){hide();markTabs(tabs.find(tab=>tab.contains(t))??chartTab);}
  };
  const onSelect=(event:Event)=>{const detail=(event as CustomEvent<{symbol?:string;quote?:string}>).detail;const symbol=detail?.symbol;if(symbol&&/^[A-Z0-9]{3,30}$/.test(symbol)){selected=symbol;selectedQuote=detail?.quote&&/^[A-Z0-9]{2,12}$/.test(detail.quote)?detail.quote:'USDT';if(opened)void load()}};
  root.addEventListener('click',onClick,true);
  root.addEventListener('nexora:market-selected',onSelect);
- return ()=>{mounted=false;controller?.abort();host.remove();root.removeEventListener('click',onClick,true);root.removeEventListener('nexora:market-selected',onSelect)};
+ return ()=>{mounted=false;hide();host.remove();root.removeEventListener('click',onClick,true);root.removeEventListener('nexora:market-selected',onSelect)};
 }
