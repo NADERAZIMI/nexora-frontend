@@ -1,5 +1,5 @@
 :root {
-  --bg-primary:#080808;
+  --bg-primary:#121212;
   --bg-secondary:#0D0D0D;
   --color-primary:#3D6BFF;
   --color-secondary:#5865F2;
@@ -9,17 +9,17 @@
   --text-secondary:#929AAA;
 }
 html[data-theme=dark]{
-  --bg-primary:#080808;--bg-secondary:#080808;
-  --bg-l0:#080808;--bg-l0-gray:#080808;--bg-level-primary:#080808;
-  --bg-l1:#080808;--bg-l1-white:#080808;--bg-level-secondary:#080808;
-  --bg-2:#080808;--bg-3:#080808;--bg-4:#080808;--bg-5:#080808;
-  --bg-modal:#080808;--bg-card:#080808;--bg-tooltip:#080808;--bg-tooltips:#080808;
-  --gray-18:#080808;--gray-17:#080808;--gray-16:#080808;--gray-16-atn:#080808;
-  --gray-15:#080808;--gray-14:#080808;--gray-13:#080808;
-  --fill-default:#080808;--fill-hover:#080808;--fill-pressed:#080808;
-  --fill-higher:#080808;--fill-elevation-higher:#080808;--fill-gray:#080808;
-  --fill-opacity-container:#080808;--fill-disable:#080808;--btn-secondary-bg:#080808;
-  --blue-0:#080808;--component-background:#080808;--third-menu-bg:#080808;--third-menu-hover-bg:#080808;
+  --bg-primary:#121212;--bg-secondary:#0D0D0D;
+  --bg-l0:#121212;--bg-l0-gray:#121212;--bg-level-primary:#121212;
+  --bg-l1:#121212;--bg-l1-white:#121212;--bg-level-secondary:#121212;
+  --bg-2:#121212;--bg-3:#121212;--bg-4:#121212;--bg-5:#121212;
+  --bg-modal:#121212;--bg-card:#121212;--bg-tooltip:#121212;--bg-tooltips:#121212;
+  --gray-18:#121212;--gray-17:#121212;--gray-16:#121212;--gray-16-atn:#121212;
+  --gray-15:#121212;--gray-14:#121212;--gray-13:#121212;
+  --fill-default:#121212;--fill-hover:#121212;--fill-pressed:#121212;
+  --fill-higher:#121212;--fill-elevation-higher:#121212;--fill-gray:#121212;
+  --fill-opacity-container:#121212;--fill-disable:#121212;--btn-secondary-bg:#121212;
+  --blue-0:#121212;--component-background:#121212;--third-menu-bg:#121212;--third-menu-hover-bg:#121212;
   --line-base:#303644;--divider:#303644;--border-2:#303644;
   --gray-1-white:#F4F6FA;--gray-3:#F4F6FA;--gray-8:#929AAA;
   --content-primary:#F4F6FA;--content-white:#F4F6FA;--text-white:#F4F6FA;--text-primary:#F4F6FA;
@@ -45,7 +45,7 @@ html[data-theme=dark] .ant-modal-content,
 html[data-theme=dark] .ant-modal-header,
 html[data-theme=dark] .ant-modal-body,
 html[data-theme=dark] .ant-modal-footer,
-[class*="__chartWrapper"],[class*="__chartContent"],.mxc-exchange-origin-kline-chart-element{background-color:#080808}
+[class*="__chartWrapper"],[class*="__chartContent"],.mxc-exchange-origin-kline-chart-element{background-color:#121212}
 html[data-theme=dark] .ant-tabs-v2-motion-ink-trail,
 html[data-theme=dark] .ant-tabs-v2-motion-ink-head{background-color:#F4F6FA}
 #root,.snapshot-surface{display:contents}
@@ -54,7 +54,7 @@ html[data-theme=dark] .ant-tabs-v2-motion-ink-head{background-color:#F4F6FA}
 [class*="__orderbookDealsWrapper"],
 [class*="__baBalance"],
 [class*="__feeLabelWrapper"],
-[class*="__chartType"].active{background-color:#080808}
+[class*="__chartType"].active{background-color:#121212}
 
 /* Keep the original field boxes; replace transparent/disabled fills only. */
 .mx-motion-input-container .mx-motion-input-inner.ant-input-affix-wrapper:has(> input[data-testid="spot-trade-buyPrice"]),
@@ -81,9 +81,9 @@ input[data-testid="spot-trade-buyTotal"]::-webkit-outer-spin-button{
   margin:0;
 }
 
-/* NEXORA final three-layer dark palette:
-   #000000 canvas/gutters, #080808 page and panels, #0D0D0D inputs. */
-:root{--nexora-canvas:#000000;--nexora-surface:#080808;--nexora-field:#0D0D0D}
+/* NEXORA three-layer dark palette:
+   #000000 canvas/gutters, #121212 page and panels, #0D0D0D inputs. */
+:root{--nexora-canvas:#000000;--nexora-surface:#121212;--nexora-field:#0D0D0D}
 html,body,#root{background-color:var(--nexora-canvas)!important}
 html[data-theme=dark] .snapshot-surface,
 html[data-theme=dark] [class*="__gridWrapper"],
