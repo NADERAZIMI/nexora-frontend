@@ -9,10 +9,6 @@ export function attachBybitSpotTransition(root:HTMLElement):()=>void {
  chartPlaceholder.className='nexora-bybit-pending nexora-bybit-chart-pending';
  chartPlaceholder.textContent='NEXORA · Bybit chart integration in progress';
  chart?.append(chartPlaceholder);
- const bookPlaceholder=document.createElement('div');
- bookPlaceholder.className='nexora-bybit-pending nexora-bybit-book-pending';
- bookPlaceholder.textContent='NEXORA · Bybit order book integration in progress';
- book?.append(bookPlaceholder);
  const picker=document.createElement('form');
  picker.className='nexora-bybit-symbol-picker';
  picker.hidden=true;
@@ -38,5 +34,5 @@ export function attachBybitSpotTransition(root:HTMLElement):()=>void {
  clickable?.addEventListener('click',toggle);
  document.addEventListener('click',outside);
  root.addEventListener('nexora:open-market-search',search);
- return ()=>{chartPlaceholder.remove();bookPlaceholder.remove();picker.remove();picker.removeEventListener('submit',submit);clickable?.removeEventListener('click',toggle);document.removeEventListener('click',outside);root.removeEventListener('nexora:open-market-search',search)};
+ return ()=>{chartPlaceholder.remove();picker.remove();picker.removeEventListener('submit',submit);clickable?.removeEventListener('click',toggle);document.removeEventListener('click',outside);root.removeEventListener('nexora:open-market-search',search)};
 }
