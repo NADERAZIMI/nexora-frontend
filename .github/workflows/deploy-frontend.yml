@@ -143,6 +143,26 @@ jobs:
           ln -s ../../shared/token-icons "releases/$release/token-icons"
           REMOTE
           ssh $SSH_OPTS "$USER@$HOST" "cd ~/nexora-frontend && ln -sfn releases/$RELEASE next && mv -Tf next current"
+          # Diagnose actual public serving, not merely successful disk writes.
+          ssh $SSH_OPTS "$USER@$HOST" bash -s -- <<'REMOTE'
+          set -euo pipefail
+          echo '=== NEXORA HTTP /ticker diagnostics ==='
+          cd "$HOME/nexora-frontend"
+          readlink current
+          python3 - <<'PY'
+          import json,pathlib,time
+          p=pathlib.Path.home()/"nexora-frontend/current/spot-tickers.json"
+          d=json.loads(p.read_text())
+          print("Disk ticker symbols",len(d.get("tickers",{})),"age_seconds",round(time.time()-d.get("updatedAt",0)/1000))
+          PY
+          for path in /spot-tickers.json /spot-markets.json /; do
+            echo "GET $path"
+            curl --noproxy '*' -sS -m 10 -o /tmp/nexora-http-check -w 'status=%{http_code} content_type=%{content_type} size=%{size_download}\n' "http://127.0.0.1$path" || true
+            if test "$path" = /spot-tickers.json; then head -c 100 /tmp/nexora-http-check || true; echo; fi
+          done
+          echo '=== last ticker cron ==='
+          crontab -l | grep NEXORA_SPOT_TICKERS || true
+          REMOTE
           # Only after a successful release switch, remove older frontend release
           # directories. Never touch the backend or paths outside this directory.
           ssh $SSH_OPTS "$USER@$HOST" bash -s -- "$RELEASE" <<'REMOTE'
