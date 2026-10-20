@@ -67,7 +67,7 @@ try:
                         "path": member.name, "count": len(matches),
                         "samples": [text[max(0,m.start()-45):m.end()+55].replace("\n"," ") for m in matches[:3]]
                     })
-            for url in re.findall(r"https?://[^\s'\\"<>\x00-\x1f]{3,200}", text):
+            for url in re.findall(r'https?://[^\\s<>]{3,200}', text):
                 urls.add(url[:200])
     report["url_literals"] = sorted(urls)[:300]
     pkg = report["package"]
