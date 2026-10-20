@@ -30,7 +30,6 @@ jobs:
         run: |
           mkdir -p dist/build-tools
           cp scripts/build-spot-catalog.py dist/build-tools/build-spot-catalog.py
-          cp scripts/refresh-spot-tickers.py dist/build-tools/refresh-spot-tickers.py
       - uses: actions/upload-artifact@v4
         with:
           name: nexora-frontend-dist
@@ -86,48 +85,12 @@ jobs:
           mv public/spot-markets.json spot-markets.json
           rm -rf public
           REMOTE
-          # Persist fresh market prices outside releases and update once per minute.
-          # Restrict all writes to the independent NEXORA frontend directory.
-          ssh $SSH_OPTS "$USER@$HOST" bash -s -- "$RELEASE" <<'REMOTE'
+          # Remove only the legacy NEXORA ticker polling job; live prices use WebSockets.
+          ssh $SSH_OPTS "$USER@$HOST" bash -s -- <<'REMOTE'
           set -euo pipefail
-          release="$1"
-          case "$release" in *[!a-f0-9]*|'') exit 1;; esac
-          cd "$HOME/nexora-frontend"
-          mkdir -p shared/build-tools
-          cp "releases/$release/build-tools/refresh-spot-tickers.py" shared/build-tools/
-          NEXORA_TICKER_TARGET="$HOME/nexora-frontend/releases/$release/spot-tickers.json" python3 shared/build-tools/refresh-spot-tickers.py
-          test -s "releases/$release/spot-tickers.json"
-          if ! command -v crontab >/dev/null 2>&1; then
-            echo "::error::crontab unavailable: cannot guarantee updated prices"
-            exit 1
+          if command -v crontab >/dev/null 2>&1; then
+            (crontab -l 2>/dev/null || true) | grep -v '# NEXORA_SPOT_TICKERS' | crontab -
           fi
-          (crontab -l 2>/dev/null || true) | grep -v '# NEXORA_SPOT_TICKERS' > /tmp/nexora-spot-cron-$ || true
-          printf '%s\n' '* * * * * /usr/bin/python3 "$HOME/nexora-frontend/shared/build-tools/refresh-spot-tickers.py" >/dev/null 2>&1 # NEXORA_SPOT_TICKERS' >> /tmp/nexora-spot-cron-$
-          crontab /tmp/nexora-spot-cron-$
-          rm -f /tmp/nexora-spot-cron-$
-          REMOTE
-          # Verify ticker JSON is valid and scheduled refresh targets the active release.
-          ssh $SSH_OPTS "$USER@$HOST" bash -s -- "$RELEASE" <<'REMOTE'
-          set -euo pipefail
-          release="$1"
-          cd "$HOME/nexora-frontend"
-          NEXORA_RELEASE="$release" python3 - <<'PY'
-          import json,os,pathlib,time
-          release=os.environ["NEXORA_RELEASE"]
-          root=pathlib.Path.home()/"nexora-frontend"
-          path=root/"releases"/release/"spot-tickers.json"
-          print("Ticker file:",path,"exists:",path.is_file(),"symlink:",path.is_symlink())
-          data=json.loads(path.read_text())
-          count=len(data.get("tickers",{}))
-          age=(time.time()*1000-float(data.get("updatedAt",0)))/1000
-          print("Ticker entries:",count,"snapshot age seconds:",round(age))
-          assert count>=100 and 0<=age<180,"Ticker payload invalid or stale"
-          PY
-          crontab -l | grep 'NEXORA_SPOT_TICKERS'
-          if command -v systemctl >/dev/null 2>&1; then
-            systemctl is-active cron || { echo 'Ticker refresher scheduler is not running'; exit 1; }
-          fi
-          echo 'Ticker service and fresh cache verified'
           REMOTE
           # Persist token images independently of frontend releases (once per symbol).
           # A fresh release links back to the dedicated NEXORA asset directory.
@@ -143,26 +106,6 @@ jobs:
           ln -s ../../shared/token-icons "releases/$release/token-icons"
           REMOTE
           ssh $SSH_OPTS "$USER@$HOST" "cd ~/nexora-frontend && ln -sfn releases/$RELEASE next && mv -Tf next current"
-          # Diagnose actual public serving, not merely successful disk writes.
-          ssh $SSH_OPTS "$USER@$HOST" bash -s -- <<'REMOTE'
-          set -euo pipefail
-          echo '=== NEXORA HTTP /ticker diagnostics ==='
-          cd "$HOME/nexora-frontend"
-          readlink current
-          python3 - <<'PY'
-          import json,pathlib,time
-          p=pathlib.Path.home()/"nexora-frontend/current/spot-tickers.json"
-          d=json.loads(p.read_text())
-          print("Disk ticker symbols",len(d.get("tickers",{})),"age_seconds",round(time.time()-d.get("updatedAt",0)/1000))
-          PY
-          for path in /spot-tickers.json /spot-markets.json /; do
-            echo "GET $path"
-            curl --noproxy '*' -sS -m 10 -o /tmp/nexora-http-check -w 'status=%{http_code} content_type=%{content_type} size=%{size_download}\n' "http://127.0.0.1$path" || true
-            if test "$path" = /spot-tickers.json; then head -c 100 /tmp/nexora-http-check || true; echo; fi
-          done
-          echo '=== last ticker cron ==='
-          crontab -l | grep NEXORA_SPOT_TICKERS || true
-          REMOTE
           # Only after a successful release switch, remove older frontend release
           # directories. Never touch the backend or paths outside this directory.
           ssh $SSH_OPTS "$USER@$HOST" bash -s -- "$RELEASE" <<'REMOTE'
