@@ -109,5 +109,7 @@ export function attachReadOnlyMarketFeed(root:HTMLElement){
  canvas.addEventListener('wheel',zoom,{passive:false});
  const resize=()=>{if(!overlay.hidden&&latestCandles.length)paint(latestCandles)};
  window.addEventListener('resize',resize);
+ // Show verified public BTC candles immediately instead of the archived static chart.
+ choose(new CustomEvent('nexora:market-selected',{detail:{symbol:'BTCUSDT'}}));
  return ()=>{mounted=false;controller?.abort();if(interval!==undefined)clearInterval(interval);restore();overlay.remove();root.removeEventListener('nexora:market-selected',choose);canvas.removeEventListener('wheel',zoom);window.removeEventListener('resize',resize)};
 }
