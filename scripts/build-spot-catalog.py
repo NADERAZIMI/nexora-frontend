@@ -12,8 +12,8 @@ for origin in ["https://api.bybit.com", "https://api.bytick.com"]:
     try:
         cursor=""
         for _ in range(12):
-            args={"category":"spot","limit":"1000"}
-            if cursor:args["cursor"]=cursor
+            args={"category":"spot"}
+            
             url=origin+"/v5/market/instruments-info?"+urllib.parse.urlencode(args)
             request=urllib.request.Request(url, headers={"User-Agent":"NEXORA-Public-Spot-Catalog/1.0","Accept":"application/json"})
             with urllib.request.urlopen(request,timeout=28) as response:
@@ -27,9 +27,7 @@ for origin in ["https://api.bybit.com", "https://api.bytick.com"]:
                 if (item.get("status")=="Trading" and isinstance(symbol,str) and
                     isinstance(base,str) and isinstance(quote,str) and symbol.isalnum()):
                     all_rows[symbol]={"symbol":symbol,"base":base,"quote":quote}
-            next_cursor=payload["result"].get("nextPageCursor") or ""
-            if not next_cursor or next_cursor==cursor:break
-            cursor=next_cursor
+            break
         if len(all_rows)>=100:break
     except Exception as e:
         print("Catalog source unavailable:",origin,type(e).__name__,str(e)[:100])
