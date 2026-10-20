@@ -421,3 +421,21 @@ font-size:13px;cursor:pointer}
 .nexora-live-chart{display:block;width:100%;height:clamp(200px,55%,440px);background:#0d0d0d;border:1px solid #282a31;border-radius:3px}
 .nexora-live-chart-foot{color:#929aaa;font-size:11px;margin-top:10px}
 @media(max-width:1100px){.nexora-analytics-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* NEXORA's independently-owned exchange chart sits under the four analytics tab panels. */
+.nexora-chart-tab-content[hidden]{display:none!important}
+.nexora-exchange-chart{position:absolute;inset:42px 0 0;z-index:35;background:#121212;color:#f4f6fa;display:flex;flex-direction:column;min-width:0;min-height:240px;overflow:hidden;font:12px Arial,sans-serif}
+.nexora-exchange-toolbar{flex:none;min-height:40px;display:flex;gap:5px;align-items:center;flex-wrap:wrap;padding:5px 10px;border-bottom:1px solid #282b32;background:#121212}
+.nexora-exchange-toolbar button,.nexora-exchange-toolbar select,.nexora-exchange-side button{border:0;border-radius:3px;padding:5px 8px;background:transparent;color:#929aaa;font:12px Arial,sans-serif;cursor:pointer}
+.nexora-exchange-toolbar button:hover,.nexora-exchange-side button:hover{background:#22252d;color:#f4f6fa}
+.nexora-exchange-toolbar button[aria-pressed=true],.nexora-exchange-side button[aria-pressed=true]{color:#5865f2;background:#1c2030}
+.nexora-exchange-toolbar select{background:#1b1d23;color:#f4f6fa;border:1px solid #333743}
+.nexora-exchange-body{flex:1;min-height:0;display:flex}
+.nexora-exchange-side{width:44px;flex:none;border-right:1px solid #282b32;display:flex;flex-direction:column;gap:5px;align-items:center;padding:8px 4px}
+.nexora-exchange-side button{width:36px;min-height:42px;padding:3px;font-size:10px;line-height:1.25;white-space:normal}
+.nexora-exchange-plot{flex:1;min-width:0;min-height:160px;position:relative}
+.nexora-exchange-status{padding:4px 12px;color:#929aaa;font-size:11px;min-height:20px}
+.nexora-exchange-status[data-error=true]{color:#f05a70}
+.nexora-exchange-foot{flex:none;padding:4px 12px 7px;color:#787f8d;font-size:10px}
+.nexora-exchange-chart:fullscreen{inset:0;position:fixed;width:100%;height:100vh}
+@media(max-width:640px){.nexora-exchange-side{width:35px}.nexora-exchange-side button{width:30px;font-size:9px}.nexora-exchange-toolbar{gap:2px}}
