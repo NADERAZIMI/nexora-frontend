@@ -14,7 +14,7 @@ export function attachBybitSpotOrderbook(root:HTMLElement):()=>void{
  const asksRows=Array.from(asksHost.querySelectorAll<HTMLElement>('[class*="__tableRow"]'));
  const bidsRows=Array.from(bidsHost.querySelectorAll<HTMLElement>('[class*="__tableRow"]'));
  const status=document.createElement('span');status.className='nexora-bybit-native-status';
- status.setAttribute('role','status');status.textContent='Connecting to Bybit…';
+ status.setAttribute('role','status');status.textContent='Connecting to NEXORA market…';
  book.querySelector<HTMLElement>('[class*="__controller"]')?.append(status);
  const originalPrice=centerPrice?.textContent??'';
  const originalFiat=fiat?.textContent??'';
@@ -25,7 +25,7 @@ export function attachBybitSpotOrderbook(root:HTMLElement):()=>void{
   bidMap.clear();askMap.clear();snapshot=false;lastSeq=-1;lastUpdate=-1;
   for(const row of [...asksRows,...bidsRows])row.style.visibility='hidden';
   if(centerPrice)centerPrice.textContent='—';if(fiat)fiat.textContent='—';
-  status.textContent='Connecting to Bybit…';book.dataset.nexoraDepthState='connecting';
+  status.textContent='Connecting to NEXORA market…';book.dataset.nexoraDepthState='connecting';
  };
  const update=(map:Map<string,string>,levels:Level[])=>{for(const [p,q] of levels){if(Number(q)===0)map.delete(p);else map.set(p,q)}};
  const format=(v:string)=>Number(v).toLocaleString('en-US',{maximumFractionDigits:8});
@@ -56,7 +56,7 @@ export function attachBybitSpotOrderbook(root:HTMLElement):()=>void{
    if(centerPrice)centerPrice.textContent=mid.toLocaleString('en-US',{maximumFractionDigits:8});
    if(fiat)fiat.textContent=mid.toLocaleString('en-US',{maximumFractionDigits:8});
   }
-  status.textContent='Bybit Spot';book.dataset.nexoraDepthState='live';
+  status.textContent='NEXORA Spot';book.dataset.nexoraDepthState='live';
  };
  const scheduleRender=()=>{if(renderTimer!==undefined)return;renderTimer=window.setTimeout(()=>{renderTimer=undefined;draw()},90)};
  const connect=()=>{
@@ -88,11 +88,11 @@ export function attachBybitSpotOrderbook(root:HTMLElement):()=>void{
    update(bidMap,validLevels(d.b));update(askMap,validLevels(d.a));
    lastSeq=d.seq!;lastUpdate=d.u!;lastFrame=Date.now();scheduleRender();
   };
-  current.onerror=()=>{if(ws===current)status.textContent='Bybit order book connection interrupted'};
+  current.onerror=()=>{if(ws===current)status.textContent='NEXORA market connection interrupted'};
   current.onclose=()=>{
    if(disposed||ws!==current)return;
    ws=null;if(ping!==undefined){clearInterval(ping);ping=undefined}
-   reset();status.textContent='Bybit order book reconnecting…';
+   reset();status.textContent='NEXORA order book reconnecting…';
    retry=window.setTimeout(connect,Math.min(30000,1000*2**Math.min(attempt++,5)));
   };
  };
