@@ -33,7 +33,18 @@ const SnapshotSurface = memo(function SnapshotSurface({ onNotice }: { onNotice: 
     const disposeTokenInfo = attachSpotTokenInfo(root);
     const disposeTradingData = attachSpotTradingData(root);
     const disposeCapturedMarketPreview = attachCapturedMarketPreview(root);
-    root.querySelector('input.ant-input-sm')?.setAttribute('aria-label', 'Search markets (local snapshot)');
+    const headerSearch = root.querySelector<HTMLInputElement>('#globalNav input.ant-input-sm');
+    headerSearch?.setAttribute('aria-label', 'Search live Spot markets');
+    const openSearch = () => {
+      root.dispatchEvent(new CustomEvent('nexora:open-market-search', {
+        detail: { query: headerSearch?.value ?? '' }
+      }));
+    };
+    const searchInput = (event: Event) => {
+      if (!(event.target instanceof HTMLInputElement)) return;
+      if (event.target.value.trim()) openSearch();
+    };
+    headerSearch?.addEventListener('input', searchInput);
     const click = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
       const tab = target.closest<HTMLElement>('[role="tab"]');
@@ -54,13 +65,14 @@ const SnapshotSurface = memo(function SnapshotSurface({ onNotice }: { onNotice: 
       }
     };
     const key = (event: KeyboardEvent) => {
-      if (event.key === 'Enter' && event.target instanceof HTMLInputElement && event.target.classList.contains('ant-input-sm')) {
-        onNotice('Local mock data: only the saved BTC/USDT market is available.');
+      if (event.key === 'Enter' && event.target === headerSearch) {
+        event.preventDefault();
+        openSearch();
       }
     };
     root.addEventListener('click', click);
     root.addEventListener('keydown', key);
-    return () => { disposeCapturedMarketPreview(); disposeTradingData(); disposeTokenInfo(); disposeReadOnlyMarketFeed(); disposeOrderBookDisplay(); disposeLocalControls(); root.removeEventListener('click', click); root.removeEventListener('keydown', key); };
+    return () => { disposeCapturedMarketPreview(); disposeTradingData(); disposeTokenInfo(); disposeReadOnlyMarketFeed(); disposeOrderBookDisplay(); disposeLocalControls(); root.removeEventListener('click', click); root.removeEventListener('keydown', key); headerSearch?.removeEventListener('input', searchInput); };
   }, [onNotice]);
   return <div className="snapshot-surface" ref={surface} dangerouslySetInnerHTML={{ __html: snapshot }} />;
 });
