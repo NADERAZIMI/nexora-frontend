@@ -329,3 +329,14 @@ font-size:13px;cursor:pointer}
 .nexora-chart-fullscreen{font-size:19px;color:#8f9aac;background:transparent;border:0;min-width:25px;flex-shrink:0}
 .nexora-chart-fullscreen:disabled{opacity:.6;cursor:default}
 @media(max-width:900px){.nexora-chart-top-row{overflow-x:auto;scrollbar-width:thin}.nexora-chart-display-modes{margin-left:12px}}
+
+/* Temporary KLineChart integration: keep the existing Spot tabs and independent
+   market-depth updater, but display the same-origin experimental chart. */
+.nexora-live-chart.nexora-embedded-kline{padding:0;overflow:hidden;background:#0d0d0d}
+.nexora-embedded-kline>.nexora-chart-top-row,
+.nexora-embedded-kline>.nexora-timeframe-menu,
+.nexora-embedded-kline>.nexora-live-chart-label,
+.nexora-embedded-kline>canvas,
+.nexora-embedded-kline>.nexora-live-state,
+.nexora-embedded-kline>.nexora-feed-retry{display:none!important}
+.nexora-live-chart .nexora-embedded-kline-frame{display:block;flex:1;width:100%;height:100%;min-height:220px;border:0;background:#0d0d0d}
