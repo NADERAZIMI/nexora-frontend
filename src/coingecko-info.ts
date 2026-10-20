@@ -73,3 +73,31 @@ export async function getCoinProfile(base:string,signal:AbortSignal):Promise<Coi
  };
  cache.set(id,{at:Date.now(),value:profile});return profile;
 }
+
+/** CoinGecko market image batches; only unique symbols are used to avoid wrong project icons. */
+let imageCache:{at:number;images:Map<string,string>}|null=null;
+let imageTask:Promise<Map<string,string>>|null=null;
+export function getCoinGeckoMarketImages(signal?:AbortSignal):Promise<Map<string,string>>{
+ if(imageCache&&Date.now()-imageCache.at<3600000)return Promise.resolve(imageCache.images);
+ if(imageTask)return imageTask;
+ imageTask=(async()=>{
+  const pages=await Promise.allSettled([1,2].map(async page=>{
+   const response=await fetch('/coingecko-public/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page='+page+'&sparkline=false',{signal,credentials:'omit',headers:{Accept:'application/json'}});
+   if(!response.ok)throw new Error('CoinGecko market icons HTTP '+response.status);
+   return await response.json() as unknown;
+  }));
+  const images=new Map<string,string>(),ambiguous=new Set<string>();
+  for(const page of pages)if(page.status==='fulfilled'&&Array.isArray(page.value)){
+   for(const item of page.value as {symbol?:unknown;image?:unknown}[]){
+    if(typeof item.symbol!=='string'||typeof item.image!=='string')continue;
+    const symbol=item.symbol.toUpperCase(),src=url(item.image);
+    if(!src||ambiguous.has(symbol))continue;
+    if(images.has(symbol)){images.delete(symbol);ambiguous.add(symbol);}
+    else images.set(symbol,src);
+   }
+  }
+  if(!pages.some(x=>x.status==='fulfilled'))throw new Error('Market icon feeds unavailable');
+  imageCache={at:Date.now(),images};return images;
+ })().finally(()=>{imageTask=null});
+ return imageTask;
+}
