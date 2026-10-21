@@ -176,27 +176,75 @@ function ActiveMarket({pair,onSelect,pairs,source,tickers,pricesReady}:{pair:Spo
     return {book:Math.min(25,Math.max(13,stored.book)),trade:Math.min(25,Math.max(13,stored.trade)),height:Math.min(960,Math.max(440,stored.height))};
   }catch{}return defaultLayout;
  });
- const [dragging,setDragging]=React.useState<'book'|'trade'|'height'|null>(null);
  const workspaceRef=React.useRef<HTMLDivElement>(null);
- React.useEffect(()=>{try{localStorage.setItem('nexora:spot-panel-layout:v1',JSON.stringify(layout))}catch{}},[layout]);
- const resize=(event:React.PointerEvent<HTMLDivElement>)=>{
-  if(!dragging||!workspaceRef.current)return;
-  const bounds=workspaceRef.current.getBoundingClientRect();
-  if(dragging==='height'){setLayout(l=>({...l,height:Math.max(440,Math.min(960,event.clientY-bounds.top))}));return}
-  const percent=(event.clientX-bounds.left)/bounds.width*100;
-  setLayout(l=>{
-   if(dragging==='book'){const chartShare=Math.max(44,Math.min(72,percent));return {...l,book:Math.max(13,Math.min(27,100-chartShare-l.trade))}}
-   const beforeTrade=Math.max(70,Math.min(87,percent));
-   return {...l,trade:Math.max(13,Math.min(25,100-beforeTrade))};
-  });
+ const layoutRef=React.useRef(layout);
+ const dragRef=React.useRef<{target:'book'|'trade'|'height';pointerId:number}|null>(null);
+ const frameRef=React.useRef<number|null>(null);
+ const applyLayout=React.useCallback((value:Layout)=>{
+  const node=workspaceRef.current;if(!node)return;
+  const chart=100-value.book-value.trade;
+  node.style.setProperty('--nx-chart-col',chart+'fr');
+  node.style.setProperty('--nx-book-col',value.book+'fr');
+  node.style.setProperty('--nx-trade-col',value.trade+'fr');
+  node.style.setProperty('--nx-chart-row',value.height+'px');
+  const first=node.querySelector<HTMLElement>('.nx-resize-chart-book');
+  const second=node.querySelector<HTMLElement>('.nx-resize-book-trade');
+  const horizontal=node.querySelector<HTMLElement>('.nx-resize-orders');
+  if(first)first.style.left=chart+'%';
+  if(second)second.style.left=(100-value.trade)+'%';
+  if(horizontal)horizontal.style.top=value.height+'px';
+ },[]);
+ React.useEffect(()=>{applyLayout(layoutRef.current)},[applyLayout]);
+ React.useEffect(()=>{
+  const node=workspaceRef.current;if(!node)return;
+  const onMove=(event:PointerEvent)=>{
+   const drag=dragRef.current;if(!drag||event.pointerId!==drag.pointerId)return;
+   const bounds=node.getBoundingClientRect();
+   const curr=layoutRef.current;
+   let next=curr;
+   if(drag.target==='height')next={...curr,height:Math.max(440,Math.min(960,Math.round(event.clientY-bounds.top)))};
+   else{
+    const percent=(event.clientX-bounds.left)/bounds.width*100;
+    if(drag.target==='book'){
+     const chart=Math.max(36,Math.min(100-curr.trade-13,percent));
+     next={...curr,book:100-chart-curr.trade};
+    }else{
+     const bookEnd=Math.max(100-25,Math.min(100-13,percent));
+     next={...curr,trade:100-bookEnd};
+    }
+   }
+   layoutRef.current=next;
+   if(frameRef.current===null)frameRef.current=requestAnimationFrame(()=>{frameRef.current=null;applyLayout(layoutRef.current)});
+  };
+  const finish=()=>{
+   if(!dragRef.current)return;
+   dragRef.current=null;
+   node.classList.remove('nx-is-resizing');
+   document.body.style.cursor='';
+   document.body.style.userSelect='';
+   if(frameRef.current!==null){cancelAnimationFrame(frameRef.current);frameRef.current=null}
+   applyLayout(layoutRef.current);
+   try{localStorage.setItem('nexora:spot-panel-layout:v1',JSON.stringify(layoutRef.current))}catch{}
+  };
+  window.addEventListener('pointermove',onMove,{passive:true});
+  window.addEventListener('pointerup',finish);
+  window.addEventListener('pointercancel',finish);
+  window.addEventListener('blur',finish);
+  return()=>{window.removeEventListener('pointermove',onMove);window.removeEventListener('pointerup',finish);window.removeEventListener('pointercancel',finish);window.removeEventListener('blur',finish);if(frameRef.current!==null)cancelAnimationFrame(frameRef.current)};
+ },[applyLayout]);
+ const startDrag=(event:React.PointerEvent<HTMLDivElement>,target:'book'|'trade'|'height')=>{
+  if(event.button!==0)return;
+  event.preventDefault();
+  dragRef.current={target,pointerId:event.pointerId};
+  workspaceRef.current?.classList.add('nx-is-resizing');
+  document.body.style.cursor=target==='height'?'row-resize':'col-resize';
+  document.body.style.userSelect='none';
  };
- const startDrag=(event:React.PointerEvent<HTMLDivElement>,target:'book'|'trade'|'height')=>{event.preventDefault();event.currentTarget.setPointerCapture(event.pointerId);setDragging(target)};
- const stopDrag=()=>setDragging(null);
  const chartWidth=100-layout.book-layout.trade;
- return <main><MarketBar pair={pair} onSelect={onSelect} pairs={pairs} source={source} tickers={tickers} pricesReady={pricesReady} book={book} livePrice={livePrice}/><div ref={workspaceRef} className="workspace nx-resizable-workspace" style={{'--nx-chart-col':chartWidth+'%','--nx-book-col':layout.book+'%','--nx-trade-col':layout.trade+'%','--nx-chart-row':layout.height+'px'} as React.CSSProperties}><ChartPanel pair={pair} livePrice={livePrice}/><OrderBook pair={pair} book={book} livePrice={livePrice}/><TradePanel pair={pair}/><Orders/>
- <div className="nx-resize-handle nx-resize-chart-book" role="separator" aria-label="Resize chart and order book" aria-orientation="vertical" title="Drag to resize chart and order book" style={{left:chartWidth+'%'}} onPointerDown={e=>startDrag(e,'book')} onPointerMove={resize} onPointerUp={stopDrag} onPointerCancel={stopDrag}><span/></div>
- <div className="nx-resize-handle nx-resize-book-trade" role="separator" aria-label="Resize order book and trade panel" aria-orientation="vertical" title="Drag to resize order book and trade panel" style={{left:(100-layout.trade)+'%'}} onPointerDown={e=>startDrag(e,'trade')} onPointerMove={resize} onPointerUp={stopDrag} onPointerCancel={stopDrag}><span/></div>
- <div className="nx-resize-handle nx-resize-orders" role="separator" aria-label="Resize chart and orders section" aria-orientation="horizontal" title="Drag to resize chart and orders" style={{top:layout.height+'px'}} onPointerDown={e=>startDrag(e,'height')} onPointerMove={resize} onPointerUp={stopDrag} onPointerCancel={stopDrag}><span/></div>
+ return <main><MarketBar pair={pair} onSelect={onSelect} pairs={pairs} source={source} tickers={tickers} pricesReady={pricesReady} book={book} livePrice={livePrice}/><div ref={workspaceRef} className="workspace nx-resizable-workspace" style={{'--nx-chart-col':chartWidth+'fr','--nx-book-col':layout.book+'fr','--nx-trade-col':layout.trade+'fr','--nx-chart-row':layout.height+'px'} as React.CSSProperties}><ChartPanel pair={pair} livePrice={livePrice}/><OrderBook pair={pair} book={book} livePrice={livePrice}/><TradePanel pair={pair}/><Orders/>
+ <div className="nx-resize-handle nx-resize-chart-book" role="separator" aria-label="Resize chart and order book" aria-orientation="vertical" title="Drag to resize chart and order book" style={{left:chartWidth+'%'}} onPointerDown={e=>startDrag(e,'book')}><span/></div>
+ <div className="nx-resize-handle nx-resize-book-trade" role="separator" aria-label="Resize order book and trade panel" aria-orientation="vertical" title="Drag to resize order book and trade panel" style={{left:(100-layout.trade)+'%'}} onPointerDown={e=>startDrag(e,'trade')}><span/></div>
+ <div className="nx-resize-handle nx-resize-orders" role="separator" aria-label="Resize chart and orders section" aria-orientation="horizontal" title="Drag to resize chart and orders" style={{top:layout.height+'px'}} onPointerDown={e=>startDrag(e,'height')}><span/></div>
  </div></main>;
 }
 function App(){const {pairs,source}=useSpotMarkets();const {tickers,ready:pricesReady}=useSpotTickers(pairs);const [pair,setPair]=useState<SpotPair>({symbol:'BTCUSDT',base:'BTC',quote:'USDT'});const [page,setPage]=useState<Page>(()=>window.location.pathname.startsWith('/dashboard')?'dashboard':window.location.pathname.startsWith('/markets')?'markets':'trade');const [theme,setTheme]=useState<Theme>(()=>{try{return localStorage.getItem('nexora-theme')==='light'?'light':'dark'}catch{return 'dark'}});
