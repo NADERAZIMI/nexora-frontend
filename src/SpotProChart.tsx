@@ -368,14 +368,8 @@ export default function SpotProChart({pair,frame,livePrice}:{pair:SpotPair;frame
 
     <button type="button" className={alertsOpen?'selected':''} onClick={()=>setAlertsOpen(v=>!v)}>Alerts</button>
     <button type="button" className={compareOpen?'selected':''} onClick={()=>setCompareOpen(v=>!v)}>Compare</button>
-    <select aria-label="Price scale" value={priceScale} onChange={e=>{const mode=e.target.value as typeof priceScale;try{chart.current?.setPriceScale(mode);setPriceScale(mode)}catch(err){setError(String(err))}}}><option value="linear">Linear</option><option value="logarithmic">Log</option><option value="percentage">Percent</option></select>
     <div className="mg-toolbar-spacer"/>
-    <div className="nx-chart-navigation" aria-label="Chart navigation controls">
-     <button type="button" title="Scroll candles left (older history)" aria-label="Scroll left" onClick={()=>{chooseTool(null);chart.current?.scrollLeft(35)}}>‹</button>
-     <button type="button" title="Scroll candles right (newer history)" aria-label="Scroll right" onClick={()=>{chooseTool(null);chart.current?.scrollRight(35)}}>›</button>
-     <button type="button" title="Zoom into candles" aria-label="Zoom in" onClick={()=>chart.current?.zoomIn(0.8)}>+</button>
-     <button type="button" title="Zoom out of candles" aria-label="Zoom out" onClick={()=>chart.current?.zoomOut(1.25)}>−</button>
-    </div>
+
     <button type="button" onClick={()=>chart.current?.goToLive()} title="Go to live price">Live</button>
     <div className="nx-chart-view-tabs" role="tablist" aria-label="Chart view modes">{(['Standard','TradingView','Depth'] as const).map(view=><button key={view} type="button" role="tab" aria-selected={chartViewTab===view} className={chartViewTab===view?'active':''} onClick={()=>setChartViewTab(view)}>{view}</button>)}</div>
     <button type="button" className={'nx-chart-volume-profile'+(vp?' selected':'')} aria-pressed={vp} onClick={toggleVP}>Volume Profile</button>
@@ -417,6 +411,15 @@ export default function SpotProChart({pair,frame,livePrice}:{pair:SpotPair;frame
  <div className="mg-rail-spacer"/>
  <button type="button" className="mg-rail-trash" title="Delete all drawings" aria-label="Delete all drawings" onClick={()=>{if(window.confirm('Delete all drawings for '+pair.symbol+'?')){chart.current?.clearDrawings();save()}}}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14M10 11v6M14 11v6"/></svg></button>
  </aside>
+    <div className="nx-chart-edge-controls">
+     <div className="nx-chart-scale-control"><select aria-label="Price scale" value={priceScale} onChange={e=>{const mode=e.target.value as typeof priceScale;try{chart.current?.setPriceScale(mode);setPriceScale(mode)}catch(err){setError(String(err))}}}><option value="linear">Linear</option><option value="logarithmic">Log</option><option value="percentage">Percent</option></select></div>
+     <div className="nx-chart-edge-navigation">    <div className="nx-chart-navigation" aria-label="Chart navigation controls">
+     <button type="button" title="Scroll candles left (older history)" aria-label="Scroll left" onClick={()=>{chooseTool(null);chart.current?.scrollLeft(35)}}>‹</button>
+     <button type="button" title="Scroll candles right (newer history)" aria-label="Scroll right" onClick={()=>{chooseTool(null);chart.current?.scrollRight(35)}}>›</button>
+     <button type="button" title="Zoom into candles" aria-label="Zoom in" onClick={()=>chart.current?.zoomIn(0.8)}>+</button>
+     <button type="button" title="Zoom out of candles" aria-label="Zoom out" onClick={()=>chart.current?.zoomOut(1.25)}>−</button>
+    </div></div>
+    </div>
     <div className={'nx-multi-chart-area nx-multi-layout-'+multiLayout}>
      <div className="nexora-mg-render nx-multi-primary" ref={holder}/>
      {Array.from({length:multiLayout-1},(_,i)=><CompanionChart key={i} symbol={pair.symbol} timeframe={syncInterval?localFrame:'1H'} index={i+1}/>)}
