@@ -161,3 +161,8 @@
 
 /* Fullscreen icon: unboxed, top-right toolbar, reference-aligned. */
 .nexora-mg-chart .nexora-mg-toolbar>.nx-chart-fullscreen,.nexora-mg-chart .nexora-mg-toolbar>.nx-chart-fullscreen:hover{background:none!important;border:0!important;box-shadow:none!important;outline-offset:2px;border-radius:0!important;padding:0!important;position:sticky!important;right:0!important;bottom:auto!important;top:auto!important;left:auto!important;flex:0 0 28px!important;width:28px!important;height:28px!important;min-width:28px!important;margin-left:auto!important;opacity:1!important}
+
+/* Screenshot and fullscreen: two unboxed icons at the right end of the chart toolbar. */
+.nexora-mg-chart .nexora-mg-toolbar>.nx-chart-screenshot{position:relative!important;flex:0 0 28px!important;min-width:28px!important;width:28px!important;height:28px!important;display:grid!important;place-items:center!important;margin:0!important;padding:0!important;color:var(--nx-muted,#929AAA)!important;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;cursor:pointer}
+.nexora-mg-chart .nexora-mg-toolbar>.nx-chart-screenshot:hover{color:var(--nx-text,#F4F6FA)!important;background:transparent!important}
+.nexora-mg-chart .nexora-mg-toolbar>.nx-chart-fullscreen{margin-left:0!important}
