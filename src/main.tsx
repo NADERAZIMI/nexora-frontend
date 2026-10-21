@@ -168,7 +168,36 @@ function Orders(){const [tab,setTab]=useState('Open Orders (0)');return <section
 function ActiveMarket({pair,onSelect,pairs,source,tickers,pricesReady}:{pair:SpotPair;onSelect:(pair:SpotPair)=>void;pairs:SpotPair[];source:'loading'|'live'|'fallback';tickers:Record<string,MarketTicker>;pricesReady:boolean}){
  const book=useBybitSpotBook(pair.symbol);
  const livePrice=book.connected?(book.trades[0]?.price??book.ticker?.lastPrice??null):null;
- return <main><MarketBar pair={pair} onSelect={onSelect} pairs={pairs} source={source} tickers={tickers} pricesReady={pricesReady} book={book} livePrice={livePrice}/><div className="workspace"><ChartPanel pair={pair} livePrice={livePrice}/><OrderBook pair={pair} book={book} livePrice={livePrice}/><TradePanel pair={pair}/><Orders/></div></main>;
+ type Layout={book:number;trade:number;height:number};
+ const defaultLayout:Layout={book:17,trade:16,height:600};
+ const [layout,setLayout]=React.useState<Layout>(()=>{
+  try{const stored=JSON.parse(localStorage.getItem('nexora:spot-panel-layout:v1')||'null') as Layout|null;
+   if(stored&&Number.isFinite(stored.book)&&Number.isFinite(stored.trade)&&Number.isFinite(stored.height))
+    return {book:Math.min(25,Math.max(13,stored.book)),trade:Math.min(25,Math.max(13,stored.trade)),height:Math.min(960,Math.max(440,stored.height))};
+  }catch{}return defaultLayout;
+ });
+ const [dragging,setDragging]=React.useState<'book'|'trade'|'height'|null>(null);
+ const workspaceRef=React.useRef<HTMLDivElement>(null);
+ React.useEffect(()=>{try{localStorage.setItem('nexora:spot-panel-layout:v1',JSON.stringify(layout))}catch{}},[layout]);
+ const resize=(event:React.PointerEvent<HTMLDivElement>)=>{
+  if(!dragging||!workspaceRef.current)return;
+  const bounds=workspaceRef.current.getBoundingClientRect();
+  if(dragging==='height'){setLayout(l=>({...l,height:Math.max(440,Math.min(960,event.clientY-bounds.top))}));return}
+  const percent=(event.clientX-bounds.left)/bounds.width*100;
+  setLayout(l=>{
+   if(dragging==='book'){const chartShare=Math.max(44,Math.min(72,percent));return {...l,book:Math.max(13,Math.min(27,100-chartShare-l.trade))}}
+   const beforeTrade=Math.max(70,Math.min(87,percent));
+   return {...l,trade:Math.max(13,Math.min(25,100-beforeTrade))};
+  });
+ };
+ const startDrag=(event:React.PointerEvent<HTMLDivElement>,target:'book'|'trade'|'height')=>{event.preventDefault();event.currentTarget.setPointerCapture(event.pointerId);setDragging(target)};
+ const stopDrag=()=>setDragging(null);
+ const chartWidth=100-layout.book-layout.trade;
+ return <main><MarketBar pair={pair} onSelect={onSelect} pairs={pairs} source={source} tickers={tickers} pricesReady={pricesReady} book={book} livePrice={livePrice}/><div ref={workspaceRef} className="workspace nx-resizable-workspace" style={{'--nx-chart-col':chartWidth+'%','--nx-book-col':layout.book+'%','--nx-trade-col':layout.trade+'%','--nx-chart-row':layout.height+'px'} as React.CSSProperties}><ChartPanel pair={pair} livePrice={livePrice}/><OrderBook pair={pair} book={book} livePrice={livePrice}/><TradePanel pair={pair}/><Orders/>
+ <div className="nx-resize-handle nx-resize-chart-book" role="separator" aria-label="Resize chart and order book" aria-orientation="vertical" title="Drag to resize chart and order book" style={{left:chartWidth+'%'}} onPointerDown={e=>startDrag(e,'book')} onPointerMove={resize} onPointerUp={stopDrag} onPointerCancel={stopDrag}><span/></div>
+ <div className="nx-resize-handle nx-resize-book-trade" role="separator" aria-label="Resize order book and trade panel" aria-orientation="vertical" title="Drag to resize order book and trade panel" style={{left:(100-layout.trade)+'%'}} onPointerDown={e=>startDrag(e,'trade')} onPointerMove={resize} onPointerUp={stopDrag} onPointerCancel={stopDrag}><span/></div>
+ <div className="nx-resize-handle nx-resize-orders" role="separator" aria-label="Resize chart and orders section" aria-orientation="horizontal" title="Drag to resize chart and orders" style={{top:layout.height+'px'}} onPointerDown={e=>startDrag(e,'height')} onPointerMove={resize} onPointerUp={stopDrag} onPointerCancel={stopDrag}><span/></div>
+ </div></main>;
 }
 function App(){const {pairs,source}=useSpotMarkets();const {tickers,ready:pricesReady}=useSpotTickers(pairs);const [pair,setPair]=useState<SpotPair>({symbol:'BTCUSDT',base:'BTC',quote:'USDT'});const [page,setPage]=useState<Page>(()=>window.location.pathname.startsWith('/dashboard')?'dashboard':window.location.pathname.startsWith('/markets')?'markets':'trade');const [theme,setTheme]=useState<Theme>(()=>{try{return localStorage.getItem('nexora-theme')==='light'?'light':'dark'}catch{return 'dark'}});
  const toggleTheme=()=>setTheme(t=>{const next=t==='dark'?'light':'dark';try{localStorage.setItem('nexora-theme',next)}catch{}return next});
