@@ -11,6 +11,8 @@ const load=(symbol:string):AlertItem[]=>{try{const x=JSON.parse(localStorage.get
 const format=(value:number)=>value.toLocaleString('en-US',{maximumFractionDigits:8});
 export default function ChartAlerts({symbol,livePrice,onClose,open}:{symbol:string;livePrice:number|null;onClose:()=>void;open:boolean}){
  const [items,setItems]=useState<AlertItem[]>(()=>load(symbol));
+ const itemsRef=useRef(items);
+ itemsRef.current=items;
  const [price,setPrice]=useState('');
  const [source,setSource]=useState<Source>('price');
  const [emaPeriod,setEmaPeriod]=useState(20);
@@ -25,7 +27,7 @@ export default function ChartAlerts({symbol,livePrice,onClose,open}:{symbol:stri
  const [message,setMessage]=useState('');
  const previous=useRef<number|null>(null);
  const emaValues=useRef(new Map<string,number>());
- useEffect(()=>{let cancelled=false;const refresh=async()=>{const configs=Array.from(new Set(items.filter(a=>a.enabled&&a.source==='ema').map(a=>(a.emaInterval||'15')+':'+(a.emaPeriod||20)).concat(source==='ema'?[emaInterval+':'+emaPeriod]:[])));for(const config of configs){const [interval,p]=config.split(':'),period=Number(p);try{const response=await fetch('https://api.bybit.com/v5/market/kline?'+new URLSearchParams({category:'spot',symbol,interval,limit:String(Math.min(1000,Math.max(120,period*5)))}));const json=await response.json() as {retCode?:number;result?:{list?:string[][]}};if(json.retCode!==0||!Array.isArray(json.result?.list))continue;const closes=json.result.list.map(row=>Number(row[4])).reverse().filter(Number.isFinite);if(closes.length<period)continue;let value=closes.slice(0,period).reduce((a,b)=>a+b,0)/period;const k=2/(period+1);for(const close of closes.slice(period))value=close*k+value*(1-k);if(!cancelled){emaValues.current.set(config,value);if(config===emaInterval+':'+emaPeriod)setEmaValue(value)}}catch{}}};void refresh();const timer=window.setInterval(()=>void refresh(),15000);return()=>{cancelled=true;window.clearInterval(timer)}},[symbol,source,emaInterval,emaPeriod,items.length]);
+ useEffect(()=>{let cancelled=false;const refresh=async()=>{const configs=Array.from(new Set(items.filter(a=>a.enabled&&a.source==='ema').map(a=>(a.emaInterval||'15')+':'+(a.emaPeriod||20)).concat(source==='ema'?[emaInterval+':'+emaPeriod]:[])));if(configs.length===0)return;for(const config of configs){const [interval,p]=config.split(':'),period=Number(p);try{const response=await fetch('https://api.bybit.com/v5/market/kline?'+new URLSearchParams({category:'spot',symbol,interval,limit:String(Math.min(1000,Math.max(120,period*5)))}));const json=await response.json() as {retCode?:number;result?:{list?:string[][]}};if(json.retCode!==0||!Array.isArray(json.result?.list))continue;const closes=json.result.list.map(row=>Number(row[4])).reverse().filter(Number.isFinite);if(closes.length<period)continue;let value=closes.slice(0,period).reduce((a,b)=>a+b,0)/period;const k=2/(period+1);for(const close of closes.slice(period))value=close*k+value*(1-k);if(!cancelled){emaValues.current.set(config,value);if(config===emaInterval+':'+emaPeriod)setEmaValue(value)}}catch{}}};void refresh();const timer=window.setInterval(()=>void refresh(),15000);return()=>{cancelled=true;window.clearInterval(timer)}},[symbol,source,emaInterval,emaPeriod,items.length]);
  const lastPair=useRef(symbol);
  useEffect(()=>{setItems(load(symbol));previous.current=null;lastPair.current=symbol;setEditId(null);setPrice('');setMessage('')},[symbol]);
  useEffect(()=>{try{localStorage.setItem(key(symbol),JSON.stringify(items));window.dispatchEvent(new Event('nexora:alerts-updated'))}catch{}},[items,symbol]);
@@ -34,6 +36,13 @@ export default function ChartAlerts({symbol,livePrice,onClose,open}:{symbol:stri
   const old=previous.current;previous.current=livePrice;
   if(old===null)return;
   const now=Date.now();
+  const hasCrossing=itemsRef.current.some(item=>{
+   if(!item.enabled)return false;
+   const target=item.source==='ema'?emaValues.current.get((item.emaInterval||'15')+':'+(item.emaPeriod||20)):item.price;
+   if(target===undefined)return false;
+   return item.condition==='crosses'?((old<target&&livePrice>=target)||(old>target&&livePrice<=target)):item.condition==='above'?(old<=target&&livePrice>target):(old>=target&&livePrice<target);
+  });
+  if(!hasCrossing)return;
   setItems(current=>{
    let changed=false;
    const updated=current.map(item=>{
