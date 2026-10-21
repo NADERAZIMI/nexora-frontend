@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Chart, sma, ema, bollingerBands, vwap, ichimoku, supertrend, sar, envelope, emaRibbon, twap, smc, rsi, macd, stochastic, atr, obv, adx, mfi, williamsR, roc, cvd } from '@mg-exchange/charts';
+import { Chart, darkTheme, lightTheme, sma, ema, bollingerBands, vwap, ichimoku, supertrend, sar, envelope, emaRibbon, twap, smc, rsi, macd, stochastic, atr, obv, adx, mfi, williamsR, roc, cvd } from '@mg-exchange/charts';
 import type { Bar, Datafeed, Timeframe, Indicator, ChartType } from '@mg-exchange/charts';
 import type { SpotPair } from './spot-markets';
 import './SpotProChart.css';
@@ -8,6 +8,8 @@ type BybitRow = [string,string,string,string,string,string,string,...unknown[]];
 const intervalMap: Record<string,string> = {'1m':'1','3m':'3','5m':'5','15m':'15','30m':'30','1H':'60','2H':'120','4H':'240','6H':'360','12H':'720','1D':'D','3D':'3D','1W':'W','1M':'M'};
 const intervals: Timeframe[] = ['1m','3m','5m','15m','30m','1H','2H','4H','6H','12H','1D','3D','1W','1M'];
 const defaultPinned:Timeframe[]=['1m','5m','15m','30m','1H','4H'];
+const chartFont='"Inter",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif';
+const nxTheme=(light:boolean)=>({... (light?lightTheme:darkTheme),fontFamily:chartFont});
 const pinnedKey='nexora:mg-chart:pinned-timeframes';
 const loadPinned=():Timeframe[]=>{try{const raw=JSON.parse(localStorage.getItem(pinnedKey)||'null');return Array.isArray(raw)&&raw.length>0?raw.filter((v:unknown,i:number)=>typeof v==='string'&&intervals.includes(v as Timeframe)&&raw.indexOf(v)===i).slice(0,8):defaultPinned}catch{return defaultPinned}};
 const indicatorList: {key:string;label:string;indicator:Indicator}[] = [
@@ -134,7 +136,7 @@ export default function SpotProChart({pair,frame,livePrice}:{pair:SpotPair;frame
   const extra=saved as typeof saved & {params?:Record<string,Record<string,number>>;favorites?:string[]};
   paramRef.current=extra?.params||{};setParams(paramRef.current);
   try{setFavorites(JSON.parse(localStorage.getItem('nexora:mg-favorites')||'[]'))}catch{setFavorites([])}
-  const next=new Chart({container:node,symbol:pair.symbol,timeframe:(intervals.find(t=>t.toLowerCase()===frame.toLowerCase())||'1H'),datafeed:new BybitMGDatafeed(pair.symbol),theme:document.documentElement.dataset.nxTheme==='light'?'light':'dark',renderer:'webgl',features:{volume:true},trading:{showPlusButton:false,showContextMenu:false,draggableOrderLines:false}});
+  const next=new Chart({container:node,symbol:pair.symbol,timeframe:(intervals.find(t=>t.toLowerCase()===frame.toLowerCase())||'1H'),datafeed:new BybitMGDatafeed(pair.symbol),theme:nxTheme(document.documentElement.dataset.nxTheme==='light'),renderer:'webgl',features:{volume:true},trading:{showPlusButton:false,showContextMenu:false,draggableOrderLines:false}});
   if(disposed){next.destroy();return}
   chart.current=next;
   instanceIds.current.clear();
@@ -143,7 +145,7 @@ export default function SpotProChart({pair,frame,livePrice}:{pair:SpotPair;frame
   if(saved?.volumeProfile)next.setVolumeProfile(true);
   if(saved?.drawings?.length){try{next.loadDrawings(saved.drawings)}catch(e){console.warn('[NEXORA] Drawing restore failed',e)}}
   for(const event of ['drawingAdded','drawingRemoved','drawingModified','drawingSelected'] as const)next.on(event,()=>setDrawVersion(v=>v+1));
-  const observer=new MutationObserver(()=>next.setTheme(document.documentElement.dataset.nxTheme==='light'?'light':'dark'));
+  const observer=new MutationObserver(()=>next.setTheme(nxTheme(document.documentElement.dataset.nxTheme==='light')));
   observer.observe(document.documentElement,{attributes:true,attributeFilter:['data-nx-theme']});
   const timer=window.setInterval(()=>{try{localStorage.setItem(key,JSON.stringify({drawings:next.getDrawings(),indicators:[...instanceIds.current.keys()],volumeProfile:vpRef.current,params:paramRef.current}))}catch{/* storage inaccessible */}},3000);
   return ()=>{disposed=true;window.clearInterval(timer);observer.disconnect();try{localStorage.setItem(key,JSON.stringify({drawings:next.getDrawings(),indicators:[...instanceIds.current.keys()],volumeProfile:vpRef.current,params:paramRef.current}))}catch{/* ignore */}next.destroy();if(chart.current===next)chart.current=null;instanceIds.current.clear()};
