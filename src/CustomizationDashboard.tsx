@@ -2,19 +2,20 @@ import React,{useEffect,useState} from 'react';
 import './CustomizationDashboard.css';
 
 export type DesignSettings={
- background:string;surface:string;elevated:string;text:string;muted:string;border:string;
+ background:string;surface:string;chartBackground:string;elevated:string;text:string;muted:string;border:string;
  primary:string;hover:string;positive:string;negative:string;
  font:string;fontSize:number;headingSize:number;radius:number;density:number;chartHeight:number;
 };
 export const defaultDesign:DesignSettings={
- background:'#000000',surface:'#101014',elevated:'#15191F',text:'#F4F6FA',muted:'#9BA5B5',
+ background:'#000000',surface:'#101014',chartBackground:'#101014',elevated:'#15191F',text:'#F4F6FA',muted:'#9BA5B5',
  border:'#29313D',primary:'#3378FF',hover:'#EAA343',positive:'#16B89A',negative:'#F05A70',
  font:'Inter',fontSize:12,headingSize:18,radius:4,density:8,chartHeight:600
 };
 export const designKey='nexora:design-customization:v1';
 const colorFields:{id:keyof DesignSettings;label:string;description:string}[]=[
  {id:'background',label:'Main background',description:'Workspace and site canvas'},
- {id:'surface',label:'Panels',description:'Market, chart and dashboard surfaces'},
+ {id:'surface',label:'Panels',description:'Market and dashboard surfaces'},
+ {id:'chartBackground',label:'Chart background',description:'MG candle canvas and chart surface'},
  {id:'elevated',label:'Elevated areas',description:'Popovers and input backgrounds'},
  {id:'text',label:'Primary text',description:'Headings, prices and labels'},
  {id:'muted',label:'Secondary text',description:'Descriptions and metadata'},
@@ -41,7 +42,7 @@ export function loadDesign():DesignSettings{
 export function applyDesign(settings:DesignSettings){
  const root=document.documentElement;
  const vars:Record<string,string>={
- '--nx-bg':settings.background,'--nx-surface':settings.surface,'--nx-elevated':settings.elevated,
+ '--nx-bg':settings.background,'--nx-surface':settings.surface,'--nx-chart-bg':settings.chartBackground,'--nx-elevated':settings.elevated,
  '--nx-text':settings.text,'--nx-muted':settings.muted,'--nx-border':settings.border,
  '--nx-blue':settings.primary,'--nx-blue-deep':settings.primary,'--nx-hover':settings.hover,
  '--nx-positive':settings.positive,'--nx-negative':settings.negative,
@@ -50,13 +51,15 @@ export function applyDesign(settings:DesignSettings){
  '--nx-user-chart-height':settings.chartHeight+'px'
  };
  for(const [key,value] of Object.entries(vars))root.style.setProperty(key,value);
+ window.dispatchEvent(new Event('nexora:design-change'));
  root.style.setProperty('--nx-user-font',settings.font==='Inter'? "'Inter',system-ui,sans-serif":settings.font==='system-ui'?'system-ui,sans-serif':settings.font+',sans-serif');
  root.dataset.nxCustomized='true';
 }
 export function clearDesign(){
  const root=document.documentElement;
- for(const key of ['--nx-bg','--nx-surface','--nx-elevated','--nx-text','--nx-muted','--nx-border','--nx-blue','--nx-blue-deep','--nx-hover','--nx-positive','--nx-negative','--nx-user-font-size','--nx-user-heading-size','--nx-user-radius','--nx-user-density','--nx-user-chart-height','--nx-user-font'])root.style.removeProperty(key);
+ for(const key of ['--nx-bg','--nx-surface','--nx-chart-bg','--nx-elevated','--nx-text','--nx-muted','--nx-border','--nx-blue','--nx-blue-deep','--nx-hover','--nx-positive','--nx-negative','--nx-user-font-size','--nx-user-heading-size','--nx-user-radius','--nx-user-density','--nx-user-chart-height','--nx-user-font'])root.style.removeProperty(key);
  delete root.dataset.nxCustomized;
+ window.dispatchEvent(new Event('nexora:design-change'));
 }
 const presets=[
  {name:'NEXORA Original',primary:'#3378FF',hover:'#EAA343',background:'#000000',surface:'#101014'},
