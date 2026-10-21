@@ -6,6 +6,7 @@ import {useTokenOverview} from './useTokenOverview';
 import DataPanel from './DataPanel';
 import MarketsPage from './MarketsPage';
 import SpotProChart from './SpotProChart';
+import CustomizationDashboard,{loadDesign,applyDesign} from './CustomizationDashboard';
 import FeedPanel from './FeedPanel';
 import { createRoot } from 'react-dom/client';
 import './styles.css';
@@ -14,10 +15,10 @@ import {useBybitSpotBook,type BookState} from './useBybitSpotBook';
 const LOGO='/nexora-n.svg';
 type BookSide='buy'|'sell';
 function Brand(){return <div className="brand"><img src={LOGO} alt="NEXORA symbol" /><strong>NE<span className="brand-x">X</span>ORA</strong></div>}
-type Page='trade'|'markets';type Theme='dark'|'light';
+type Page='trade'|'markets'|'dashboard';type Theme='dark'|'light';
 function Header({page,setPage,theme,toggleTheme}:{page:Page;setPage:(page:Page)=>void;theme:Theme;toggleTheme:()=>void}){
  const entries=[['Buy Crypto',null],['Markets','markets'],['Trade','trade'],['TradFi',null],['Tools',null],['Finance',null],['Card',null],['Discover',null],['More',null]] as const;
- return <header className="topbar"><div className="nx-brand-click" role="button" tabIndex={0} onClick={()=>setPage('trade')} onKeyDown={e=>{if(e.key==='Enter')setPage('trade')}}><Brand/></div><nav className="toplinks" aria-label="Main navigation">{entries.map(([label,target])=><button key={label} className={target===page?'selected':''} type="button" onClick={()=>{if(target)setPage(target)}} disabled={!target} title={!target?'Coming soon':undefined}>{label}{['Trade','Tools','Finance','Discover','More'].includes(label)&&<span className="nx-menu-chevron">⌄</span>}</button>)}</nav><div className="topright"><button type="button" className="nx-theme-switch" onClick={toggleTheme} title={theme==='dark'?'Switch to Light Mode':'Switch to Dark Mode'} aria-label={theme==='dark'?'Enable light mode':'Enable dark mode'} aria-pressed={theme==='light'}>{theme==='dark'?'☀':'☾'}</button><button className="outline">Log In</button><button className="primary">Sign Up</button></div></header>
+ return <header className="topbar"><div className="nx-brand-click" role="button" tabIndex={0} onClick={()=>setPage('trade')} onKeyDown={e=>{if(e.key==='Enter')setPage('trade')}}><Brand/></div><nav className="toplinks" aria-label="Main navigation">{entries.map(([label,target])=><button key={label} className={target===page?'selected':''} type="button" onClick={()=>{if(target)setPage(target)}} disabled={!target} title={!target?'Coming soon':undefined}>{label}{['Trade','Tools','Finance','Discover','More'].includes(label)&&<span className="nx-menu-chevron">⌄</span>}</button>)}</nav><button type="button" className={page==='dashboard'?'nx-dashboard-entry selected':'nx-dashboard-entry'} onClick={()=>setPage('dashboard')} aria-label="Open customization dashboard">Dashboard <span>+</span></button><div className="topright"><button type="button" className="nx-theme-switch" onClick={toggleTheme} title={theme==='dark'?'Switch to Light Mode':'Switch to Dark Mode'} aria-label={theme==='dark'?'Enable light mode':'Enable dark mode'} aria-pressed={theme==='light'}>{theme==='dark'?'☀':'☾'}</button><button className="outline">Log In</button><button className="primary">Sign Up</button></div></header>
 }
 const display='—';
 const formatLivePrice=(value:number)=>value.toLocaleString('en-US',{maximumFractionDigits:12});
@@ -169,11 +170,11 @@ function ActiveMarket({pair,onSelect,pairs,source,tickers,pricesReady}:{pair:Spo
  const livePrice=book.connected?(book.trades[0]?.price??book.ticker?.lastPrice??null):null;
  return <main><MarketBar pair={pair} onSelect={onSelect} pairs={pairs} source={source} tickers={tickers} pricesReady={pricesReady} book={book} livePrice={livePrice}/><div className="workspace"><ChartPanel pair={pair} livePrice={livePrice}/><OrderBook pair={pair} book={book} livePrice={livePrice}/><TradePanel pair={pair}/><Orders/></div></main>;
 }
-function App(){const {pairs,source}=useSpotMarkets();const {tickers,ready:pricesReady}=useSpotTickers(pairs);const [pair,setPair]=useState<SpotPair>({symbol:'BTCUSDT',base:'BTC',quote:'USDT'});const [page,setPage]=useState<Page>(()=>window.location.pathname.startsWith('/markets')?'markets':'trade');const [theme,setTheme]=useState<Theme>(()=>{try{return localStorage.getItem('nexora-theme')==='light'?'light':'dark'}catch{return 'dark'}});
+function App(){const {pairs,source}=useSpotMarkets();const {tickers,ready:pricesReady}=useSpotTickers(pairs);const [pair,setPair]=useState<SpotPair>({symbol:'BTCUSDT',base:'BTC',quote:'USDT'});const [page,setPage]=useState<Page>(()=>window.location.pathname.startsWith('/dashboard')?'dashboard':window.location.pathname.startsWith('/markets')?'markets':'trade');const [theme,setTheme]=useState<Theme>(()=>{try{return localStorage.getItem('nexora-theme')==='light'?'light':'dark'}catch{return 'dark'}});
  const toggleTheme=()=>setTheme(t=>{const next=t==='dark'?'light':'dark';try{localStorage.setItem('nexora-theme',next)}catch{}return next});
- React.useEffect(()=>{document.documentElement.dataset.nxTheme=theme;document.documentElement.style.colorScheme=theme},[theme]);
- const navigate=(next:Page)=>{setPage(next);const path=next==='markets'?'/markets':'/trade/spot';if(window.location.pathname!==path)window.history.pushState({page:next},'',path);window.scrollTo(0,0)};
- React.useEffect(()=>{const listener=()=>setPage(window.location.pathname.startsWith('/markets')?'markets':'trade');window.addEventListener('popstate',listener);return()=>window.removeEventListener('popstate',listener)},[]);
+ React.useEffect(()=>{document.documentElement.dataset.nxTheme=theme;document.documentElement.style.colorScheme=theme;applyDesign(loadDesign())},[theme]);
+ const navigate=(next:Page)=>{setPage(next);const path=next==='dashboard'?'/dashboard':next==='markets'?'/markets':'/trade/spot';if(window.location.pathname!==path)window.history.pushState({page:next},'',path);window.scrollTo(0,0)};
+ React.useEffect(()=>{const listener=()=>setPage(window.location.pathname.startsWith('/dashboard')?'dashboard':window.location.pathname.startsWith('/markets')?'markets':'trade');window.addEventListener('popstate',listener);return()=>window.removeEventListener('popstate',listener)},[]);
  const trade=(selected:SpotPair)=>{setPair(selected);navigate('trade')};
- return <><Header page={page} setPage={navigate} theme={theme} toggleTheme={toggleTheme}/>{page==='markets'?<MarketsPage pairs={pairs} tickers={tickers} ready={pricesReady} onTrade={trade}/>:<ActiveMarket key={pair.symbol} pair={pair} onSelect={setPair} pairs={pairs} source={source} tickers={tickers} pricesReady={pricesReady}/>}<footer>NEXORA Spot · Live public market data</footer></>}
+ return <><Header page={page} setPage={navigate} theme={theme} toggleTheme={toggleTheme}/>{page==='dashboard'?<CustomizationDashboard/>:page==='markets'?<MarketsPage pairs={pairs} tickers={tickers} ready={pricesReady} onTrade={trade}/>:<ActiveMarket key={pair.symbol} pair={pair} onSelect={setPair} pairs={pairs} source={source} tickers={tickers} pricesReady={pricesReady}/>}<footer>NEXORA Spot · Live public market data</footer></>}
 createRoot(document.getElementById('root')!).render(<React.StrictMode><App/></React.StrictMode>);
