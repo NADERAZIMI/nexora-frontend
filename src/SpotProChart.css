@@ -16,3 +16,7 @@
 .nexora-mg-chart .mg-object-row div{display:flex;gap:1px}
 .nexora-mg-chart .mg-object-row button,.nexora-mg-chart .nexora-mg-objects header button{border:0;background:transparent;color:#aeb5c3;cursor:pointer;padding:4px}
 .nexora-mg-chart .mg-object-row button:hover{color:#f4f6fa;background:#263a64}
+
+.nexora-mg-chart .mg-sidebar-form{display:flex;gap:6px;padding:12px;border-bottom:1px solid #30343c}
+.nexora-mg-chart .mg-sidebar-form input{min-width:0;flex:1;background:#080808;border:1px solid #30343c;color:#f4f6fa;padding:8px;border-radius:4px}
+.nexora-mg-chart .mg-sidebar-form button{background:#3d6bff;color:#fff;border:0;border-radius:4px;padding:7px;cursor:pointer}
