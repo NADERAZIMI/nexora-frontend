@@ -279,3 +279,6 @@
 .nexora-mg-chart .nx-chart-edge-navigation .nx-chart-navigation{display:flex;align-items:center;gap:2px;padding:2px 3px}
 .nexora-mg-chart .nx-chart-edge-navigation .nx-chart-navigation button{font-size:17px;line-height:20px;min-width:22px;padding:1px 3px;border:0;border-radius:0;background:transparent;color:var(--nx-muted,#929aaa)}
 .nexora-mg-chart .nx-chart-edge-navigation .nx-chart-navigation button:hover{color:var(--nx-hover,#EAA343)!important;background:transparent!important;box-shadow:none}
+
+/* Depth replaces plot content only; its data stays live from the shared book. */
+.nexora-mg-chart .nx-depth-layer{position:relative;flex:1;min-width:0;min-height:0;overflow:hidden}
