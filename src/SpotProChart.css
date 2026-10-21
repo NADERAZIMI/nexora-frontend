@@ -72,3 +72,10 @@
 .nexora-mg-chart .mg-intervals button:hover,
 .nexora-mg-chart .mg-intervals button.selected:hover{color:var(--nx-hover,#EAA343)!important}
 .nexora-mg-chart .mg-intervals button:focus-visible{text-decoration:underline;text-underline-offset:4px}
+
+/* Compact chart-style and indicator icons next to the timeframe chevron */
+.nexora-mg-chart .mg-timeframe-arrow{font-size:18px!important;line-height:1;padding-inline:7px!important}
+.nexora-mg-chart .nexora-mg-toolbar .mg-compact-icon{display:inline-flex;align-items:center;justify-content:center;flex:0 0 31px;width:31px;height:31px;padding:4px;background:transparent;border:0;box-shadow:none;color:#929AAA}
+.nexora-mg-chart .nexora-mg-toolbar .mg-compact-icon:hover{color:var(--nx-hover,#EAA343);background:transparent}
+.nexora-mg-chart .nexora-mg-toolbar .mg-compact-icon.selected{color:var(--nx-blue,#3D6BFF);background:transparent}
+.nexora-mg-chart .mg-chart-type-popover{left:clamp(48px,22%,290px);width:min(235px,calc(100% - 55px))}
