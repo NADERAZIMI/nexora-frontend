@@ -321,6 +321,22 @@ export default function SpotProChart({pair,frame,livePrice,book}:{pair:SpotPair;
   const next=new Chart({container:node,symbol:pair.symbol,timeframe:localFrame,datafeed:kind==='renko'?new RenkoDatafeed(new BybitMGDatafeed(pair.symbol)):new BybitMGDatafeed(pair.symbol),theme:nxTheme(document.documentElement.dataset.nxTheme==='light'),chartType:kind==='renko'?'candlestick':kind,renderer:'webgl',features:{volume:true},trading:{showPlusButton:false,showContextMenu:false,draggableOrderLines:false}});
   if(disposed){next.destroy();return}
   chart.current=next;
+  // Alert annotations are non-interactive dashed MG order-line overlays.
+  // Keep them distinct from trading orders and normal drawings.
+  const alertLineIds=new Set<string>();
+  const syncAlertLines=()=>{
+   let records: Array<{id:string;price:number;source?:string;enabled?:boolean;note?:string}>=[];
+   try{const stored=JSON.parse(localStorage.getItem('nexora:price-alerts:v2:'+pair.symbol)||'[]');if(Array.isArray(stored))records=stored}catch{}
+   const desired=new Map(records.filter(a=>a&&a.source!=='ema'&&a.enabled&&Number.isFinite(a.price)&&a.price>0&&typeof a.id==='string').map(a=>['nx-alert-'+a.id,a] as const));
+   for(const id of alertLineIds){if(!desired.has(id)){next.removeOrderLine(id);alertLineIds.delete(id)}}
+   for(const [id,alert] of desired){
+    next.addOrderLine({id,price:alert.price,type:'stop',side:'buy',label:'Alert'+(alert.note?' · '+alert.note.slice(0,24):'')});
+    alertLineIds.add(id);
+   }
+  };
+  syncAlertLines();
+  window.addEventListener('nexora:alerts-updated',syncAlertLines);
+  window.addEventListener('storage',syncAlertLines);
   instanceIds.current.clear();
   const items=(saved?.indicators||['SMA']).filter(k=>indicatorList.some(i=>i.key===k));
   for(const k of items){const entry=indicatorList.find(i=>i.key===k);if(entry){try{instanceIds.current.set(k,next.addIndicator(entry.indicator,paramRef.current[k]))}catch(e){console.warn('[NEXORA] Indicator failed:',k,e)}}}
@@ -332,7 +348,7 @@ export default function SpotProChart({pair,frame,livePrice,book}:{pair:SpotPair;
   window.addEventListener('nexora:design-change',updateChartTheme);
   observer.observe(document.documentElement,{attributes:true,attributeFilter:['data-nx-theme','style']});
   const timer=window.setInterval(()=>{try{localStorage.setItem(key,JSON.stringify({drawings:next.getDrawings(),indicators:[...instanceIds.current.keys()],volumeProfile:vpRef.current,params:paramRef.current}))}catch{/* storage inaccessible */}},3000);
-  return ()=>{disposed=true;window.clearInterval(timer);observer.disconnect();window.removeEventListener('nexora:design-change',updateChartTheme);try{localStorage.setItem(key,JSON.stringify({drawings:next.getDrawings(),indicators:[...instanceIds.current.keys()],volumeProfile:vpRef.current,params:paramRef.current}))}catch{/* ignore */}next.destroy();if(chart.current===next)chart.current=null;instanceIds.current.clear()};
+  return ()=>{disposed=true;window.clearInterval(timer);observer.disconnect();window.removeEventListener('nexora:design-change',updateChartTheme);window.removeEventListener('nexora:alerts-updated',syncAlertLines);window.removeEventListener('storage',syncAlertLines);try{localStorage.setItem(key,JSON.stringify({drawings:next.getDrawings(),indicators:[...instanceIds.current.keys()],volumeProfile:vpRef.current,params:paramRef.current}))}catch{/* ignore */}next.destroy();if(chart.current===next)chart.current=null;instanceIds.current.clear()};
  },[pair.symbol,frame,kind==='renko']);
  const setChartStyle=(type:ChartType|'renko')=>{
   try{
