@@ -58,3 +58,8 @@ html[data-nx-customized="true"] .chart{min-height:var(--nx-user-chart-height,600
 .feed-filters button.active:not(:hover),
 .nx-custom-sidebar button.active:not(:hover){color:var(--nx-blue,#3D6BFF)!important}
 .nx-dashboard-entry:hover,.nx-theme-switch:hover{background:transparent!important;box-shadow:none!important}
+
+/* Alerts is a first-class page alongside Dashboard. */
+.nx-alerts-entry{flex:0 0 auto;color:var(--nx-text);white-space:nowrap;font-size:12px;font-weight:650;padding:8px 10px;border:1px solid transparent;border-radius:var(--nx-user-radius,4px)}
+.nx-alerts-entry:hover{color:var(--nx-hover,#EAA343)!important;background:transparent!important}
+.nx-alerts-entry.selected:not(:hover){color:var(--nx-blue,#3D6BFF)!important}
