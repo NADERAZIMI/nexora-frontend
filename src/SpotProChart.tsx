@@ -1,115 +1,142 @@
-import {useEffect,useRef,useState} from 'react';
-import type {KLineChartPro} from '@klinecharts/pro';
-import '@klinecharts/pro/dist/klinecharts-pro.css';
-import type {SpotPair} from './spot-markets';
+import { useEffect, useRef, useState } from 'react';
+import { Chart, sma, ema, bollingerBands, vwap, ichimoku, supertrend, sar, envelope, emaRibbon, twap, smc, rsi, macd, stochastic, atr, obv, adx, mfi, williamsR, roc, cvd } from '@mg-exchange/charts';
+import type { Bar, Datafeed, Timeframe, Indicator, ChartType } from '@mg-exchange/charts';
+import type { SpotPair } from './spot-markets';
 import './SpotProChart.css';
 
-type Period={multiplier:number;timespan:string;text:string};
-type SymbolInfo={ticker:string;name?:string;shortName?:string;exchange?:string;market?:string;priceCurrency?:string;type?:string};
-type Candle={timestamp:number;open:number;high:number;low:number;close:number;volume:number;turnover:number};
-const periods:Period[]=[{multiplier:1,timespan:'minute',text:'1m'},{multiplier:5,timespan:'minute',text:'5m'},{multiplier:15,timespan:'minute',text:'15m'},{multiplier:30,timespan:'minute',text:'30m'},{multiplier:1,timespan:'hour',text:'1h'},{multiplier:4,timespan:'hour',text:'4h'},{multiplier:1,timespan:'day',text:'1D'},{multiplier:1,timespan:'week',text:'1W'}];
-const interval=(p:Period)=>p.timespan==='minute'?String(p.multiplier):p.timespan==='hour'?String(p.multiplier*60):p.timespan==='day'?'D':p.timespan==='week'?'W':'M';
-const symbolInfo=(pair:SpotPair):SymbolInfo=>({ticker:pair.symbol,name:pair.base+'/'+pair.quote,shortName:pair.base+'/'+pair.quote,exchange:'Bybit',market:'crypto',priceCurrency:pair.quote,type:'spot'});
-const bucket=(ms:number,p:Period)=>{if(p.timespan==='day'){const d=new Date(ms);return Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate())}if(p.timespan==='week'){const d=new Date(ms);return Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate()-(d.getUTCDay()+6)%7)}const n=p.multiplier*(p.timespan==='hour'?3600000:60000);return Math.floor(ms/n)*n};
-const validSymbol=(s:string)=>/^[A-Z0-9]{2,32}$/.test(s);
-const finite=(c:Candle)=>Object.values(c).every(Number.isFinite)&&c.timestamp>0&&c.open>0&&c.high>=c.low&&c.low>0&&c.close>0&&c.volume>=0;
-function candle(raw:unknown):Candle|null{
- if(!Array.isArray(raw)||raw.length<7)return null;
- const c={timestamp:Number(raw[0]),open:Number(raw[1]),high:Number(raw[2]),low:Number(raw[3]),close:Number(raw[4]),volume:Number(raw[5]),turnover:Number(raw[6])};
- return finite(c)?c:null;
+type BybitRow = [string,string,string,string,string,string,string,...unknown[]];
+const intervalMap: Record<string,string> = {'1m':'1','5m':'5','15m':'15','30m':'30','1H':'60','4H':'240','1D':'D','1W':'W'};
+const intervals: Timeframe[] = ['1m','5m','15m','30m','1H','4H','1D','1W'];
+const indicatorList: {key:string;label:string;indicator:Indicator}[] = [
+ {key:'SMA',label:'Simple Moving Average',indicator:sma},{key:'EMA',label:'Exponential Moving Average',indicator:ema},
+ {key:'BB',label:'Bollinger Bands',indicator:bollingerBands},{key:'VWAP',label:'VWAP',indicator:vwap},
+ {key:'ICH',label:'Ichimoku Cloud',indicator:ichimoku},{key:'ST',label:'Supertrend',indicator:supertrend},
+ {key:'SAR',label:'Parabolic SAR',indicator:sar},{key:'ENV',label:'Envelope',indicator:envelope},
+ {key:'RIBBON',label:'EMA Ribbon',indicator:emaRibbon},{key:'TWAP',label:'TWAP',indicator:twap},
+ {key:'SMC',label:'Smart Money Concepts',indicator:smc},{key:'RSI',label:'RSI',indicator:rsi},
+ {key:'MACD',label:'MACD',indicator:macd},{key:'STOCH',label:'Stochastic',indicator:stochastic},
+ {key:'ATR',label:'ATR',indicator:atr},{key:'OBV',label:'On Balance Volume',indicator:obv},
+ {key:'ADX',label:'ADX',indicator:adx},{key:'MFI',label:'Money Flow Index',indicator:mfi},
+ {key:'WR',label:'Williams %R',indicator:williamsR},{key:'ROC',label:'Rate of Change',indicator:roc},
+ {key:'CVD',label:'Cumulative Volume Delta (OHLCV estimate)',indicator:cvd}
+];
+const drawingGroups: {label:string;tools:[string,string][]}[] = [
+ {label:'Lines',tools:[['trend-line','Trend Line'],['ray','Ray'],['extended-line','Extended Line'],['horizontal-line','Horizontal Line'],['horizontal-ray','Horizontal Ray'],['vertical-line','Vertical Line'],['cross-line','Cross Line'],['info-line','Info Line'],['polyline','Polyline'],['trend-angle','Trend Angle']]},
+ {label:'Channels',tools:[['parallel-channel','Parallel Channel'],['regression-channel','Regression Channel'],['pitchfork','Pitchfork'],['schiff-pitchfork','Schiff Pitchfork'],['modified-schiff-pitchfork','Modified Schiff Pitchfork'],['inside-pitchfork','Inside Pitchfork'],['disjoint-channel','Disjoint Channel']]},
+ {label:'Fibonacci',tools:[['fib-retracement','Retracement'],['fib-extension','Extension'],['fib-channel','Channel'],['fib-timezone','Time Zone'],['fib-speed-fan','Speed Fan'],['fib-circles','Circles'],['fib-spiral','Spiral'],['fib-arcs','Arcs'],['fib-wedge','Wedge'],['trend-fib-extension','Trend Extension'],['trend-fib-time','Trend Time']]},
+ {label:'Gann & Cycles',tools:[['gann-box','Gann Box'],['gann-fan','Gann Fan'],['gann-square','Gann Square'],['gann-square-fixed','Fixed Gann Square'],['cyclic-lines','Cyclic Lines'],['time-cycles','Time Cycles'],['sine-line','Sine Line']]},
+ {label:'Patterns',tools:[['xabcd-pattern','XABCD'],['abcd-pattern','ABCD'],['head-shoulders','Head & Shoulders'],['three-drives','Three Drives'],['cypher-pattern','Cypher'],['elliott-impulse','Elliott Impulse'],['elliott-correction','Elliott Correction'],['elliott-triangle','Elliott Triangle'],['elliott-double-combo','Elliott Double Combo'],['elliott-triple-combo','Elliott Triple Combo'],['triangle','Triangle'],['flat-top-bottom','Flat Top/Bottom'],['bars-pattern','Bars Pattern']]},
+ {label:'Shapes & Text',tools:[['rectangle','Rectangle'],['ellipse','Ellipse'],['arc','Arc'],['arrow','Arrow'],['brush','Brush'],['text','Text'],['text-annotation','Text Annotation'],['note','Note'],['callout','Callout'],['flag-marker','Flag']]},
+ {label:'Trading & Measure',tools:[['long-short','Long/Short Position'],['price-range','Price Range'],['date-range','Date Range'],['date-price-range','Date + Price Range'],['forecast','Forecast'],['fixed-range-vp','Fixed Range Volume Profile'],['anchored-vwap','Anchored VWAP']]}
+];
+function parseRow(raw:unknown):Bar|null{
+ if(!Array.isArray(raw)||raw.length<6)return null;
+ const time=Number(raw[0])/1000,open=Number(raw[1]),high=Number(raw[2]),low=Number(raw[3]),close=Number(raw[4]),volume=Number(raw[5]);
+ if(![time,open,high,low,close,volume].every(Number.isFinite)||time<=0||open<=0||low<=0||high<low||close<=0||volume<0)return null;
+ return {time,open,high,low,close,volume};
 }
-class BybitChartDatafeed{
- private sockets=new Map<string,WebSocket>();
- private closed=false;
- private livePrice:number|null;
- private candles=new Map<string,Candle>();
- private listeners=new Map<string,(c:Candle)=>void>();
- constructor(private pairs:SpotPair[],price:number|null){this.livePrice=price}
- updateLivePrice(price:number|null){if(price===null||price<=0||price===this.livePrice)return;this.livePrice=price;for(const [key,last] of this.candles){const cb=this.listeners.get(key);const p=periods.find(x=>interval(x)===key.split('/')[1]);if(!cb||!p||last.timestamp!==bucket(Date.now(),p))continue;const next={...last,close:price,high:Math.max(last.high,price),low:Math.min(last.low,price)};this.candles.set(key,next);cb(next)}}
- searchSymbols(search=''):Promise<SymbolInfo[]>{
-  const q=search.toUpperCase().trim();
-  return Promise.resolve(this.pairs.filter(p=>p.symbol.includes(q)).slice(0,80).map(symbolInfo));
- }
- async getHistoryKLineData(symbol:SymbolInfo,period:Period,from:number,to:number):Promise<Candle[]>{
-  if(this.closed||!validSymbol(symbol.ticker))return [];
-  const query=new URLSearchParams({category:'spot',symbol:symbol.ticker,interval:interval(period),limit:'500'});
-  const end=to>0?(to<1e11?to*1000:to):0;
-  const start=from>0?(from<1e11?from*1000:from):0;
-  if(end>0)query.set('end',String(Math.floor(end)));
-  if(start>0&&start<end)query.set('start',String(Math.floor(start)));
-  // Use verified same-origin history first: direct REST can be geoblocked in browsers.
-  // Do not show an isolated live candle when historical loading has failed.
-  const endpoints=[
-   '/kline-cache/'+symbol.ticker+'/'+interval(period)+'.json',
-   'https://api.bybit.com/v5/market/kline?'+query.toString()
-  ];
-  for(const url of endpoints){
-   const controller=new AbortController();
-   const timeout=setTimeout(()=>controller.abort(),url.startsWith('/')?3500:6500);
+class BybitMGDatafeed implements Datafeed{
+ constructor(private symbol:string){}
+ async getBars({symbol,timeframe,from,to,limit}:{symbol:string;timeframe:Timeframe;from:number;to:number;limit:number}):Promise<Bar[]>{
+  if(symbol!==this.symbol||!/^[A-Z0-9]{2,32}$/.test(symbol))return [];
+  const i=intervalMap[timeframe]||'60';
+  const query=new URLSearchParams({category:'spot',symbol,interval:i,limit:String(Math.min(Math.max(limit||500,1),1000))});
+  if(to>0)query.set('end',String(Math.floor(to*1000)));
+  if(from>0&&to>from)query.set('start',String(Math.floor(from*1000)));
+  const urls=['/kline-cache/'+symbol+'/'+i+'.json','https://api.bybit.com/v5/market/kline?'+query];
+  for(const url of urls){
+   const ac=new AbortController(),timeout=setTimeout(()=>ac.abort(),url.startsWith('/')?3500:7000);
    try{
-    const response=await fetch(url,{signal:controller.signal,cache:url.startsWith('/')?'no-cache':'default'});
+    const response=await fetch(url,{signal:ac.signal,cache:url.startsWith('/')?'no-cache':'default'});
     if(!response.ok)continue;
-    const data=await response.json() as {retCode?:number;result?:{list?:unknown[]};list?:unknown[];generatedAt?:number};
-    if(!url.startsWith('/')&&data.retCode!==0)continue;
-    const list=url.startsWith('/')?data.list:data.result?.list;
-    if(!Array.isArray(list))continue;
-    // Reject stale static snapshots; the WebSocket provides the current candle.
-    if(url.startsWith('/')&&(!data.generatedAt||Date.now()-data.generatedAt>36*60*60*1000))continue;
-    const rows=list.map(candle).filter((c):c is Candle=>c!==null).sort((a,b)=>a.timestamp-b.timestamp);
-    if(rows.length>0){const key=symbol.ticker+'/'+interval(period),last=rows[rows.length-1];if(last.timestamp===bucket(Date.now(),period)&&this.livePrice!==null)rows[rows.length-1]={...last,close:this.livePrice,high:Math.max(last.high,this.livePrice),low:Math.min(last.low,this.livePrice)};this.candles.set(key,rows[rows.length-1]);return rows;}
-   }catch{/* Try next real-data source. */}finally{clearTimeout(timeout)}
+    const json=await response.json() as {generatedAt?:number;retCode?:number;list?:unknown[];result?:{list?:unknown[]}};
+    if(url.startsWith('/')&&(!json.generatedAt||Date.now()-json.generatedAt>36*3600000))continue;
+    if(!url.startsWith('/')&&json.retCode!==0)continue;
+    const source=url.startsWith('/')?json.list:json.result?.list;
+    if(!Array.isArray(source))continue;
+    const bars=source.map(parseRow).filter((v):v is Bar=>v!==null).sort((a,b)=>a.time-b.time);
+    const unique=bars.filter((b,k)=>k===0||b.time!==bars[k-1].time);
+    if(unique.length)return unique;
+   }catch{/* Use next verified real-data source. */}finally{clearTimeout(timeout)}
   }
   return [];
  }
- subscribe(symbol:SymbolInfo,period:Period,callback:(c:Candle)=>void){
-  if(this.closed||!validSymbol(symbol.ticker))return;
-  this.unsubscribe(symbol,period);
-  const key=symbol.ticker+'/'+interval(period);
-  this.listeners.set(key,callback);
-  const topic='kline.'+interval(period)+'.'+symbol.ticker;
+ subscribe({symbol,timeframe,onBar,onTick}:{symbol:string;timeframe:Timeframe;onBar:(bar:Bar)=>void;onTick:(tick:{time:number;price:number;volume:number})=>void}){
+  if(symbol!==this.symbol||!/^[A-Z0-9]{2,32}$/.test(symbol))return ()=>{};
+  const topic='kline.'+(intervalMap[timeframe]||'60')+'.'+symbol;
   const ws=new WebSocket('wss://stream.bybit.com/v5/public/spot');
-  this.sockets.set(key,ws);
   ws.onopen=()=>ws.send(JSON.stringify({op:'subscribe',args:[topic]}));
-  ws.onmessage=e=>{
-   if(this.closed)return;
-   try{
-    const message=JSON.parse(e.data) as {topic?:string;data?:Array<{start:number;open:string;high:string;low:string;close:string;volume:string;turnover:string}>};
-    if(message.topic!==topic||!Array.isArray(message.data))return;
-    for(const d of message.data){
-     const c=candle([d.start,d.open,d.high,d.low,d.close,d.volume,d.turnover]);
-     if(c){const active=this.livePrice!==null&&c.timestamp===bucket(Date.now(),period)?{...c,close:this.livePrice,high:Math.max(c.high,this.livePrice),low:Math.min(c.low,this.livePrice)}:c;this.candles.set(key,active);callback(active)}
-    }
-   }catch{/* invalid stream message */}
-  };
-  ws.onclose=()=>{if(this.sockets.get(key)===ws)this.sockets.delete(key)};
+  ws.onmessage=e=>{try{
+   const message=JSON.parse(e.data) as {topic?:string;data?:Array<{start:number;open:string;high:string;low:string;close:string;volume:string;confirm?:boolean}>};
+   if(message.topic!==topic||!Array.isArray(message.data))return;
+   for(const d of message.data){
+    const b=parseRow([d.start,d.open,d.high,d.low,d.close,d.volume]);
+    if(b){onBar(b);onTick({time:Math.floor(Date.now()/1000),price:b.close,volume:0})}
+   }
+  }catch{/* Ignore malformed messages. */}};
+  return ()=>{ws.onopen=null;ws.onmessage=null;ws.close()};
  }
- unsubscribe(symbol:SymbolInfo,period:Period){
-  const key=symbol.ticker+'/'+interval(period);this.listeners.delete(key);this.candles.delete(key);const ws=this.sockets.get(key);
-  if(ws){this.sockets.delete(key);ws.onclose=null;ws.close()}
- }
- dispose(){this.closed=true;this.listeners.clear();this.candles.clear();for(const ws of this.sockets.values()){ws.onclose=null;ws.close()}this.sockets.clear()}
+ async searchSymbols(query:string){return this.symbol.includes(query.toUpperCase())?[{symbol:this.symbol,name:this.symbol,exchange:'Bybit',type:'spot' as const,pricePrecision:8,qtyPrecision:8,minMove:0.00000001}]:[]}
 }
+const readStored=(key:string)=>{try{return JSON.parse(localStorage.getItem(key)||'null') as {drawings?:object[];indicators?:string[];volumeProfile?:boolean}|null}catch{return null}};
 export default function SpotProChart({pair,frame,livePrice}:{pair:SpotPair;frame:string;livePrice:number|null}){
- const container=useRef<HTMLDivElement>(null);
+ const holder=useRef<HTMLDivElement>(null);
+ const chart=useRef<Chart|null>(null);
+ const instanceIds=useRef<Map<string,string>>(new Map());
  const [error,setError]=useState<string|null>(null);
- const feedRef=useRef<BybitChartDatafeed|null>(null);
- useEffect(()=>{feedRef.current?.updateLivePrice(livePrice)},[livePrice]);
+ const [indicatorMenu,setIndicatorMenu]=useState(false);
+ const [drawMenu,setDrawMenu]=useState(false);
+ const [activeTools,setActiveTools]=useState<string|null>(null);
+ const [chosen,setChosen]=useState<string[]>(['SMA']);
+ const [vp,setVp]=useState(false);
+ const [kind,setKind]=useState<ChartType>('candlestick');
+ const [drawSearch,setDrawSearch]=useState('');
+ const [indSearch,setIndSearch]=useState('');
+ const key='nexora:mg-chart:'+pair.symbol;
+ const save=()=>{const c=chart.current;if(!c)return;try{localStorage.setItem(key,JSON.stringify({drawings:c.getDrawings(),indicators:[...instanceIds.current.keys()],volumeProfile:vp}))}catch{/* Private browsing or full storage */}};
  useEffect(()=>{
-  const node=container.current;if(!node)return;
-  let chart:KLineChartPro|null=null;
+  const node=holder.current;if(!node)return;
   let disposed=false;
-  const datafeed=new BybitChartDatafeed([pair],livePrice);feedRef.current=datafeed;
-  const init=async()=>{try{
-   const {KLineChartPro}=await import('@klinecharts/pro');
-   if(disposed)return;
-   const period=periods.find(p=>p.text.toLowerCase()===frame.toLowerCase())||periods[4];
-   chart=new KLineChartPro({container:node,symbol:symbolInfo(pair),period,periods,datafeed,theme:document.documentElement.dataset.nxTheme==='light'?'light':'dark',locale:'en-US',timezone:'Etc/UTC',watermark:'NEXORA',drawingBarVisible:true,mainIndicators:['MA'],subIndicators:['VOL']});
-   setError(null);
-  }catch(e){if(!disposed)setError(e instanceof Error?e.message:'Chart could not initialize')}};
-  void init();
-  const obs=new MutationObserver(()=>{try{chart?.setTheme(document.documentElement.dataset.nxTheme==='light'?'light':'dark')}catch{/* chart already unmounted */}});
-  obs.observe(document.documentElement,{attributes:true,attributeFilter:['data-nx-theme']});
-  return()=>{disposed=true;obs.disconnect();datafeed.dispose();if(feedRef.current===datafeed)feedRef.current=null;node.replaceChildren();chart=null};
+  setError(null);
+  const saved=readStored(key);
+  if(saved?.indicators)setChosen(saved.indicators.filter(k=>indicatorList.some(i=>i.key===k)));
+  setVp(Boolean(saved?.volumeProfile));
+  const next=new Chart({container:node,symbol:pair.symbol,timeframe:(intervals.find(t=>t.toLowerCase()===frame.toLowerCase())||'1H'),datafeed:new BybitMGDatafeed(pair.symbol),theme:document.documentElement.dataset.nxTheme==='light'?'light':'dark',renderer:'webgl',features:{volume:true},trading:{showPlusButton:false,showContextMenu:false,draggableOrderLines:false}});
+  if(disposed){next.destroy();return}
+  chart.current=next;
+  instanceIds.current.clear();
+  const items=(saved?.indicators||['SMA']).filter(k=>indicatorList.some(i=>i.key===k));
+  for(const k of items){const entry=indicatorList.find(i=>i.key===k);if(entry){try{instanceIds.current.set(k,next.addIndicator(entry.indicator))}catch(e){console.warn('[NEXORA] Indicator failed:',k,e)}}}
+  if(saved?.volumeProfile)next.setVolumeProfile(true);
+  if(saved?.drawings?.length){try{next.loadDrawings(saved.drawings)}catch(e){console.warn('[NEXORA] Drawing restore failed',e)}}
+  const observer=new MutationObserver(()=>next.setTheme(document.documentElement.dataset.nxTheme==='light'?'light':'dark'));
+  observer.observe(document.documentElement,{attributes:true,attributeFilter:['data-nx-theme']});
+  const timer=window.setInterval(()=>{try{localStorage.setItem(key,JSON.stringify({drawings:next.getDrawings(),indicators:[...instanceIds.current.keys()],volumeProfile:saved?.volumeProfile||false}))}catch{/* storage inaccessible */}},3000);
+  return ()=>{disposed=true;window.clearInterval(timer);observer.disconnect();try{localStorage.setItem(key,JSON.stringify({drawings:next.getDrawings(),indicators:[...instanceIds.current.keys()],volumeProfile:saved?.volumeProfile||false}))}catch{/* ignore */}next.destroy();if(chart.current===next)chart.current=null;instanceIds.current.clear()};
  },[pair.symbol,frame]);
- return <div className={"nexora-pro-chart"+(livePrice===null?" awaiting-live-price":"")}>{livePrice===null&&<div className="nexora-price-awaiting">Waiting for live Bybit price…</div>}{error&&<div className="nexora-chart-error" role="alert">{error}</div>}<div ref={container} className="nexora-pro-chart-container"/></div>;
+ const toggleIndicator=(k:string)=>{const c=chart.current,entry=indicatorList.find(i=>i.key===k);if(!c||!entry)return;try{const ids=instanceIds.current;if(ids.has(k)){c.removeIndicator(ids.get(k)!);ids.delete(k)}else ids.set(k,c.addIndicator(entry.indicator));setChosen([...ids.keys()]);}catch(e){setError('Indicator could not be added: '+String(e))}};
+ const chooseTool=(name:string|null)=>{try{chart.current?.setDrawingTool(name);setActiveTools(name);setDrawMenu(false)}catch(e){setError('Drawing tool failed: '+String(e))}};
+ const toggleVP=()=>{const n=!vp;chart.current?.setVolumeProfile(n);setVp(n)};
+ return <div className="nexora-mg-chart">
+   <div className="nexora-mg-toolbar">
+    <span className="mg-market-label">{pair.base}/{pair.quote}</span>
+    <div className="mg-intervals">{intervals.map(t=><button key={t} className={t.toLowerCase()===frame.toLowerCase()?'selected':''} type="button" title={'Current timeframe: '+frame} disabled={t.toLowerCase()!==frame.toLowerCase()}>{t}</button>)}</div>
+    <select aria-label="Chart type" value={kind} onChange={e=>{const k=e.target.value as ChartType;setKind(k);chart.current?.setChartType(k)}}><option value="candlestick">Candles</option><option value="heikin_ashi">Heikin Ashi</option><option value="bar">OHLC Bars</option><option value="line">Line</option><option value="area">Area</option><option value="baseline">Baseline</option><option value="hollow_candle">Hollow Candles</option></select>
+    <button type="button" className={indicatorMenu?'selected':''} onClick={()=>{setIndicatorMenu(!indicatorMenu);setDrawMenu(false)}}>Indicators ({chosen.length}) ▾</button>
+    <button type="button" className={drawMenu?'selected':''} onClick={()=>{setDrawMenu(!drawMenu);setIndicatorMenu(false)}}>Draw ▾</button>
+    <button type="button" className={vp?'selected':''} onClick={toggleVP}>Volume Profile</button>
+    <div className="mg-toolbar-spacer"/>
+    <button type="button" onClick={()=>chart.current?.goToLive()} title="Go to live price">Live</button>
+    <button type="button" onClick={()=>chart.current?.exportPNG('NEXORA-'+pair.symbol+'.png')} title="Save chart image">Screenshot</button>
+    <button type="button" onClick={()=>{if(window.confirm('Clear all drawings for '+pair.symbol+'?')){chart.current?.clearDrawings();save()}}} title="Remove drawings">Clear Drawings</button>
+   </div>
+   <div className="nexora-mg-stage">
+    <aside className="nexora-mg-rail"><button className={!activeTools?'selected':''} onClick={()=>chooseTool(null)} title="Cursor">↖</button>{drawingGroups.map(g=><button key={g.label} className={g.tools.some(t=>t[0]===activeTools)?'selected':''} type="button" title={g.label} onClick={()=>{setDrawMenu(true);setIndicatorMenu(false)}}>{g.label==='Lines'?'╱':g.label==='Channels'?'☷':g.label==='Fibonacci'?'ϕ':g.label==='Gann & Cycles'?'⌁':g.label==='Patterns'?'⌯':g.label==='Shapes & Text'?'▭':'↕'}</button>)}</aside>
+    <div className="nexora-mg-render" ref={holder}/>
+    {error&&<div className="nexora-mg-error" role="alert">{error}<button onClick={()=>setError(null)}>Dismiss</button></div>}
+    {indicatorMenu&&<section className="nexora-mg-popover mg-indicator-popover"><header><strong>Indicators</strong><button onClick={()=>setIndicatorMenu(false)}>×</button></header><input value={indSearch} placeholder="Search indicators..." onChange={e=>setIndSearch(e.target.value)}/><div className="nexora-mg-options">{indicatorList.filter(i=>i.label.toLowerCase().includes(indSearch.toLowerCase())||i.key.toLowerCase().includes(indSearch.toLowerCase())).map(i=><button key={i.key} className={chosen.includes(i.key)?'selected':''} onClick={()=>toggleIndicator(i.key)}><span>{i.label}</span><span>{chosen.includes(i.key)?'✓':'+'}</span></button>)}</div></section>}
+    {drawMenu&&<section className="nexora-mg-popover mg-draw-popover"><header><strong>Drawing Tools</strong><button onClick={()=>setDrawMenu(false)}>×</button></header><input value={drawSearch} placeholder="Search drawing tools..." onChange={e=>setDrawSearch(e.target.value)}/><div className="nexora-mg-options"><button onClick={()=>chooseTool(null)}>Cursor / Cancel tool</button>{drawingGroups.map(g=><div key={g.label}><h4>{g.label}</h4>{g.tools.filter(t=>t[1].toLowerCase().includes(drawSearch.toLowerCase())).map(t=><button key={t[0]} className={activeTools===t[0]?'selected':''} onClick={()=>chooseTool(t[0])}>{t[1]}</button>)}</div>)}</div></section>}
+   </div>
+   <div className="nexora-mg-footer"><span>MG Exchange Chart · Bybit Spot Market Data</span><span>{activeTools?'Drawing: '+activeTools:'Chart'} {livePrice!==null?'· Real-time market':'· Awaiting ticker'}</span></div>
+ </div>
 }
