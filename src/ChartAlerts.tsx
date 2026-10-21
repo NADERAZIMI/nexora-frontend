@@ -9,7 +9,7 @@ type AlertItem={id:string;price:number;source?:Source;emaPeriod?:number;emaInter
 const key=(symbol:string)=>'nexora:price-alerts:v2:'+symbol;
 const load=(symbol:string):AlertItem[]=>{try{const x=JSON.parse(localStorage.getItem(key(symbol))||'[]');return Array.isArray(x)?x.filter(a=>Number.isFinite(a.price)&&a.price>0&&typeof a.id==='string'):[]}catch{return []}};
 const format=(value:number)=>value.toLocaleString('en-US',{maximumFractionDigits:8});
-export default function ChartAlerts({symbol,livePrice,onClose}:{symbol:string;livePrice:number|null;onClose:()=>void}){
+export default function ChartAlerts({symbol,livePrice,onClose,open}:{symbol:string;livePrice:number|null;onClose:()=>void;open:boolean}){
  const [items,setItems]=useState<AlertItem[]>(()=>load(symbol));
  const [price,setPrice]=useState('');
  const [source,setSource]=useState<Source>('price');
@@ -61,7 +61,7 @@ export default function ChartAlerts({symbol,livePrice,onClose}:{symbol:string;li
  };
  const edit=(item:AlertItem)=>{setPrice(item.source==='ema'?'':String(item.price));setSource(item.source||'price');setEmaPeriod(item.emaPeriod||20);setEmaInterval(item.emaInterval||'15');setTone(item.tone||'bell');setCondition(item.condition);setRepeat(item.repeat);setNote(item.note||'');setEditId(item.id);setSection('active')};
  const current=items.filter(a=>section==='active'?!a.triggered||a.enabled:!!a.triggered);
- return <section className="nx-alert-panel" role="dialog" aria-label="Price alerts">
+ return <section className="nx-alert-panel" style={{display:open?undefined:"none"}} role="dialog" aria-label="Price alerts">
   <header><div><strong>Price Alerts</strong><small>{symbol} · {livePrice!==null?format(livePrice):'Waiting for price'}</small></div><button type="button" aria-label="Close alerts" onClick={onClose}>×</button></header>
   <div className="nx-alert-scroll">
    <div className="nx-alert-block"><label>Alert on</label><select value={source} onChange={e=>setSource(e.target.value as Source)}><option value="price">Price</option><option value="ema">EMA · Price crossing moving average</option></select>{source==='ema'&&<><label>EMA period</label><input type="number" min="2" max="500" value={emaPeriod} onChange={e=>setEmaPeriod(Number(e.target.value))}/><label>EMA timeframe</label><select value={emaInterval} onChange={e=>setEmaInterval(e.target.value)}>{[['1','1 minute'],['5','5 minutes'],['15','15 minutes'],['60','1 hour'],['240','4 hours'],['D','1 day']].map(([value,label])=><option key={value} value={value}>{label}</option>)}</select><small>Current EMA: {emaValue===null?'Loading…':format(emaValue)}</small></>}
