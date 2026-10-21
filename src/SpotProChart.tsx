@@ -92,39 +92,59 @@ export default function SpotProChart({pair,frame,livePrice}:{pair:SpotPair;frame
  const [kind,setKind]=useState<ChartType>('candlestick');
  const [drawSearch,setDrawSearch]=useState('');
  const [indSearch,setIndSearch]=useState('');
+ const [objectsOpen,setObjectsOpen]=useState(false);
+ const [settingsOpen,setSettingsOpen]=useState<string|null>(null);
+ const [params,setParams]=useState<Record<string,Record<string,number>>>({});
+ const [favorites,setFavorites]=useState<string[]>([]);
+ const [magnet,setMagnet]=useState(false);
+ const [drawVersion,setDrawVersion]=useState(0);
+ const [localFrame,setLocalFrame]=useState<Timeframe>(intervals.find(t=>t.toLowerCase()===frame.toLowerCase())||'1H');
+ const vpRef=useRef(false);
+ const paramRef=useRef<Record<string,Record<string,number>>>({});
  const key='nexora:mg-chart:'+pair.symbol;
- const save=()=>{const c=chart.current;if(!c)return;try{localStorage.setItem(key,JSON.stringify({drawings:c.getDrawings(),indicators:[...instanceIds.current.keys()],volumeProfile:vp}))}catch{/* Private browsing or full storage */}};
+ const save=()=>{const c=chart.current;if(!c)return;try{localStorage.setItem(key,JSON.stringify({drawings:c.getDrawings(),indicators:[...instanceIds.current.keys()],volumeProfile:vpRef.current,params:paramRef.current}))}catch{/* Private browsing or full storage */}};
  useEffect(()=>{
   const node=holder.current;if(!node)return;
   let disposed=false;
   setError(null);
   const saved=readStored(key);
   if(saved?.indicators)setChosen(saved.indicators.filter(k=>indicatorList.some(i=>i.key===k)));
-  setVp(Boolean(saved?.volumeProfile));
+  setVp(Boolean(saved?.volumeProfile));vpRef.current=Boolean(saved?.volumeProfile);
+  const extra=saved as typeof saved & {params?:Record<string,Record<string,number>>;favorites?:string[]};
+  paramRef.current=extra?.params||{};setParams(paramRef.current);
+  try{setFavorites(JSON.parse(localStorage.getItem('nexora:mg-favorites')||'[]'))}catch{setFavorites([])}
   const next=new Chart({container:node,symbol:pair.symbol,timeframe:(intervals.find(t=>t.toLowerCase()===frame.toLowerCase())||'1H'),datafeed:new BybitMGDatafeed(pair.symbol),theme:document.documentElement.dataset.nxTheme==='light'?'light':'dark',renderer:'webgl',features:{volume:true},trading:{showPlusButton:false,showContextMenu:false,draggableOrderLines:false}});
   if(disposed){next.destroy();return}
   chart.current=next;
   instanceIds.current.clear();
   const items=(saved?.indicators||['SMA']).filter(k=>indicatorList.some(i=>i.key===k));
-  for(const k of items){const entry=indicatorList.find(i=>i.key===k);if(entry){try{instanceIds.current.set(k,next.addIndicator(entry.indicator))}catch(e){console.warn('[NEXORA] Indicator failed:',k,e)}}}
+  for(const k of items){const entry=indicatorList.find(i=>i.key===k);if(entry){try{instanceIds.current.set(k,next.addIndicator(entry.indicator,paramRef.current[k]))}catch(e){console.warn('[NEXORA] Indicator failed:',k,e)}}}
   if(saved?.volumeProfile)next.setVolumeProfile(true);
   if(saved?.drawings?.length){try{next.loadDrawings(saved.drawings)}catch(e){console.warn('[NEXORA] Drawing restore failed',e)}}
+  for(const event of ['drawingAdded','drawingRemoved','drawingModified','drawingSelected'] as const)next.on(event,()=>setDrawVersion(v=>v+1));
   const observer=new MutationObserver(()=>next.setTheme(document.documentElement.dataset.nxTheme==='light'?'light':'dark'));
   observer.observe(document.documentElement,{attributes:true,attributeFilter:['data-nx-theme']});
-  const timer=window.setInterval(()=>{try{localStorage.setItem(key,JSON.stringify({drawings:next.getDrawings(),indicators:[...instanceIds.current.keys()],volumeProfile:saved?.volumeProfile||false}))}catch{/* storage inaccessible */}},3000);
-  return ()=>{disposed=true;window.clearInterval(timer);observer.disconnect();try{localStorage.setItem(key,JSON.stringify({drawings:next.getDrawings(),indicators:[...instanceIds.current.keys()],volumeProfile:saved?.volumeProfile||false}))}catch{/* ignore */}next.destroy();if(chart.current===next)chart.current=null;instanceIds.current.clear()};
+  const timer=window.setInterval(()=>{try{localStorage.setItem(key,JSON.stringify({drawings:next.getDrawings(),indicators:[...instanceIds.current.keys()],volumeProfile:vpRef.current,params:paramRef.current}))}catch{/* storage inaccessible */}},3000);
+  return ()=>{disposed=true;window.clearInterval(timer);observer.disconnect();try{localStorage.setItem(key,JSON.stringify({drawings:next.getDrawings(),indicators:[...instanceIds.current.keys()],volumeProfile:vpRef.current,params:paramRef.current}))}catch{/* ignore */}next.destroy();if(chart.current===next)chart.current=null;instanceIds.current.clear()};
  },[pair.symbol,frame]);
- const toggleIndicator=(k:string)=>{const c=chart.current,entry=indicatorList.find(i=>i.key===k);if(!c||!entry)return;try{const ids=instanceIds.current;if(ids.has(k)){c.removeIndicator(ids.get(k)!);ids.delete(k)}else ids.set(k,c.addIndicator(entry.indicator));setChosen([...ids.keys()]);}catch(e){setError('Indicator could not be added: '+String(e))}};
+ const toggleIndicator=(k:string)=>{const c=chart.current,entry=indicatorList.find(i=>i.key===k);if(!c||!entry)return;try{const ids=instanceIds.current;if(ids.has(k)){c.removeIndicator(ids.get(k)!);ids.delete(k)}else ids.set(k,c.addIndicator(entry.indicator,paramRef.current[k]));setChosen([...ids.keys()]);}catch(e){setError('Indicator could not be added: '+String(e))}};
  const chooseTool=(name:string|null)=>{try{chart.current?.setDrawingTool(name);setActiveTools(name);setDrawMenu(false)}catch(e){setError('Drawing tool failed: '+String(e))}};
- const toggleVP=()=>{const n=!vp;chart.current?.setVolumeProfile(n);setVp(n)};
+ const toggleVP=()=>{const n=!vp;chart.current?.setVolumeProfile(n);vpRef.current=n;setVp(n)};
+ const toggleFavorite=(k:string)=>setFavorites(v=>{const next=v.includes(k)?v.filter(x=>x!==k):[...v,k];try{localStorage.setItem('nexora:mg-favorites',JSON.stringify(next))}catch{}return next});
+ const applyParams=(k:string,values:Record<string,number>)=>{const entry=indicatorList.find(i=>i.key===k),c=chart.current;if(!entry||!c)return;try{paramRef.current={...paramRef.current,[k]:values};setParams(paramRef.current);const id=instanceIds.current.get(k);if(id)c.removeIndicator(id);instanceIds.current.set(k,c.addIndicator(entry.indicator,values));setChosen([...instanceIds.current.keys()]);setSettingsOpen(null);save()}catch(e){setError(String(e))}};
+ const items=(()=>{void drawVersion;try{return chart.current?.getDrawingInstances()||[]}catch{return []}})() as Array<{id:string;type?:string}>;
+ const drawingAction=(id:string,action:string)=>{const c=chart.current;if(!c)return;try{if(action==='remove')c.removeDrawing(id);else if(action==='visible')c.toggleDrawingVisible(id);else if(action==='lock')c.toggleDrawingLock(id);else if(action==='front')c.bringDrawingToFront(id);else if(action==='back')c.sendDrawingToBack(id);setDrawVersion(v=>v+1);save()}catch(e){setError(String(e))}};
+ const toggleMagnet=()=>{const next=!magnet;chart.current?.setMagnetMode(next);setMagnet(next)};
  return <div className="nexora-mg-chart">
    <div className="nexora-mg-toolbar">
     <span className="mg-market-label">{pair.base}/{pair.quote}</span>
-    <div className="mg-intervals">{intervals.map(t=><button key={t} className={t.toLowerCase()===frame.toLowerCase()?'selected':''} type="button" title={'Current timeframe: '+frame} disabled={t.toLowerCase()!==frame.toLowerCase()}>{t}</button>)}</div>
+    <div className="mg-intervals">{intervals.map(t=><button key={t} className={t===localFrame?'selected':''} type="button" title={'Switch to '+t} onClick={()=>{chart.current?.setTimeframe(t);setLocalFrame(t)}}>{t}</button>)}</div>
     <select aria-label="Chart type" value={kind} onChange={e=>{const k=e.target.value as ChartType;setKind(k);chart.current?.setChartType(k)}}><option value="candlestick">Candles</option><option value="heikin_ashi">Heikin Ashi</option><option value="bar">OHLC Bars</option><option value="line">Line</option><option value="area">Area</option><option value="baseline">Baseline</option><option value="hollow_candle">Hollow Candles</option></select>
     <button type="button" className={indicatorMenu?'selected':''} onClick={()=>{setIndicatorMenu(!indicatorMenu);setDrawMenu(false)}}>Indicators ({chosen.length}) ▾</button>
     <button type="button" className={drawMenu?'selected':''} onClick={()=>{setDrawMenu(!drawMenu);setIndicatorMenu(false)}}>Draw ▾</button>
     <button type="button" className={vp?'selected':''} onClick={toggleVP}>Volume Profile</button>
+    <button type="button" className={magnet?'selected':''} onClick={toggleMagnet}>Magnet</button>
+    <button type="button" className={objectsOpen?'selected':''} onClick={()=>setObjectsOpen(v=>!v)}>Objects</button>
     <div className="mg-toolbar-spacer"/>
     <button type="button" onClick={()=>chart.current?.goToLive()} title="Go to live price">Live</button>
     <button type="button" onClick={()=>chart.current?.exportPNG('NEXORA-'+pair.symbol+'.png')} title="Save chart image">Screenshot</button>
@@ -133,8 +153,10 @@ export default function SpotProChart({pair,frame,livePrice}:{pair:SpotPair;frame
    <div className="nexora-mg-stage">
     <aside className="nexora-mg-rail"><button className={!activeTools?'selected':''} onClick={()=>chooseTool(null)} title="Cursor">↖</button>{drawingGroups.map(g=><button key={g.label} className={g.tools.some(t=>t[0]===activeTools)?'selected':''} type="button" title={g.label} onClick={()=>{setDrawMenu(true);setIndicatorMenu(false)}}>{g.label==='Lines'?'╱':g.label==='Channels'?'☷':g.label==='Fibonacci'?'ϕ':g.label==='Gann & Cycles'?'⌁':g.label==='Patterns'?'⌯':g.label==='Shapes & Text'?'▭':'↕'}</button>)}</aside>
     <div className="nexora-mg-render" ref={holder}/>
+    {objectsOpen&&<section className="nexora-mg-objects"><header><strong>Objects ({items.length})</strong><button onClick={()=>setObjectsOpen(false)}>×</button></header><div className="nexora-mg-options">{items.length===0?<p>No drawings yet</p>:items.map((d,index)=><div className="mg-object-row" key={d.id||index}><span>{d.type||'Drawing'} #{index+1}</span><div><button title="Show/hide" onClick={()=>drawingAction(d.id,'visible')}>◉</button><button title="Lock/unlock" onClick={()=>drawingAction(d.id,'lock')}>♧</button><button title="Bring forward" onClick={()=>drawingAction(d.id,'front')}>↑</button><button title="Send backward" onClick={()=>drawingAction(d.id,'back')}>↓</button><button title="Delete" onClick={()=>drawingAction(d.id,'remove')}>×</button></div></div>)}</div></section>}
     {error&&<div className="nexora-mg-error" role="alert">{error}<button onClick={()=>setError(null)}>Dismiss</button></div>}
-    {indicatorMenu&&<section className="nexora-mg-popover mg-indicator-popover"><header><strong>Indicators</strong><button onClick={()=>setIndicatorMenu(false)}>×</button></header><input value={indSearch} placeholder="Search indicators..." onChange={e=>setIndSearch(e.target.value)}/><div className="nexora-mg-options">{indicatorList.filter(i=>i.label.toLowerCase().includes(indSearch.toLowerCase())||i.key.toLowerCase().includes(indSearch.toLowerCase())).map(i=><button key={i.key} className={chosen.includes(i.key)?'selected':''} onClick={()=>toggleIndicator(i.key)}><span>{i.label}</span><span>{chosen.includes(i.key)?'✓':'+'}</span></button>)}</div></section>}
+    {indicatorMenu&&<section className="nexora-mg-popover mg-indicator-popover"><header><strong>Indicators</strong><button onClick={()=>setIndicatorMenu(false)}>×</button></header><input value={indSearch} placeholder="Search indicators..." onChange={e=>setIndSearch(e.target.value)}/><div className="nexora-mg-options">{indicatorList.filter(i=>i.label.toLowerCase().includes(indSearch.toLowerCase())||i.key.toLowerCase().includes(indSearch.toLowerCase())).sort((a,b)=>Number(favorites.includes(b.key))-Number(favorites.includes(a.key))).map(i=><div className="mg-indicator-row" key={i.key}><button title="Favorite" onClick={()=>toggleFavorite(i.key)}>{favorites.includes(i.key)?'★':'☆'}</button><button className={chosen.includes(i.key)?'selected':''} onClick={()=>toggleIndicator(i.key)}><span>{i.label}</span><span>{chosen.includes(i.key)?'✓':'+'}</span></button><button title="Settings" onClick={()=>setSettingsOpen(i.key)}>⚙</button></div>)}</div></section>}
+    {settingsOpen&&<section className="nexora-mg-popover mg-settings-popover"><header><strong>{indicatorList.find(i=>i.key===settingsOpen)?.label} Settings</strong><button onClick={()=>setSettingsOpen(null)}>×</button></header><form onSubmit={e=>{e.preventDefault();const fd=new FormData(e.currentTarget);const values:Record<string,number>={};for(const [k,v] of fd){const n=Number(v);if(Number.isFinite(n))values[k]=n}applyParams(settingsOpen,values)}}>{Object.entries(params[settingsOpen]||{period:settingsOpen==='EMA'?50:14}).map(([k,v])=><label key={k}>{k}<input name={k} type="number" step="any" defaultValue={v} required/></label>)}<button type="submit">Apply</button></form></section>}
     {drawMenu&&<section className="nexora-mg-popover mg-draw-popover"><header><strong>Drawing Tools</strong><button onClick={()=>setDrawMenu(false)}>×</button></header><input value={drawSearch} placeholder="Search drawing tools..." onChange={e=>setDrawSearch(e.target.value)}/><div className="nexora-mg-options"><button onClick={()=>chooseTool(null)}>Cursor / Cancel tool</button>{drawingGroups.map(g=><div key={g.label}><h4>{g.label}</h4>{g.tools.filter(t=>t[1].toLowerCase().includes(drawSearch.toLowerCase())).map(t=><button key={t[0]} className={activeTools===t[0]?'selected':''} onClick={()=>chooseTool(t[0])}>{t[1]}</button>)}</div>)}</div></section>}
    </div>
    <div className="nexora-mg-footer"><span>MG Exchange Chart · Bybit Spot Market Data</span><span>{activeTools?'Drawing: '+activeTools:'Chart'} {livePrice!==null?'· Real-time market':'· Awaiting ticker'}</span></div>
