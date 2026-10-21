@@ -6,12 +6,15 @@ import './SpotProChart.css';
 
 type BybitRow = [string,string,string,string,string,string,string,...unknown[]];
 const intervalMap: Record<string,string> = {'1m':'1','3m':'3','5m':'5','15m':'15','30m':'30','1H':'60','2H':'120','4H':'240','6H':'360','12H':'720','1D':'D','3D':'3D','1W':'W','1M':'M'};
-const intervals: Timeframe[] = ['1m','3m','5m','15m','30m','1H','2H','4H','6H','12H','1D','3D','1W','1M'];
+const intervals: Timeframe[] = ['1s','1m','3m','5m','15m','30m','1H','2H','4H','6H','12H','1D','3D','1W','1M'];
 const defaultPinned:Timeframe[]=['1m','5m','15m','30m','1H','4H'];
+const timeframeKey='nexora:mg-chart:active-timeframe';
+const loadTimeframe=():Timeframe=>{try{const value=localStorage.getItem(timeframeKey);return intervals.includes(value as Timeframe)?value as Timeframe:'5m'}catch{return '5m'}};
+const sortTimes=(values:Timeframe[])=>[...values].sort((a,b)=>intervals.indexOf(a)-intervals.indexOf(b));
 const chartFont='"Inter",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif';
 const nxTheme=(light:boolean)=>({... (light?lightTheme:darkTheme),fontFamily:chartFont});
 const pinnedKey='nexora:mg-chart:pinned-timeframes';
-const loadPinned=():Timeframe[]=>{try{const raw=JSON.parse(localStorage.getItem(pinnedKey)||'null');if(Array.isArray(raw)&&raw.length===5&&raw.every((v:unknown,i:number)=>v===defaultPinned[i])){localStorage.setItem(pinnedKey,JSON.stringify(defaultPinned));return defaultPinned}return Array.isArray(raw)&&raw.length>0?raw.filter((v:unknown,i:number)=>typeof v==='string'&&intervals.includes(v as Timeframe)&&raw.indexOf(v)===i).slice(0,8):defaultPinned}catch{return defaultPinned}};
+const loadPinned=():Timeframe[]=>{try{const raw=JSON.parse(localStorage.getItem(pinnedKey)||'null');if(Array.isArray(raw)&&raw.length===5&&raw.every((v:unknown,i:number)=>v===defaultPinned[i])){localStorage.setItem(pinnedKey,JSON.stringify(defaultPinned));return defaultPinned}return Array.isArray(raw)&&raw.length>0?sortTimes(raw.filter((v:unknown,i:number)=>typeof v==='string'&&intervals.includes(v as Timeframe)&&raw.indexOf(v)===i).slice(0,8)):defaultPinned}catch{return defaultPinned}};
 const indicatorList: {key:string;label:string;indicator:Indicator}[] = [
  {key:'SMA',label:'Simple Moving Average',indicator:sma},{key:'EMA',label:'Exponential Moving Average',indicator:ema},
  {key:'BB',label:'Bollinger Bands',indicator:bollingerBands},{key:'VWAP',label:'VWAP',indicator:vwap},
@@ -163,7 +166,7 @@ export default function SpotProChart({pair,frame,livePrice}:{pair:SpotPair;frame
  const [drawingWidth,setDrawingWidth]=useState(2);
  const [selectedDrawing,setSelectedDrawing]=useState<string|null>(null);
  const [priceScale,setPriceScale]=useState<'linear'|'logarithmic'|'percentage'>('linear');
- const [localFrame,setLocalFrame]=useState<Timeframe>(intervals.find(t=>t.toLowerCase()===frame.toLowerCase())||'1H');
+ const [localFrame,setLocalFrame]=useState<Timeframe>(loadTimeframe);
  const [pinned,setPinned]=useState<Timeframe[]>(loadPinned);
  const [timeframeMenu,setTimeframeMenu]=useState(false);
  const [editPinned,setEditPinned]=useState(false);
@@ -207,12 +210,12 @@ export default function SpotProChart({pair,frame,livePrice}:{pair:SpotPair;frame
   setError(null);
   const saved=readStored(key);
   if(saved?.indicators)setChosen(saved.indicators.filter(k=>indicatorList.some(i=>i.key===k)));
-  setLocalFrame(intervals.find(t=>t.toLowerCase()===frame.toLowerCase())||'1H');
+
   setVp(Boolean(saved?.volumeProfile));vpRef.current=Boolean(saved?.volumeProfile);
   const extra=saved as typeof saved & {params?:Record<string,Record<string,number>>;favorites?:string[]};
   paramRef.current=extra?.params||{};setParams(paramRef.current);
   try{setFavorites(JSON.parse(localStorage.getItem('nexora:mg-favorites')||'[]'))}catch{setFavorites([])}
-  const next=new Chart({container:node,symbol:pair.symbol,timeframe:(intervals.find(t=>t.toLowerCase()===frame.toLowerCase())||'1H'),datafeed:kind==='renko'?new RenkoDatafeed(new BybitMGDatafeed(pair.symbol)):new BybitMGDatafeed(pair.symbol),theme:nxTheme(document.documentElement.dataset.nxTheme==='light'),chartType:kind==='renko'?'candlestick':kind,renderer:'webgl',features:{volume:true},trading:{showPlusButton:false,showContextMenu:false,draggableOrderLines:false}});
+  const next=new Chart({container:node,symbol:pair.symbol,timeframe:localFrame,datafeed:kind==='renko'?new RenkoDatafeed(new BybitMGDatafeed(pair.symbol)):new BybitMGDatafeed(pair.symbol),theme:nxTheme(document.documentElement.dataset.nxTheme==='light'),chartType:kind==='renko'?'candlestick':kind,renderer:'webgl',features:{volume:true},trading:{showPlusButton:false,showContextMenu:false,draggableOrderLines:false}});
   if(disposed){next.destroy();return}
   chart.current=next;
   instanceIds.current.clear();
@@ -249,8 +252,8 @@ export default function SpotProChart({pair,frame,livePrice}:{pair:SpotPair;frame
  const toggleAllHidden=()=>{const next=!allDrawingsHidden;if(next)chart.current?.hideAllDrawings();else chart.current?.showAllDrawings();setAllDrawingsHidden(next);setDrawVersion(v=>v+1);save()};
  const changeDrawingAppearance=(field:'color'|'lineWidth',value:string|number)=>{if(!selectedDrawing)return;try{chart.current?.updateDrawing(selectedDrawing,{[field]:value});setDrawVersion(v=>v+1);save()}catch(e){setError(String(e))}};
  const toggleFullscreen=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await root.current?.requestFullscreen()}catch(e){setError(String(e))}};
- const changeTimeframe=(timeframe:Timeframe)=>{try{chart.current?.setTimeframe(timeframe);setLocalFrame(timeframe);setTimeframeMenu(false)}catch(e){setError('Timeframe switch failed: '+String(e))}};
- const togglePinned=(timeframe:Timeframe)=>setPinned(current=>{const updated=current.includes(timeframe)?(current.length>1?current.filter(t=>t!==timeframe):current):(current.length<8?[...current,timeframe]:current);try{localStorage.setItem(pinnedKey,JSON.stringify(updated))}catch{}return updated});
+ const changeTimeframe=(timeframe:Timeframe)=>{try{chart.current?.setTimeframe(timeframe);setLocalFrame(timeframe);try{localStorage.setItem(timeframeKey,timeframe)}catch{}setTimeframeMenu(false)}catch(e){setError('Timeframe switch failed: '+String(e))}};
+ const togglePinned=(timeframe:Timeframe)=>setPinned(current=>{const updated=current.includes(timeframe)?(current.length>1?current.filter(t=>t!==timeframe):current):(current.length<8?[...current,timeframe]:current);const sorted=sortTimes(updated);try{localStorage.setItem(pinnedKey,JSON.stringify(sorted))}catch{}return sorted});
  const toggleStayDrawing=()=>{const next=!stayDrawing;chart.current?.setStayInDrawingMode(next);setStayDrawing(next)};
  return <div ref={root} className="nexora-mg-chart">
    <div className="nexora-mg-toolbar">
