@@ -323,28 +323,6 @@ export default function SpotProChart({pair,frame,livePrice,book}:{pair:SpotPair;
   chart.current=next;
   // Alert annotations are non-interactive dashed MG order-line overlays.
   // Keep them distinct from trading orders and normal drawings.
-  const alertLineIds=new Map<string,string>();
-  const syncAlertLines=()=>{
-   let records: Array<{id:string;price:number;source?:string;enabled?:boolean;triggered?:boolean;note?:string}>=[];
-   try{const stored=JSON.parse(localStorage.getItem('nexora:price-alerts:v2:'+pair.symbol)||'[]');if(Array.isArray(stored))records=stored}catch{}
-   const desired=new Map(records.filter(a=>a&&a.source!=='ema'&&a.enabled!==false&&!a.triggered&&Number.isFinite(a.price)&&a.price>0&&typeof a.id==='string').map(a=>['nx-alert-'+a.id,a] as const));
-   for(const id of alertLineIds.keys())if(!desired.has(id)){next.removeOrderLine(id);alertLineIds.delete(id)}
-   const existing=new Set(next.getOrderLines().map(line=>line.id));
-   for(const [id,alert] of desired){
-    const label='Alert'+(alert.note?' · '+alert.note.slice(0,24):'');
-    const signature=alert.price+'|'+label;
-    if(existing.has(id)&&alertLineIds.get(id)===signature)continue;
-    if(existing.has(id))next.removeOrderLine(id);
-    next.addOrderLine({id,price:alert.price,type:'stop',side:'buy',label});
-    alertLineIds.set(id,signature);
-   }
-  };
-  // MG initializes market data asynchronously; reconcile once loaded and on subsequent changes.
-  syncAlertLines();
-  const alertResyncTimer=window.setInterval(syncAlertLines,3000);
-  window.addEventListener('nexora:alerts-updated',syncAlertLines);
-  window.addEventListener('storage',syncAlertLines);
-  window.addEventListener('focus',syncAlertLines);
   instanceIds.current.clear();
   const items=(saved?.indicators||['SMA']).filter(k=>indicatorList.some(i=>i.key===k));
   for(const k of items){const entry=indicatorList.find(i=>i.key===k);if(entry){try{instanceIds.current.set(k,next.addIndicator(entry.indicator,paramRef.current[k]))}catch(e){console.warn('[NEXORA] Indicator failed:',k,e)}}}
@@ -356,7 +334,7 @@ export default function SpotProChart({pair,frame,livePrice,book}:{pair:SpotPair;
   window.addEventListener('nexora:design-change',updateChartTheme);
   observer.observe(document.documentElement,{attributes:true,attributeFilter:['data-nx-theme','style']});
   const timer=window.setInterval(()=>{try{localStorage.setItem(key,JSON.stringify({drawings:next.getDrawings(),indicators:[...instanceIds.current.keys()],volumeProfile:vpRef.current,params:paramRef.current}))}catch{/* storage inaccessible */}},3000);
-  return ()=>{disposed=true;window.clearInterval(timer);observer.disconnect();window.removeEventListener('nexora:design-change',updateChartTheme);window.removeEventListener('nexora:alerts-updated',syncAlertLines);window.removeEventListener('storage',syncAlertLines);window.removeEventListener('focus',syncAlertLines);window.clearInterval(alertResyncTimer);try{localStorage.setItem(key,JSON.stringify({drawings:next.getDrawings(),indicators:[...instanceIds.current.keys()],volumeProfile:vpRef.current,params:paramRef.current}))}catch{/* ignore */}next.destroy();if(chart.current===next)chart.current=null;instanceIds.current.clear()};
+  return ()=>{disposed=true;window.clearInterval(timer);observer.disconnect();window.removeEventListener('nexora:design-change',updateChartTheme);try{localStorage.setItem(key,JSON.stringify({drawings:next.getDrawings(),indicators:[...instanceIds.current.keys()],volumeProfile:vpRef.current,params:paramRef.current}))}catch{/* ignore */}next.destroy();if(chart.current===next)chart.current=null;instanceIds.current.clear()};
  },[pair.symbol,frame,kind==='renko']);
  const setChartStyle=(type:ChartType|'renko')=>{
   try{
