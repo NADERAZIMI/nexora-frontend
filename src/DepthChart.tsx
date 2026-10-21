@@ -1,5 +1,5 @@
 import {useMemo,useRef,useState} from 'react';
-import type {BookState,Level} from './useBybitSpotBook';
+import type {BookState} from './useBybitSpotBook';
 import './DepthChart.css';
 
 type Point={price:number;volume:number;x:number;y:number;side:'bid'|'ask'};
