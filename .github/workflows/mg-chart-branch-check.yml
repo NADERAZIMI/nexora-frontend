@@ -1,0 +1,22 @@
+name: MG Chart — branch verification
+on:
+  push:
+    branches:
+      - feat/mg-chart-complete-ui-20261021
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Resolve pinned chart dependencies
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+      - run: npm ci
+      - name: Build NEXORA frontend
+        run: npm run build
