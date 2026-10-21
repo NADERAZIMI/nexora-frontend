@@ -20,3 +20,9 @@
 .nexora-mg-chart .mg-sidebar-form{display:flex;gap:6px;padding:12px;border-bottom:1px solid #30343c}
 .nexora-mg-chart .mg-sidebar-form input{min-width:0;flex:1;background:#080808;border:1px solid #30343c;color:#f4f6fa;padding:8px;border-radius:4px}
 .nexora-mg-chart .mg-sidebar-form button{background:#3d6bff;color:#fff;border:0;border-radius:4px;padding:7px;cursor:pointer}
+
+/* Unified single-row chart toolbar: replaces the old Trading Chart strip. */
+.nexora-mg-toolbar .mg-toolbar-title{flex:0 0 auto;margin-right:10px;color:#3D6BFF;font-weight:600;white-space:nowrap}
+.nexora-mg-toolbar .mg-intervals{flex:0 0 auto}
+.nexora-mg-toolbar{scrollbar-width:thin;scrollbar-color:#303642 transparent}
+.nexora-mg-toolbar .mg-market-label{display:none}
