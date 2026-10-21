@@ -333,7 +333,7 @@ export default function SpotProChart({pair,frame,livePrice,book}:{pair:SpotPair;
   const observer=new MutationObserver(updateChartTheme);
   window.addEventListener('nexora:design-change',updateChartTheme);
   observer.observe(document.documentElement,{attributes:true,attributeFilter:['data-nx-theme','style']});
-  const timer=window.setInterval(()=>{try{localStorage.setItem(key,JSON.stringify({drawings:next.getDrawings(),indicators:[...instanceIds.current.keys()],volumeProfile:vpRef.current,params:paramRef.current}))}catch{/* storage inaccessible */}},3000);
+  const timer=window.setInterval(()=>{try{localStorage.setItem(key,JSON.stringify({drawings:next.getDrawings(),indicators:[...instanceIds.current.keys()],volumeProfile:vpRef.current,params:paramRef.current}))}catch{/* storage inaccessible */}},30000);
   return ()=>{disposed=true;window.clearInterval(timer);observer.disconnect();window.removeEventListener('nexora:design-change',updateChartTheme);try{localStorage.setItem(key,JSON.stringify({drawings:next.getDrawings(),indicators:[...instanceIds.current.keys()],volumeProfile:vpRef.current,params:paramRef.current}))}catch{/* ignore */}next.destroy();if(chart.current===next)chart.current=null;instanceIds.current.clear()};
  },[pair.symbol,frame,kind==='renko']);
  const setChartStyle=(type:ChartType|'renko')=>{
