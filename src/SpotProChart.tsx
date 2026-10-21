@@ -38,7 +38,7 @@ function parseRow(raw:unknown):Bar|null{
 class BybitMGDatafeed implements Datafeed{
  constructor(private symbol:string){}
  async getBars({symbol,timeframe,from,to,limit}:{symbol:string;timeframe:Timeframe;from:number;to:number;limit:number}):Promise<Bar[]>{
-  if(symbol!==this.symbol||!/^[A-Z0-9]{2,32}$/.test(symbol))return [];
+  if(!/^[A-Z0-9]{2,32}$/.test(symbol))return [];
   const i=intervalMap[timeframe]||'60';
   const query=new URLSearchParams({category:'spot',symbol,interval:i,limit:String(Math.min(Math.max(limit||500,1),1000))});
   if(to>0)query.set('end',String(Math.floor(to*1000)));
@@ -55,14 +55,14 @@ class BybitMGDatafeed implements Datafeed{
     const source=url.startsWith('/')?json.list:json.result?.list;
     if(!Array.isArray(source))continue;
     const bars=source.map(parseRow).filter((v):v is Bar=>v!==null).sort((a,b)=>a.time-b.time);
-    const unique=bars.filter((b,k)=>k===0||b.time!==bars[k-1].time);
+    const unique=bars.filter((b,k)=> (k===0||b.time!==bars[k-1].time) && (!from||b.time>=from) && (!to||b.time<=to));
     if(unique.length)return unique;
    }catch{/* Use next verified real-data source. */}finally{clearTimeout(timeout)}
   }
   return [];
  }
  subscribe({symbol,timeframe,onBar,onTick}:{symbol:string;timeframe:Timeframe;onBar:(bar:Bar)=>void;onTick:(tick:{time:number;price:number;volume:number})=>void}){
-  if(symbol!==this.symbol||!/^[A-Z0-9]{2,32}$/.test(symbol))return ()=>{};
+  if(!/^[A-Z0-9]{2,32}$/.test(symbol))return ()=>{};
   const topic='kline.'+(intervalMap[timeframe]||'60')+'.'+symbol;
   const ws=new WebSocket('wss://stream.bybit.com/v5/public/spot');
   ws.onopen=()=>ws.send(JSON.stringify({op:'subscribe',args:[topic]}));
@@ -143,7 +143,7 @@ export default function SpotProChart({pair,frame,livePrice}:{pair:SpotPair;frame
  const drawingAction=(id:string,action:string)=>{const c=chart.current;if(!c)return;try{if(action==='remove')c.removeDrawing(id);else if(action==='visible')c.toggleDrawingVisible(id);else if(action==='lock')c.toggleDrawingLock(id);else if(action==='front')c.bringDrawingToFront(id);else if(action==='back')c.sendDrawingToBack(id);setDrawVersion(v=>v+1);save()}catch(e){setError(String(e))}};
  const addAlert=()=>{const value=Number(alertPrice);if(!Number.isFinite(value)||value<=0){setError('Enter a valid positive price');return}try{const id=chart.current?.addAlert(value);if(id){setAlerts(v=>[...v,{id,price:value}]);setAlertPrice('')}}catch(e){setError(String(e))}};
  const removeAlert=(id:string)=>{try{chart.current?.removeAlert(id);setAlerts(v=>v.filter(a=>a.id!==id))}catch(e){setError(String(e))}};
- const addCompare=()=>{const symbol=compareSymbol.trim().toUpperCase();if(!/^[A-Z0-9]{2,32}$/.test(symbol)||symbol===pair.symbol){setError('Enter another valid market symbol');return}try{chart.current?.addCompare(symbol);setCompared(v=>v.includes(symbol)?v:[...v,symbol]);setCompareSymbol('')}catch(e){setError('Symbol comparison failed: '+String(e))}};
+ const addCompare=async()=>{const symbol=compareSymbol.trim().toUpperCase();if(!/^[A-Z0-9]{2,32}$/.test(symbol)||symbol===pair.symbol){setError('Enter another valid market symbol');return}try{await chart.current?.addCompare(symbol);setCompared(v=>v.includes(symbol)?v:[...v,symbol]);setCompareSymbol('')}catch(e){setError('Symbol comparison failed: '+String(e))}};
  const removeCompare=(symbol:string)=>{chart.current?.removeCompare(symbol);setCompared(v=>v.filter(x=>x!==symbol))};
  const toggleMagnet=()=>{const next=!magnet;chart.current?.setMagnetMode(next);setMagnet(next)};
  const toggleStayDrawing=()=>{const next=!stayDrawing;chart.current?.setStayInDrawingMode(next);setStayDrawing(next)};
