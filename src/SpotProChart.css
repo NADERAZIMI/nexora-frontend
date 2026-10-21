@@ -225,3 +225,20 @@
 .nexora-mg-chart .nx-multi-toggle input{accent-color:var(--nx-hover,#EAA343)}
 .nexora-mg-chart .nx-multi-toggle input:disabled{opacity:.55}
 .nexora-mg-chart .nx-multi-layout-note{padding:9px 4px 2px;font-size:10px;line-height:1.5;color:var(--nx-muted,#929AAA)}
+
+/* Compact Bybit-inspired multi-chart menu; lightweight layout glyphs and switches. */
+.nexora-mg-chart .nx-multi-layout-menu{width:188px!important;right:50px!important;top:39px!important;padding:9px 11px!important;border-radius:8px!important;background:var(--nx-elevated,#292d31)!important;box-shadow:0 9px 24px #0008!important}
+.nexora-mg-chart .nx-multi-layout-title{font-size:11px!important;font-weight:600!important;padding:3px 0 7px!important;margin:0!important;color:var(--nx-text,#f4f6fa)!important}
+.nexora-mg-chart .nx-multi-option{gap:8px!important;height:28px!important;padding:2px 0!important;font-size:11px!important}
+.nexora-mg-chart .nx-multi-index{width:13px;flex:0 0 13px;color:var(--nx-muted,#929aaa)}
+.nexora-mg-chart .nx-mini-layout{width:42px!important;height:16px!important;gap:2px!important;grid-auto-rows:minmax(0,1fr)}
+.nexora-mg-chart .nx-mini-layout i{border:1px solid #828891!important;border-radius:2px!important;opacity:.85}
+.nexora-mg-chart .nx-multi-option:hover .nx-mini-layout i,.nexora-mg-chart .nx-multi-option.active .nx-mini-layout i{border-color:var(--nx-hover,#eaa343)!important}
+.nexora-mg-chart .nx-multi-divider{margin-top:6px!important;padding-top:10px!important;border-top:1px solid var(--nx-border,#343943)!important}
+.nexora-mg-chart .nx-multi-toggle{height:30px!important;padding:4px 0!important;font-size:11px!important;font-weight:500!important;border-bottom:1px solid color-mix(in srgb,var(--nx-border,#343943) 45%,transparent)}
+.nexora-mg-chart .nx-multi-toggle:last-child{border-bottom:0}
+.nexora-mg-chart .nx-multi-toggle input[type=checkbox]{appearance:none;width:33px;height:18px;border-radius:20px;background:#4b4f55;position:relative;margin:0;cursor:pointer;opacity:1;flex:0 0 33px}
+.nexora-mg-chart .nx-multi-toggle input[type=checkbox]:before{content:"";position:absolute;left:2px;top:2px;width:14px;height:14px;border-radius:50%;background:white;transition:transform .15s}
+.nexora-mg-chart .nx-multi-toggle input[type=checkbox]:checked{background:var(--nx-hover,#EAA343)}
+.nexora-mg-chart .nx-multi-toggle input[type=checkbox]:checked:before{transform:translateX(15px)}
+.nexora-mg-chart .nx-multi-toggle input[type=checkbox]:disabled{cursor:not-allowed;opacity:.45}
