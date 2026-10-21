@@ -209,7 +209,16 @@ export default function SpotProChart({pair,frame,livePrice}:{pair:SpotPair;frame
     <button type="button" className={indicatorMenu?'selected mg-compact-icon':'mg-compact-icon'} aria-label="Indicators" title="Indicators" aria-expanded={indicatorMenu} onClick={()=>{setIndicatorMenu(v=>!v);setChartTypeMenu(false);setTimeframeMenu(false);setDrawMenu(false)}}><svg viewBox="0 0 24 24" aria-hidden="true" width="19" height="19" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M3 18h18M5 15l4-5 4 3 6-8"/><path d="M16 5h3v3"/></svg></button>
     <button type="button" className={drawMenu?'selected':''} onClick={()=>{setDrawMenu(!drawMenu);setIndicatorMenu(false)}}>Draw ▾</button>
     <button type="button" className={vp?'selected':''} onClick={toggleVP}>Volume Profile</button>
-    <button type="button" className={magnet?'selerrent?.goToLive()} title="Go to live price">Live</button>
+    <button type="button" className={magnet?'selected':''} onClick={toggleMagnet}>Magnet</button>
+    <button type="button" className={stayDrawing?'selected':''} onClick={toggleStayDrawing}>Keep Tool</button>
+    <button type="button" className={objectsOpen?'selected':''} onClick={()=>setObjectsOpen(v=>!v)}>Objects</button>
+    <button type="button" className={alertsOpen?'selected':''} onClick={()=>setAlertsOpen(v=>!v)}>Alerts</button>
+    <button type="button" className={compareOpen?'selected':''} onClick={()=>setCompareOpen(v=>!v)}>Compare</button>
+    <select aria-label="Price scale" value={priceScale} onChange={e=>{const mode=e.target.value as typeof priceScale;try{chart.current?.setPriceScale(mode);setPriceScale(mode)}catch(err){setError(String(err))}}}><option value="linear">Linear</option><option value="logarithmic">Log</option><option value="percentage">Percent</option></select>
+    <button type="button" onClick={toggleAllLock}>{allDrawingsLocked?'Unlock All':'Lock All'}</button>
+    <button type="button" onClick={toggleAllHidden}>{allDrawingsHidden?'Show All':'Hide All'}</button>
+    <div className="mg-toolbar-spacer"/>
+    <button type="button" onClick={()=>chart.current?.goToLive()} title="Go to live price">Live</button>
     <button type="button" onClick={toggleFullscreen}>Fullscreen</button>
     <button type="button" onClick={()=>chart.current?.exportPNG('NEXORA-'+pair.symbol+'.png')} title="Save chart image">Screenshot</button>
     <button type="button" onClick={()=>{if(window.confirm('Clear all drawings for '+pair.symbol+'?')){chart.current?.clearDrawings();save()}}} title="Remove drawings">Clear Drawings</button>
