@@ -52,3 +52,23 @@
 .nexora-mg-chart .mg-intervals button.selected:hover,
 .nexora-mg-chart .mg-timeframe-arrow.selected{background:transparent!important;color:#3D6BFF!important;border-color:transparent!important}
 .nexora-mg-chart .mg-timeframe-grid button.selected{background:transparent;color:#3D6BFF;border-color:#3D6BFF}
+
+/* Timeframe shortcuts: no boxes on hover, selected, focus or keyboard focus. */
+.nexora-mg-chart .mg-intervals{padding-left:10px;gap:5px}
+.nexora-mg-chart .mg-intervals button,
+.nexora-mg-chart .mg-intervals button.selected,
+.nexora-mg-chart .mg-intervals button:hover,
+.nexora-mg-chart .mg-intervals button.selected:hover,
+.nexora-mg-chart .mg-intervals button:focus,
+.nexora-mg-chart .mg-intervals button:focus-visible,
+.nexora-mg-chart .mg-intervals button:active{
+ background:transparent!important;
+ border:0!important;
+ box-shadow:none!important;
+ outline:0!important;
+ border-radius:0!important;
+}
+.nexora-mg-chart .mg-intervals button.selected{color:var(--nx-blue,#3D6BFF)!important}
+.nexora-mg-chart .mg-intervals button:hover,
+.nexora-mg-chart .mg-intervals button.selected:hover{color:var(--nx-hover,#EAA343)!important}
+.nexora-mg-chart .mg-intervals button:focus-visible{text-decoration:underline;text-underline-offset:4px}
