@@ -28,3 +28,33 @@ html[data-nx-customized="true"] .market-up{color:var(--nx-positive)}
 html[data-nx-customized="true"] .market-down{color:var(--nx-negative)}
 html[data-nx-customized="true"] .workspace{gap:2px}
 html[data-nx-customized="true"] .chart{min-height:var(--nx-user-chart-height,600px)}
+
+/* NEXORA interaction policy — hover orange, selected brand blue.
+   Restrict to navigation, tabs and option controls; preserve buy/sell and alert status colors. */
+.toplinks button:not(:disabled):hover,
+.tabs button:not(:disabled):hover,
+.nx-dashboard-entry:hover,
+.markets-nav button:hover,
+.markets-quote-tabs button:hover,
+.market-main-tabs button:hover,
+.market-type-tabs button:hover,
+.market-table-row:hover button,
+.overview-subtabs button:hover,
+.data-nav button:hover,
+.data-periods button:hover,
+.feed-filters button:hover,
+.nx-custom-sidebar button:hover,
+.nx-theme-switch:hover{color:var(--nx-hover,#EAA343)!important}
+.toplinks button.selected:not(:hover),
+.tabs button.active:not(:hover),
+.nx-dashboard-entry.selected:not(:hover),
+.markets-nav button.active:not(:hover),
+.markets-quote-tabs button.active:not(:hover),
+.market-main-tabs button.active:not(:hover),
+.market-type-tabs button.active:not(:hover),
+.overview-subtabs button.active:not(:hover),
+.data-nav button.active:not(:hover),
+.data-periods button.active:not(:hover),
+.feed-filters button.active:not(:hover),
+.nx-custom-sidebar button.active:not(:hover){color:var(--nx-blue,#3D6BFF)!important}
+.nx-dashboard-entry:hover,.nx-theme-switch:hover{background:transparent!important;box-shadow:none!important}
