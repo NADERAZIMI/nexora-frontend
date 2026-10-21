@@ -5,8 +5,11 @@ import type { SpotPair } from './spot-markets';
 import './SpotProChart.css';
 
 type BybitRow = [string,string,string,string,string,string,string,...unknown[]];
-const intervalMap: Record<string,string> = {'1m':'1','5m':'5','15m':'15','30m':'30','1H':'60','4H':'240','1D':'D','1W':'W'};
-const intervals: Timeframe[] = ['1m','5m','15m','30m','1H','4H','1D','1W'];
+const intervalMap: Record<string,string> = {'1m':'1','3m':'3','5m':'5','15m':'15','30m':'30','1H':'60','2H':'120','4H':'240','6H':'360','12H':'720','1D':'D','3D':'3D','1W':'W','1M':'M'};
+const intervals: Timeframe[] = ['1m','3m','5m','15m','30m','1H','2H','4H','6H','12H','1D','3D','1W','1M'];
+const defaultPinned:Timeframe[]=['1m','5m','15m','30m','1H'];
+const pinnedKey='nexora:mg-chart:pinned-timeframes';
+const loadPinned=():Timeframe[]=>{try{const raw=JSON.parse(localStorage.getItem(pinnedKey)||'null');return Array.isArray(raw)&&raw.length>0?raw.filter((v:unknown,i:number)=>typeof v==='string'&&intervals.includes(v as Timeframe)&&raw.indexOf(v)===i).slice(0,8):defaultPinned}catch{return defaultPinned}};
 const indicatorList: {key:string;label:string;indicator:Indicator}[] = [
  {key:'SMA',label:'Simple Moving Average',indicator:sma},{key:'EMA',label:'Exponential Moving Average',indicator:ema},
  {key:'BB',label:'Bollinger Bands',indicator:bollingerBands},{key:'VWAP',label:'VWAP',indicator:vwap},
@@ -113,6 +116,9 @@ export default function SpotProChart({pair,frame,livePrice}:{pair:SpotPair;frame
  const [selectedDrawing,setSelectedDrawing]=useState<string|null>(null);
  const [priceScale,setPriceScale]=useState<'linear'|'logarithmic'|'percentage'>('linear');
  const [localFrame,setLocalFrame]=useState<Timeframe>(intervals.find(t=>t.toLowerCase()===frame.toLowerCase())||'1H');
+ const [pinned,setPinned]=useState<Timeframe[]>(loadPinned);
+ const [timeframeMenu,setTimeframeMenu]=useState(false);
+ const [editPinned,setEditPinned]=useState(false);
  const vpRef=useRef(false);
  const paramRef=useRef<Record<string,Record<string,number>>>({});
  const key='nexora:mg-chart:'+pair.symbol;
@@ -158,11 +164,12 @@ export default function SpotProChart({pair,frame,livePrice}:{pair:SpotPair;frame
  const toggleAllHidden=()=>{const next=!allDrawingsHidden;if(next)chart.current?.hideAllDrawings();else chart.current?.showAllDrawings();setAllDrawingsHidden(next);setDrawVersion(v=>v+1);save()};
  const changeDrawingAppearance=(field:'color'|'lineWidth',value:string|number)=>{if(!selectedDrawing)return;try{chart.current?.updateDrawing(selectedDrawing,{[field]:value});setDrawVersion(v=>v+1);save()}catch(e){setError(String(e))}};
  const toggleFullscreen=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await root.current?.requestFullscreen()}catch(e){setError(String(e))}};
+ const changeTimeframe=(timeframe:Timeframe)=>{try{chart.current?.setTimeframe(timeframe);setLocalFrame(timeframe);setTimeframeMenu(false)}catch(e){setError('Timeframe switch failed: '+String(e))}};
+ const togglePinned=(timeframe:Timeframe)=>setPinned(current=>{const updated=current.includes(timeframe)?(current.length>1?current.filter(t=>t!==timeframe):current):(current.length<8?[...current,timeframe]:current);try{localStorage.setItem(pinnedKey,JSON.stringify(updated))}catch{}return updated});
  const toggleStayDrawing=()=>{const next=!stayDrawing;chart.current?.setStayInDrawingMode(next);setStayDrawing(next)};
  return <div ref={root} className="nexora-mg-chart">
    <div className="nexora-mg-toolbar">
-    <span className="mg-toolbar-title">Trading Chart</span>
-    <div className="mg-intervals">{intervals.map(t=><button key={t} className={t===localFrame?'selected':''} type="button" title={'Switch to '+t} onClick={()=>{chart.current?.setTimeframe(t);setLocalFrame(t)}}>{t}</button>)}</div>
+    <div className="mg-intervals">{pinned.map(t=><button key={t} className={t===localFrame?'selected':''} type="button" title={'Switch to '+t} onClick={()=>changeTimeframe(t)}>{t}</button>)}<button className={timeframeMenu?'selected mg-timeframe-arrow':'mg-timeframe-arrow'} aria-label="Choose timeframes" aria-expanded={timeframeMenu} type="button" onClick={()=>setTimeframeMenu(v=>!v)}>▾</button></div>
     <select aria-label="Chart type" value={kind} onChange={e=>{const k=e.target.value as ChartType;setKind(k);chart.current?.setChartType(k)}}><option value="candlestick">Candles</option><option value="heikin_ashi">Heikin Ashi</option><option value="bar">OHLC Bars</option><option value="line">Line</option><option value="line_markers">Line with Markers</option><option value="step_line">Step Line</option><option value="area">Area</option><option value="hlc_area">HLC Area</option><option value="baseline">Baseline</option><option value="columns">Columns</option><option value="high_low">High-Low</option><option value="hollow_candle">Hollow Candles</option></select>
     <button type="button" className={indicatorMenu?'selected':''} onClick={()=>{setIndicatorMenu(!indicatorMenu);setDrawMenu(false)}}>Indicators ({chosen.length}) ▾</button>
     <button type="button" className={drawMenu?'selected':''} onClick={()=>{setDrawMenu(!drawMenu);setIndicatorMenu(false)}}>Draw ▾</button>
@@ -181,6 +188,7 @@ export default function SpotProChart({pair,frame,livePrice}:{pair:SpotPair;frame
     <button type="button" onClick={()=>{if(window.confirm('Clear all drawings for '+pair.symbol+'?')){chart.current?.clearDrawings();save()}}} title="Remove drawings">Clear Drawings</button>
    </div>
    <div className="nexora-mg-stage">
+    {timeframeMenu&&<section className="mg-timeframe-menu" role="dialog" aria-label="Timeframe selection"><header><strong>Pinned ({pinned.length}/8)</strong><button className="mg-pin-edit" type="button" onClick={()=>setEditPinned(v=>!v)}>{editPinned?'Done':'Edit'}</button></header><div className="mg-timeframe-grid">{pinned.map(t=><button type="button" key={t} className={t===localFrame?'selected':''} onClick={()=>editPinned?togglePinned(t):changeTimeframe(t)}>{t}{editPinned?' ×':''}</button>)}</div><header><strong>Available</strong><span>{pinned.length>=8?'Maximum 8 pinned':''}</span></header><div className="mg-timeframe-grid">{intervals.filter(t=>!pinned.includes(t)).map(t=><button type="button" key={t} onClick={()=>editPinned?togglePinned(t):changeTimeframe(t)} disabled={editPinned&&pinned.length>=8}>{t}{editPinned?' +':''}</button>)}</div>{editPinned&&<p className="mg-pin-hint">Choose up to 8 shortcuts. Your selection is saved automatically.</p>}</section>
     <aside className="nexora-mg-rail"><button className={!activeTools?'selected':''} onClick={()=>chooseTool(null)} title="Cursor">↖</button>{drawingGroups.map(g=><button key={g.label} className={g.tools.some(t=>t[0]===activeTools)?'selected':''} type="button" title={g.label} onClick={()=>{setDrawMenu(true);setIndicatorMenu(false)}}>{g.label==='Lines'?'╱':g.label==='Channels'?'☷':g.label==='Fibonacci'?'ϕ':g.label==='Gann & Cycles'?'⌁':g.label==='Patterns'?'⌯':g.label==='Shapes & Text'?'▭':'↕'}</button>)}</aside>
     <div className="nexora-mg-render" ref={holder}/>
     {alertsOpen&&<section className="nexora-mg-objects"><header><strong>Price Alerts</strong><button onClick={()=>setAlertsOpen(false)}>×</button></header><div className="mg-sidebar-form"><input aria-label="Alert price" type="number" min="0" step="any" placeholder="Alert price" value={alertPrice} onChange={e=>setAlertPrice(e.target.value)}/><button onClick={addAlert}>Add alert</button></div><div className="nexora-mg-options">{alerts.map(a=><div key={a.id} className="mg-object-row"><span>{a.price}</span><button onClick={()=>removeAlert(a.id)}>Remove</button></div>)}</div></section>}
