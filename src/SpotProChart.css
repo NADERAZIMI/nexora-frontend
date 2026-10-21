@@ -270,3 +270,12 @@
 .nexora-mg-chart .nexora-mg-toolbar>.nx-chart-volume-profile{flex:0 0 auto;padding:3px 0!important;margin-left:5px;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;color:var(--nx-muted,#929AAA)!important;font-size:11px;font-weight:500;line-height:24px}
 .nexora-mg-chart .nexora-mg-toolbar>.nx-chart-volume-profile:hover{color:var(--nx-hover,#EAA343)!important;background:transparent!important}
 .nexora-mg-chart .nexora-mg-toolbar>.nx-chart-volume-profile.selected{color:var(--nx-hover,#EAA343)!important}
+
+/* Advanced controls live on the plot edge, not in the top strip. */
+.nexora-mg-chart .nx-chart-edge-controls{position:absolute;inset:0;z-index:17;pointer-events:none}
+.nexora-mg-chart .nx-chart-scale-control{position:absolute;top:7px;right:7px;pointer-events:auto}
+.nexora-mg-chart .nx-chart-scale-control select{height:25px;max-width:90px;padding:2px 6px;font-size:10px;color:var(--nx-muted,#929aaa);background:var(--nx-elevated,#15191f);border:1px solid var(--nx-border,#29313d);border-radius:3px}
+.nexora-mg-chart .nx-chart-edge-navigation{position:absolute;right:8px;bottom:30px;pointer-events:auto;background:var(--nx-surface,#101014);border-radius:3px}
+.nexora-mg-chart .nx-chart-edge-navigation .nx-chart-navigation{display:flex;align-items:center;gap:2px;padding:2px 3px}
+.nexora-mg-chart .nx-chart-edge-navigation .nx-chart-navigation button{font-size:17px;line-height:20px;min-width:22px;padding:1px 3px;border:0;border-radius:0;background:transparent;color:var(--nx-muted,#929aaa)}
+.nexora-mg-chart .nx-chart-edge-navigation .nx-chart-navigation button:hover{color:var(--nx-hover,#EAA343)!important;background:transparent!important;box-shadow:none}
