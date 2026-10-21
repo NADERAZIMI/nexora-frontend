@@ -12,7 +12,7 @@ const timeframeKey='nexora:mg-chart:active-timeframe';
 const loadTimeframe=():Timeframe=>{try{const value=localStorage.getItem(timeframeKey);return intervals.includes(value as Timeframe)?value as Timeframe:'5m'}catch{return '5m'}};
 const sortTimes=(values:Timeframe[])=>[...values].sort((a,b)=>intervals.indexOf(a)-intervals.indexOf(b));
 const chartFont='"Inter",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif';
-const nxTheme=(light:boolean)=>({... (light?lightTheme:darkTheme),bg:getComputedStyle(document.documentElement).getPropertyValue('--nx-surface').trim()||(light?'#FFFFFF':'#101014'),fontFamily:chartFont});
+const nxTheme=(light:boolean)=>({... (light?lightTheme:darkTheme),bg:getComputedStyle(document.documentElement).getPropertyValue('--nx-chart-bg').trim()||getComputedStyle(document.documentElement).getPropertyValue('--nx-surface').trim()||(light?'#FFFFFF':'#101014'),fontFamily:chartFont});
 const pinnedKey='nexora:mg-chart:pinned-timeframes';
 const pinnedLayoutVersionKey='nexora:mg-chart:pinned-layout-version';
 const loadPinned=():Timeframe[]=>{
