@@ -166,3 +166,31 @@
 .nexora-mg-chart .nexora-mg-toolbar>.nx-chart-screenshot{position:relative!important;flex:0 0 28px!important;min-width:28px!important;width:28px!important;height:28px!important;display:grid!important;place-items:center!important;margin:0!important;padding:0!important;color:var(--nx-muted,#929AAA)!important;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;cursor:pointer}
 .nexora-mg-chart .nexora-mg-toolbar>.nx-chart-screenshot:hover{color:var(--nx-text,#F4F6FA)!important;background:transparent!important}
 .nexora-mg-chart .nexora-mg-toolbar>.nx-chart-fullscreen{margin-left:0!important}
+
+/* NEXORA chart interaction rule: hover is orange text/icon, never a filled button box.
+   Scope to chart controls; preserve selected blue indicators, destructive confirmations,
+   and form/popover surfaces outside the chart toolbars. */
+.nexora-mg-chart .nexora-mg-toolbar button:not(:disabled):hover,
+.nexora-mg-chart .nexora-mg-rail>button:not(:disabled):hover,
+.nexora-mg-chart .nx-chart-navigation button:not(:disabled):hover,
+.nexora-mg-chart .nexora-mg-toolbar>.nx-chart-screenshot:hover,
+.nexora-mg-chart .nexora-mg-toolbar>.nx-chart-fullscreen:hover{
+ color:var(--nx-hover,#EAA343)!important;
+ background:transparent!important;
+ background-color:transparent!important;
+ border-color:transparent!important;
+ box-shadow:none!important;
+}
+.nexora-mg-chart .nexora-mg-toolbar>.nx-chart-screenshot,
+.nexora-mg-chart .nexora-mg-toolbar>.nx-chart-fullscreen{
+ background:transparent!important;
+ border:0!important;
+ box-shadow:none!important;
+ border-radius:0!important;
+ outline-offset:2px;
+}
+.nexora-mg-chart .nexora-mg-toolbar button:not(:disabled):hover svg,
+.nexora-mg-chart .nexora-mg-rail>button:not(:disabled):hover svg{
+ color:inherit!important;
+ stroke:currentColor;
+}
