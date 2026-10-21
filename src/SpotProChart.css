@@ -87,3 +87,8 @@
 .nexora-mg-chart .mg-chart-style-list button:hover{background:#343940;color:#EAA343}
 .nexora-mg-chart .mg-chart-style-list button.selected{background:#353b45;color:#EAA343}
 .nexora-mg-chart .mg-chart-style-list .mg-style-icon{display:inline-flex;justify-content:center;align-items:center;flex:0 0 18px;color:inherit;font-size:16px}
+
+/* Force chart-style popup items onto separate full-width rows. */
+.nexora-mg-chart .mg-chart-type-popover .mg-chart-style-list{display:flex!important;flex-direction:column!important;flex-wrap:nowrap!important;align-items:stretch!important;gap:2px!important;width:100%}
+.nexora-mg-chart .mg-chart-type-popover .mg-chart-style-list>button{display:flex!important;flex-direction:row!important;flex:0 0 auto!important;align-items:center!important;justify-content:flex-start!important;width:100%!important;min-width:0!important;min-height:31px!important;white-space:nowrap!important;text-align:left!important}
+.nexora-mg-chart .mg-chart-type-popover .mg-chart-style-list>button>.mg-style-icon{flex:0 0 19px!important}
