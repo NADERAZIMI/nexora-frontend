@@ -49,6 +49,24 @@ class BybitMGDatafeed implements Datafeed{
  constructor(private symbol:string){}
  async getBars({symbol,timeframe,from,to,limit}:{symbol:string;timeframe:Timeframe;from:number;to:number;limit:number}):Promise<Bar[]>{
   if(!/^[A-Z0-9]{2,32}$/.test(symbol))return [];
+  if(timeframe==='1s'){
+   try{
+    const response=await fetch('https://api.bybit.com/v5/market/recent-trade?'+new URLSearchParams({category:'spot',symbol,limit:'1000'}));
+    if(!response.ok)return [];
+    const payload=await response.json() as {retCode?:number;result?:{list?:Array<{T:string;p:string;v:string}>}};
+    if(payload.retCode!==0||!Array.isArray(payload.result?.list))return [];
+    const result=new Map<number,Bar>();
+    for(const trade of [...payload.result.list].reverse()){
+     const time=Math.floor(Number(trade.T)/1000),price=Number(trade.p),volume=Number(trade.v);
+     if(!Number.isFinite(time)||!Number.isFinite(price)||price<=0||!Number.isFinite(volume)||volume<0)continue;
+     if(from&&time<from||to&&time>to)continue;
+     const prev=result.get(time);
+     if(prev){prev.high=Math.max(prev.high,price);prev.low=Math.min(prev.low,price);prev.close=price;prev.volume+=volume}
+     else result.set(time,{time,open:price,high:price,low:price,close:price,volume});
+    }
+    return [...result.values()].sort((a,b)=>a.time-b.time).slice(-Math.min(limit||500,1000));
+   }catch{return []}
+  }
   const i=intervalMap[timeframe]||'60';
   const query=new URLSearchParams({category:'spot',symbol,interval:i,limit:String(Math.min(Math.max(limit||500,1),1000))});
   if(to>0)query.set('end',String(Math.floor(to*1000)));
@@ -73,6 +91,25 @@ class BybitMGDatafeed implements Datafeed{
  }
  subscribe({symbol,timeframe,onBar,onTick}:{symbol:string;timeframe:Timeframe;onBar:(bar:Bar)=>void;onTick:(tick:{time:number;price:number;volume:number})=>void}){
   if(!/^[A-Z0-9]{2,32}$/.test(symbol))return ()=>{};
+  if(timeframe==='1s'){
+   const topic='publicTrade.'+symbol;
+   const ws=new WebSocket('wss://stream.bybit.com/v5/public/spot');
+   let current:Bar|null=null;
+   ws.onopen=()=>ws.send(JSON.stringify({op:'subscribe',args:[topic]}));
+   ws.onmessage=event=>{try{
+    const msg=JSON.parse(event.data) as {topic?:string;data?:Array<{T:number;p:string;v:string}>};
+    if(msg.topic!==topic||!Array.isArray(msg.data))return;
+    for(const trade of msg.data){
+     const time=Math.floor(Number(trade.T)/1000),price=Number(trade.p),volume=Number(trade.v);
+     if(!Number.isFinite(time)||!Number.isFinite(price)||price<=0||!Number.isFinite(volume)||volume<0)continue;
+     if(current&&time<current.time)continue;
+     if(!current||current.time!==time)current={time,open:price,high:price,low:price,close:price,volume};
+     else current={...current,high:Math.max(current.high,price),low:Math.min(current.low,price),close:price,volume:current.volume+volume};
+     onBar(current);
+    }
+   }catch{/* Ignore malformed public trade events */}};
+   return ()=>{ws.onopen=null;ws.onmessage=null;ws.close()};
+  }
   const topic='kline.'+(intervalMap[timeframe]||'60')+'.'+symbol;
   const ws=new WebSocket('wss://stream.bybit.com/v5/public/spot');
   ws.onopen=()=>ws.send(JSON.stringify({op:'subscribe',args:[topic]}));
