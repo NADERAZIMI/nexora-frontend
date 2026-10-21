@@ -148,3 +148,6 @@
 .nexora-mg-chart{position:relative}
 .nexora-mg-chart .nx-chart-fullscreen{position:absolute;right:9px;bottom:9px;z-index:15;display:grid;place-items:center;width:25px;height:25px;padding:3px;background:var(--nx-elevated,#15191F);border:1px solid var(--nx-border,#29313D);border-radius:3px;color:var(--nx-muted,#929AAA);cursor:pointer;opacity:.8}
 .nexora-mg-chart .nx-chart-fullscreen:hover{opacity:1;color:var(--nx-text,#F4F6FA)}
+
+/* Pin fullscreen action to the visible plot stage, above the time-axis corner. */
+.nexora-mg-chart .nexora-mg-stage>.nx-chart-fullscreen{position:absolute!important;right:12px!important;bottom:36px!important;top:auto!important;left:auto!important;z-index:100!important;width:30px;height:30px;opacity:1!important;color:var(--nx-text,#F4F6FA);background:var(--nx-elevated,#15191F);box-shadow:0 1px 6px #0008;flex:none}
