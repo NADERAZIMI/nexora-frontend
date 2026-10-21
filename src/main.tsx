@@ -107,7 +107,7 @@ function TokenInfoPanel({pair}:{pair:SpotPair}){
  </div>;
 }
 const tabs=['Chart','Info','Data','Feed','Trade Analysis'] as const;
-function ChartPanel({pair,livePrice}:{pair:SpotPair;livePrice:number|null}){const [tab,setTab]=useState<(typeof tabs)[number]>('Chart');return <section className="panel chart"><div className="tabs">{tabs.map(x=><button key={x} onClick={()=>setTab(x)} className={tab===x?'active':''}>{x}</button>)}<span className="paneltools">⚙　⛶</span></div>{tab==='Feed'?<FeedPanel symbol={pair.symbol}/>:tab==='Data'?<DataPanel symbol={pair.symbol}/>:tab==='Info'?<TokenInfoPanel pair={pair}/>:tab==='Chart'?<><div className="chart-area"><SpotProChart pair={pair} frame="1h" livePrice={livePrice}/></div></>:<div className="waiting">{tab} panel · React component ready for live data</div>}</section>}
+function ChartPanel({pair,livePrice}:{pair:SpotPair;livePrice:number|null}){const [tab,setTab]=useState<(typeof tabs)[number]>('Chart');return <section className="panel chart"><div className="tabs">{tabs.map(x=><button key={x} onClick={()=>setTab(x)} className={tab===x?'active':''}>{x}</button>)}</div>{tab==='Feed'?<FeedPanel symbol={pair.symbol}/>:tab==='Data'?<DataPanel symbol={pair.symbol}/>:tab==='Info'?<TokenInfoPanel pair={pair}/>:tab==='Chart'?<><div className="chart-area"><SpotProChart pair={pair} frame="1h" livePrice={livePrice}/></div></>:<div className="waiting">{tab} panel · React component ready for live data</div>}</section>}
 function OrderBook({pair,book,livePrice}:{pair:SpotPair;book:BookState;livePrice:number|null}){
  const [mode,setMode]=useState('Order Book');
  const [stepMultiplier,setStepMultiplier]=useState(1);
