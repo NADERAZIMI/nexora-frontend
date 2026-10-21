@@ -211,7 +211,26 @@ class RenkoDatafeed implements Datafeed {
  searchSymbols(query:string){return this.source.searchSymbols(query)}
 }
 const readStored=(key:string)=>{try{return JSON.parse(localStorage.getItem(key)||'null') as {drawings?:object[];indicators?:string[];volumeProfile?:boolean}|null}catch{return null}};
+type MultiLayout=1|2|3|4|5;
+const multiLayoutKey='nexora:mg-chart:multi-layout';
+function CompanionChart({symbol,timeframe,index}:{symbol:string;timeframe:Timeframe;index:number}){
+ const mount=useRef<HTMLDivElement>(null);
+ useEffect(()=>{
+  const node=mount.current;if(!node)return;
+  let instance:Chart|null=null;
+  try{instance=new Chart({container:node,symbol,timeframe,datafeed:new BybitMGDatafeed(symbol),theme:nxTheme(document.documentElement.dataset.nxTheme==='light'),chartType:'candlestick',renderer:'webgl',features:{volume:true},trading:{showPlusButton:false,showContextMenu:false,draggableOrderLines:false}})}
+  catch(e){console.warn('[NEXORA] Companion chart failed',e)}
+  return()=>{instance?.destroy()};
+ },[symbol,timeframe]);
+ return <div className="nx-multi-cell"><div className="nx-multi-label">{symbol} · {timeframe} · {index+1}</div><div ref={mount} className="nx-multi-chart-mount"/></div>;
+}
 export default function SpotProChart({pair,frame,livePrice}:{pair:SpotPair;frame:string;livePrice:number|null}){
+ const [multiLayout,setMultiLayout]=useState<MultiLayout>(()=>{
+  try{const n=Number(localStorage.getItem(multiLayoutKey));return n>=1&&n<=5?n as MultiLayout:1}catch{return 1}
+ });
+ const [multiMenu,setMultiMenu]=useState(false);
+ const [syncInterval,setSyncInterval]=useState(true);
+ const changeMulti=(count:MultiLayout)=>{setMultiLayout(count);setMultiMenu(false);try{localStorage.setItem(multiLayoutKey,String(count))}catch{}};
  const holder=useRef<HTMLDivElement>(null);
  const chart=useRef<Chart|null>(null);
  const instanceIds=useRef<Map<string,string>>(new Map());
@@ -362,8 +381,17 @@ export default function SpotProChart({pair,frame,livePrice}:{pair:SpotPair;frame
      <button type="button" title="Zoom out of candles" aria-label="Zoom out" onClick={()=>chart.current?.zoomOut(1.25)}>−</button>
     </div>
     <button type="button" onClick={()=>chart.current?.goToLive()} title="Go to live price">Live</button>
+    <button type="button" className="nx-chart-multi-trigger" aria-label="Chart layout" aria-expanded={multiMenu} title="Chart layout" onClick={()=>setMultiMenu(v=>!v)}><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.6"><rect x="4" y="4" width="16" height="16" rx="3"/></svg></button>
     <button type="button" className="nx-chart-screenshot" aria-label="Take chart screenshot" title="Screenshot" onClick={()=>chart.current?.exportPNG('NEXORA-'+pair.symbol+'.png')}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 7h3l2-2h6l2 2h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1Z"/><circle cx="12" cy="13" r="3.4"/></svg></button>
     <button type="button" className="nx-chart-fullscreen" aria-label="Toggle chart fullscreen" title="Fullscreen chart" onClick={toggleFullscreen}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 3H3v6M3 3l7 7M15 21h6v-6m0 6-7-7"/></svg></button>
+    {multiMenu&&<div className="nx-multi-layout-menu" role="dialog" aria-label="Multi chart layout">
+      <div className="nx-multi-layout-title">Chart layout</div>
+      {[1,2,3,4,5].map(n=><button type="button" className={'nx-multi-option'+(multiLayout===n?' active':'')} key={n} onClick={()=>changeMulti(n as MultiLayout)}><span>{n}</span><span className={'nx-mini-layout nx-mini-layout-'+n}>{Array.from({length:n},(_,i)=><i key={i}/>)}</span></button>)}
+      <div className="nx-multi-layout-title nx-multi-divider">Sync chart settings</div>
+      <label className="nx-multi-toggle"><span>Symbol</span><input type="checkbox" checked disabled title="All chart panels currently use the selected market"/></label>
+      <label className="nx-multi-toggle"><span>Interval</span><input type="checkbox" checked={syncInterval} onChange={e=>setSyncInterval(e.target.checked)}/></label>
+      <div className="nx-multi-layout-note">All panels use the selected market. Independent crosshair, time and date-range syncing requires engine support.</div>
+     </div>}
     {chartTypeMenu&&<section className="nexora-mg-popover mg-chart-type-popover" style={{left:chartPopupLeft}} role="menu" aria-label="Chart styles"><div className="mg-chart-style-list">{([{id:'bar',label:'Bars',icon:''},{id:'candlestick',label:'Candles',icon:''},{id:'hollow_candle',label:'Hollow Candles',icon:''},{id:'heikin_ashi',label:'Heikin Ashi',icon:''},{id:'line',label:'Line',icon:''},{id:'area',label:'Area',icon:''},{id:'baseline',label:'Baseline',icon:''},{id:'line_markers',label:'Line with Markers',icon:''},{id:'step_line',label:'Step Line',icon:''},{id:'hlc_area',label:'HLC Area',icon:''},{id:'columns',label:'Columns',icon:''},{id:'high_low',label:'High-Low',icon:''},{id:'renko',label:'Renko',icon:''}] as {id:ChartType|'renko';label:string;icon:string}[]).map(item=><button type="button" role="menuitemradio" aria-checked={kind===item.id} key={item.id} className={kind===item.id?'selected':''} onClick={()=>{try{setChartStyle(item.id)}catch(e){setError(String(e))}}}><span className="mg-style-icon" aria-hidden="true">{item.id==='renko'?<RenkoIcon/>:<StyleIcon kind={item.id}/>}</span><span>{item.label}</span></button>)}</div></section>}
        </div>
    <div className="nexora-mg-stage">
@@ -385,7 +413,10 @@ export default function SpotProChart({pair,frame,livePrice}:{pair:SpotPair;frame
  <div className="mg-rail-spacer"/>
  <button type="button" className="mg-rail-trash" title="Delete all drawings" aria-label="Delete all drawings" onClick={()=>{if(window.confirm('Delete all drawings for '+pair.symbol+'?')){chart.current?.clearDrawings();save()}}}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14M10 11v6M14 11v6"/></svg></button>
  </aside>
-    <div className="nexora-mg-render" ref={holder}/>
+    <div className={'nx-multi-chart-area nx-multi-layout-'+multiLayout}>
+     <div className="nexora-mg-render nx-multi-primary" ref={holder}/>
+     {Array.from({length:multiLayout-1},(_,i)=><CompanionChart key={i} symbol={pair.symbol} timeframe={syncInterval?localFrame:'1H'} index={i+1}/>)}
+    </div>
     {drawMenu&&<section className="nexora-mg-popover mg-draw-popover" role="dialog" aria-label="Drawing Tools"><header><strong>Drawing Tools</strong><button type="button" aria-label="Close drawing tools" onClick={()=>setDrawMenu(false)}>×</button></header><input aria-label="Search drawing tools" value={drawSearch} placeholder="Search drawing tools..." onChange={e=>setDrawSearch(e.target.value)}/><div className="nexora-mg-options"><button type="button" onClick={()=>chooseTool(null)}>Cursor / Cancel tool</button>{drawingGroups.map(g=><div key={g.label}><h4>{g.label}</h4>{g.tools.filter(([,label])=>label.toLowerCase().includes(drawSearch.toLowerCase())).map(([id,label])=><button type="button" key={id} className={activeTools===id?'selected':''} onClick={()=>chooseTool(id)}>{label}</button>)}</div>)}</div></section>}
     {alertsOpen&&<section className="nexora-mg-objects"><header><strong>Price Alerts</strong><button onClick={()=>setAlertsOpen(false)}>×</button></header><div className="mg-sidebar-form"><input aria-label="Alert price" type="number" min="0" step="any" placeholder="Alert price" value={alertPrice} onChange={e=>setAlertPrice(e.target.value)}/><button onClick={addAlert}>Add alert</button></div><div className="nexora-mg-options">{alerts.map(a=><div key={a.id} className="mg-object-row"><span>{a.price}</span><button onClick={()=>removeAlert(a.id)}>Remove</button></div>)}</div></section>}
     {compareOpen&&<section className="nexora-mg-objects"><header><strong>Compare Markets</strong><button onClick={()=>setCompareOpen(false)}>×</button></header><div className="mg-sidebar-form"><input aria-label="Compare market symbol" placeholder="ETHUSDT" value={compareSymbol} onChange={e=>setCompareSymbol(e.target.value)}/><button onClick={addCompare}>Compare</button></div><div className="nexora-mg-options">{compared.map(symbol=><div key={symbol} className="mg-object-row"><span>{symbol}</span><button onClick={()=>removeCompare(symbol)}>Remove</button></div>)}</div></section>}
