@@ -123,3 +123,12 @@
 .nexora-mg-chart .mg-rail-actions{display:flex;gap:4px;padding:8px;border-top:1px solid #343b47}
 .nexora-mg-chart .mg-rail-actions button{flex:1;padding:7px 3px;color:#c4cbda;background:#242936;border-radius:4px;font-size:11px;cursor:pointer}
 .nexora-mg-chart .mg-rail-actions button:hover{color:var(--nx-hover)}
+
+/* Professional always-visible drawing shortcuts. Full MG tool catalog remains in All Drawing Tools. */
+.nexora-mg-chart .nexora-mg-rail{width:40px;flex:0 0 40px;display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 3px 3px;overflow-y:auto;overflow-x:hidden;background:var(--nx-surface,#101014);scrollbar-width:none}
+.nexora-mg-chart .nexora-mg-rail>button{display:flex;align-items:center;justify-content:center;min-height:34px;width:34px;flex:0 0 34px;padding:6px;background:transparent;border-radius:3px}
+.nexora-mg-chart .nexora-mg-rail>button svg{width:21px;height:21px;display:block}
+.nexora-mg-chart .nexora-mg-rail>button:hover{background:transparent;color:var(--nx-hover,#EAA343)}
+.nexora-mg-chart .nexora-mg-rail>button.selected{background:transparent;color:var(--nx-blue,#3D6BFF)}
+.nexora-mg-chart .mg-rail-spacer{flex:1;min-height:9px}
+.nexora-mg-chart .nexora-mg-rail>button.mg-rail-trash{border-top:1px solid #30343c;border-radius:0;margin-top:5px}
