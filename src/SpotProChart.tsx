@@ -356,6 +356,12 @@ export default function SpotProChart({pair,frame,livePrice}:{pair:SpotPair;frame
     <button type="button" onClick={toggleAllLock}>{allDrawingsLocked?'Unlock All':'Lock All'}</button>
     <button type="button" onClick={toggleAllHidden}>{allDrawingsHidden?'Show All':'Hide All'}</button>
     <div className="mg-toolbar-spacer"/>
+    <div className="nx-chart-navigation" aria-label="Chart navigation controls">
+     <button type="button" title="Scroll candles left (older history)" aria-label="Scroll left" onClick={()=>{chooseTool(null);chart.current?.scrollLeft(35)}}>‹</button>
+     <button type="button" title="Scroll candles right (newer history)" aria-label="Scroll right" onClick={()=>{chooseTool(null);chart.current?.scrollRight(35)}}>›</button>
+     <button type="button" title="Zoom into candles" aria-label="Zoom in" onClick={()=>chart.current?.zoomIn(0.8)}>+</button>
+     <button type="button" title="Zoom out of candles" aria-label="Zoom out" onClick={()=>chart.current?.zoomOut(1.25)}>−</button>
+    </div>
     <button type="button" onClick={()=>chart.current?.goToLive()} title="Go to live price">Live</button>
     <button type="button" onClick={toggleFullscreen}>Fullscreen</button>
     <button type="button" onClick={()=>chart.current?.exportPNG('NEXORA-'+pair.symbol+'.png')} title="Save chart image">Screenshot</button>
