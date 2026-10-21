@@ -12,7 +12,7 @@ const timeframeKey='nexora:mg-chart:active-timeframe';
 const loadTimeframe=():Timeframe=>{try{const value=localStorage.getItem(timeframeKey);return intervals.includes(value as Timeframe)?value as Timeframe:'5m'}catch{return '5m'}};
 const sortTimes=(values:Timeframe[])=>[...values].sort((a,b)=>intervals.indexOf(a)-intervals.indexOf(b));
 const chartFont='"Inter",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif';
-const nxTheme=(light:boolean)=>({... (light?lightTheme:darkTheme),fontFamily:chartFont});
+const nxTheme=(light:boolean)=>({... (light?lightTheme:darkTheme),bg:light?'#FFFFFF':'#101014',fontFamily:chartFont});
 const pinnedKey='nexora:mg-chart:pinned-timeframes';
 const pinnedLayoutVersionKey='nexora:mg-chart:pinned-layout-version';
 const loadPinned=():Timeframe[]=>{
@@ -370,6 +370,7 @@ export default function SpotProChart({pair,frame,livePrice}:{pair:SpotPair;frame
  <button type="button" title="Fibonacci" aria-label="Fibonacci" onClick={()=>setDrawingGroup('Fibonacci')}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M2 5h20M2 10h20M2 15h20M2 20h20"/><circle cx="7" cy="10" r="2"/><circle cx="17" cy="15" r="2"/></svg></button>
  <button type="button" title="Brush and Shapes" aria-label="Brush and Shapes" onClick={()=>setDrawingGroup('Shapes & Text')}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 19c6 2 7-5 11-11l5-5 2 2-5 5C10 14 11 21 3 19Z"/></svg></button>
  <button type="button" title="Text" aria-label="Text" className={activeTools==='text'?'selected':''} onClick={()=>chooseTool('text')}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 5h18M12 5v15M7 20h10"/></svg></button>
+ <button type="button" title="Ruler / Measure price and time" aria-label="Ruler" className={activeTools==='date-price-range'?'selected':''} onClick={()=>chooseTool('date-price-range')}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><g transform="rotate(-45 12 12)"><rect x="3" y="8" width="18" height="8" rx="1"/><path d="M6 8v4M9 8v3M12 8v4M15 8v3M18 8v4"/></g></svg></button>
  <button type="button" title="Long / Short and Measurement" aria-label="Trading and measuring tools" onClick={()=>setDrawingGroup('Trading & Measure')}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M5 5h14v14H5zM5 12h14M12 5v14"/></svg></button>
  <button type="button" title="All Drawing Tools" aria-label="All Drawing Tools" className={drawingGroup==='All tools'?'selected':''} onClick={()=>{setRailSearch('');setDrawingGroup(v=>v==='All tools'?null:'All tools')}}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2"/><circle cx="16" cy="12" r="2"/><circle cx="7" cy="18" r="2"/></svg></button>
  <button type="button" title="Magnet" aria-label="Toggle Magnet" className={magnet?'selected':''} onClick={toggleMagnet}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M5 12V7a7 7 0 0 1 14 0v5h-5V7a2 2 0 0 0-4 0v5z"/></svg></button>
