@@ -143,3 +143,8 @@
 .nexora-mg-chart .nexora-mg-toolbar .nx-chart-navigation button:hover{color:var(--nx-hover,#EAA343);background:transparent}
 .nexora-mg-chart .nexora-mg-render canvas{touch-action:none;cursor:grab}
 .nexora-mg-chart .nexora-mg-render canvas:active{cursor:grabbing}
+
+/* Fullscreen toggle at the chart canvas bottom-right, as an unobtrusive icon. */
+.nexora-mg-chart{position:relative}
+.nexora-mg-chart .nx-chart-fullscreen{position:absolute;right:9px;bottom:9px;z-index:15;display:grid;place-items:center;width:25px;height:25px;padding:3px;background:var(--nx-elevated,#15191F);border:1px solid var(--nx-border,#29313D);border-radius:3px;color:var(--nx-muted,#929AAA);cursor:pointer;opacity:.8}
+.nexora-mg-chart .nx-chart-fullscreen:hover{opacity:1;color:var(--nx-text,#F4F6FA)}
