@@ -116,6 +116,7 @@ export default function SpotProChart({pair,frame,livePrice}:{pair:SpotPair;frame
   setError(null);
   const saved=readStored(key);
   if(saved?.indicators)setChosen(saved.indicators.filter(k=>indicatorList.some(i=>i.key===k)));
+  setLocalFrame(intervals.find(t=>t.toLowerCase()===frame.toLowerCase())||'1H');
   setVp(Boolean(saved?.volumeProfile));vpRef.current=Boolean(saved?.volumeProfile);
   const extra=saved as typeof saved & {params?:Record<string,Record<string,number>>;favorites?:string[]};
   paramRef.current=extra?.params||{};setParams(paramRef.current);
@@ -151,7 +152,7 @@ export default function SpotProChart({pair,frame,livePrice}:{pair:SpotPair;frame
    <div className="nexora-mg-toolbar">
     <span className="mg-market-label">{pair.base}/{pair.quote}</span>
     <div className="mg-intervals">{intervals.map(t=><button key={t} className={t===localFrame?'selected':''} type="button" title={'Switch to '+t} onClick={()=>{chart.current?.setTimeframe(t);setLocalFrame(t)}}>{t}</button>)}</div>
-    <select aria-label="Chart type" value={kind} onChange={e=>{const k=e.target.value as ChartType;setKind(k);chart.current?.setChartType(k)}}><option value="candlestick">Candles</option><option value="heikin_ashi">Heikin Ashi</option><option value="bar">OHLC Bars</option><option value="line">Line</option><option value="area">Area</option><option value="baseline">Baseline</option><option value="hollow_candle">Hollow Candles</option></select>
+    <select aria-label="Chart type" value={kind} onChange={e=>{const k=e.target.value as ChartType;setKind(k);chart.current?.setChartType(k)}}><option value="candlestick">Candles</option><option value="heikin_ashi">Heikin Ashi</option><option value="bar">OHLC Bars</option><option value="line">Line</option><option value="line_markers">Line with Markers</option><option value="step_line">Step Line</option><option value="area">Area</option><option value="hlc_area">HLC Area</option><option value="baseline">Baseline</option><option value="columns">Columns</option><option value="high_low">High-Low</option><option value="hollow_candle">Hollow Candles</option></select>
     <button type="button" className={indicatorMenu?'selected':''} onClick={()=>{setIndicatorMenu(!indicatorMenu);setDrawMenu(false)}}>Indicators ({chosen.length}) ▾</button>
     <button type="button" className={drawMenu?'selected':''} onClick={()=>{setDrawMenu(!drawMenu);setIndicatorMenu(false)}}>Draw ▾</button>
     <button type="button" className={vp?'selected':''} onClick={toggleVP}>Volume Profile</button>
