@@ -59,6 +59,21 @@ function parseRow(raw:unknown):Bar|null{
  if(![time,open,high,low,close,volume].every(Number.isFinite)||time<=0||open<=0||low<=0||high<low||close<=0||volume<0)return null;
  return {time,open,high,low,close,volume};
 }
+// Continuous one-second OHLC: missing trade-seconds are flat, zero-volume intervals.
+function fillSecondGaps(bars:Bar[],maximum=1000):Bar[]{
+ if(!bars.length)return [];
+ const sorted=[...bars].sort((a,b)=>a.time-b.time);
+ const end=sorted[sorted.length-1].time;
+ const first=Math.max(sorted[0].time,end-maximum+1);
+ const bySecond=new Map(sorted.map(bar=>[bar.time,bar]));
+ const result:Bar[]=[];let close=sorted[0].open;
+ for(let time=first;time<=end;time++){
+  const bar=bySecond.get(time);
+  if(bar){result.push(bar);close=bar.close}
+  else result.push({time,open:close,high:close,low:close,close,volume:0});
+ }
+ return result;
+}
 class BybitMGDatafeed implements Datafeed{
  constructor(private symbol:string){}
  async getBars({symbol,timeframe,from,to,limit}:{symbol:string;timeframe:Timeframe;from:number;to:number;limit:number}):Promise<Bar[]>{
@@ -78,7 +93,7 @@ class BybitMGDatafeed implements Datafeed{
      if(prev){prev.high=Math.max(prev.high,price);prev.low=Math.min(prev.low,price);prev.close=price;prev.volume+=volume}
      else result.set(time,{time,open:price,high:price,low:price,close:price,volume});
     }
-    return [...result.values()].sort((a,b)=>a.time-b.time).slice(-Math.min(limit||500,1000));
+    return fillSecondGaps([...result.values()],Math.min(limit||500,1000));
    }catch{return []}
   }
   const i=intervalMap[timeframe]||'60';
@@ -109,20 +124,34 @@ class BybitMGDatafeed implements Datafeed{
    const topic='publicTrade.'+symbol;
    const ws=new WebSocket('wss://stream.bybit.com/v5/public/spot');
    let current:Bar|null=null;
+   let disposed=false;
+   // Advance one-second candles even when no trades occur; zero-volume flat bars.
+   const advance=(second:number)=>{
+    if(!current||second<=current.time)return;
+    const last=current;
+    const count=Math.min(1000,second-last.time);
+    for(let t=last.time+1;t<=last.time+count;t++){
+     if(disposed)return;
+     current={time:t,open:current.close,high:current.close,low:current.close,close:current.close,volume:0};
+     onBar(current);
+    }
+   };
    ws.onopen=()=>ws.send(JSON.stringify({op:'subscribe',args:[topic]}));
    ws.onmessage=event=>{try{
     const msg=JSON.parse(event.data) as {topic?:string;data?:Array<{T:number;p:string;v:string}>};
     if(msg.topic!==topic||!Array.isArray(msg.data))return;
-    for(const trade of msg.data){
+    for(const trade of [...msg.data].sort((a,b)=>Number(a.T)-Number(b.T))){
      const time=Math.floor(Number(trade.T)/1000),price=Number(trade.p),volume=Number(trade.v);
      if(!Number.isFinite(time)||!Number.isFinite(price)||price<=0||!Number.isFinite(volume)||volume<0)continue;
      if(current&&time<current.time)continue;
-     if(!current||current.time!==time)current={time,open:price,high:price,low:price,close:price,volume};
+     if(current&&time>current.time+1)advance(time-1);
+     if(!current||current.time!==time)current={time,open:current?.close??price,high:Math.max(current?.close??price,price),low:Math.min(current?.close??price,price),close:price,volume};
      else current={...current,high:Math.max(current.high,price),low:Math.min(current.low,price),close:price,volume:current.volume+volume};
      onBar(current);
     }
    }catch{/* Ignore malformed public trade events */}};
-   return ()=>{ws.onopen=null;ws.onmessage=null;ws.close()};
+   const timer=window.setInterval(()=>advance(Math.floor(Date.now()/1000)-1),1000);
+   return ()=>{disposed=true;window.clearInterval(timer);ws.onopen=null;ws.onmessage=null;ws.close()};
   }
   const topic='kline.'+(intervalMap[timeframe]||'60')+'.'+symbol;
   const ws=new WebSocket('wss://stream.bybit.com/v5/public/spot');
