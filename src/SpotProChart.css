@@ -26,3 +26,17 @@
 .nexora-mg-toolbar .mg-intervals{flex:0 0 auto}
 .nexora-mg-toolbar{scrollbar-width:thin;scrollbar-color:#303642 transparent}
 .nexora-mg-toolbar .mg-market-label{display:none}
+
+/* Configurable timeframe picker (single chart toolbar) */
+.nexora-mg-chart .mg-timeframe-arrow{min-width:26px;font-size:14px;padding-inline:6px}
+.nexora-mg-chart .mg-timeframe-menu{position:absolute;top:4px;left:8px;z-index:35;width:min(330px,calc(100% - 16px));max-height:calc(100% - 12px);overflow-y:auto;background:#161b24;border:1px solid #343d4c;border-radius:7px;box-shadow:0 12px 36px #000a;color:#dce4f4;padding:12px 14px}
+.nexora-mg-chart .mg-timeframe-menu header{display:flex;align-items:center;justify-content:space-between;margin:0 0 10px;font-size:12px;color:#92a8cb}
+.nexora-mg-chart .mg-timeframe-menu header:not(:first-child){margin-top:18px}
+.nexora-mg-chart .mg-timeframe-menu header span{font-size:10px;color:#929aaa}
+.nexora-mg-chart .mg-pin-edit{background:transparent;border:0;color:#3d6bff;font-size:12px;cursor:pointer}
+.nexora-mg-chart .mg-timeframe-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+.nexora-mg-chart .mg-timeframe-grid button{padding:7px 4px;border:1px solid #303846;border-radius:4px;background:#1b2029;color:#e8edf7;cursor:pointer;font-weight:600;font-size:12px}
+.nexora-mg-chart .mg-timeframe-grid button.selected{background:#263b68;border-color:#3d6bff}
+.nexora-mg-chart .mg-timeframe-grid button:hover:not(:disabled){border-color:#5865f2;background:#27354a}
+.nexora-mg-chart .mg-timeframe-grid button:disabled{opacity:.32;cursor:not-allowed}
+.nexora-mg-chart .mg-pin-hint{margin:12px 0 0;font-size:11px;color:#929aaa}
