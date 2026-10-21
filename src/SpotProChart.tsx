@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { Chart, darkTheme, lightTheme, sma, ema, bollingerBands, vwap, ichimoku, supertrend, sar, envelope, emaRibbon, twap, smc, rsi, macd, stochastic, atr, obv, adx, mfi, williamsR, roc, cvd } from '@mg-exchange/charts';
 import type { Bar, Datafeed, Timeframe, Indicator, ChartType } from '@mg-exchange/charts';
 import type { SpotPair } from './spot-markets';
+import type { BookState } from './useBybitSpotBook';
+import DepthChart from './DepthChart';
 import './SpotProChart.css';
 
 type BybitRow = [string,string,string,string,string,string,string,...unknown[]];
@@ -224,7 +226,7 @@ function CompanionChart({symbol,timeframe,index}:{symbol:string;timeframe:Timefr
  },[symbol,timeframe]);
  return <div className="nx-multi-cell"><div className="nx-multi-label">{symbol} · {timeframe} · {index+1}</div><div ref={mount} className="nx-multi-chart-mount"/></div>;
 }
-export default function SpotProChart({pair,frame,livePrice}:{pair:SpotPair;frame:string;livePrice:number|null}){
+export default function SpotProChart({pair,frame,livePrice,book}:{pair:SpotPair;frame:string;livePrice:number|null;book:BookState}){
  const [multiLayout,setMultiLayout]=useState<MultiLayout>(()=>{
   try{const n=Number(localStorage.getItem(multiLayoutKey));return n>=1&&n<=5?n as MultiLayout:1}catch{return 1}
  });
@@ -420,7 +422,8 @@ export default function SpotProChart({pair,frame,livePrice}:{pair:SpotPair;frame
      <button type="button" title="Zoom out of candles" aria-label="Zoom out" onClick={()=>chart.current?.zoomOut(1.25)}>−</button>
     </div></div>
     </div>
-    <div className={'nx-multi-chart-area nx-multi-layout-'+multiLayout}>
+    <div className="nx-depth-layer" style={{display:chartViewTab==='Depth'?'block':'none'}}><DepthChart book={book} symbol={pair.symbol}/></div>
+    <div className={'nx-multi-chart-area nx-multi-layout-'+multiLayout} style={{display:chartViewTab==='Depth'?'none':undefined}}>
      <div className="nexora-mg-render nx-multi-primary" ref={holder}/>
      {Array.from({length:multiLayout-1},(_,i)=><CompanionChart key={i} symbol={pair.symbol} timeframe={syncInterval?localFrame:'1H'} index={i+1}/>)}
     </div>
