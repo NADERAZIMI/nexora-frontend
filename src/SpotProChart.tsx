@@ -121,6 +121,22 @@ export default function SpotProChart({pair,frame,livePrice}:{pair:SpotPair;frame
  const [pinned,setPinned]=useState<Timeframe[]>(loadPinned);
  const [timeframeMenu,setTimeframeMenu]=useState(false);
  const [editPinned,setEditPinned]=useState(false);
+ useEffect(()=>{
+  if(!timeframeMenu)return;
+  const onPointerDown=(event:PointerEvent)=>{
+   const target=event.target;
+   if(!(target instanceof Node))return;
+   const panel=root.current?.querySelector('.mg-timeframe-menu');
+   const arrow=root.current?.querySelector('.mg-timeframe-arrow');
+   if(!panel?.contains(target)&&!arrow?.contains(target))setTimeframeMenu(false);
+  };
+  const onContextMenu=()=>setTimeframeMenu(false);
+  const onKeyDown=(event:KeyboardEvent)=>{if(event.key==='Escape')setTimeframeMenu(false)};
+  document.addEventListener('pointerdown',onPointerDown,true);
+  document.addEventListener('contextmenu',onContextMenu,true);
+  document.addEventListener('keydown',onKeyDown);
+  return ()=>{document.removeEventListener('pointerdown',onPointerDown,true);document.removeEventListener('contextmenu',onContextMenu,true);document.removeEventListener('keydown',onKeyDown)};
+ },[timeframeMenu]);
  const vpRef=useRef(false);
  const paramRef=useRef<Record<string,Record<string,number>>>({});
  const key='nexora:mg-chart:'+pair.symbol;
