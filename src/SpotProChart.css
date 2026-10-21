@@ -40,3 +40,15 @@
 .nexora-mg-chart .mg-timeframe-grid button:hover:not(:disabled){border-color:#5865f2;background:#27354a}
 .nexora-mg-chart .mg-timeframe-grid button:disabled{opacity:.32;cursor:not-allowed}
 .nexora-mg-chart .mg-pin-hint{margin:12px 0 0;font-size:11px;color:#929aaa}
+
+/* NEXORA typography and understated selected timeframe */
+.nexora-mg-chart,
+.nexora-mg-chart button,
+.nexora-mg-chart select,
+.nexora-mg-chart input,
+.nexora-mg-chart textarea,
+.nexora-mg-chart label{font-family:'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif}
+.nexora-mg-chart .mg-intervals button.selected,
+.nexora-mg-chart .mg-intervals button.selected:hover,
+.nexora-mg-chart .mg-timeframe-arrow.selected{background:transparent!important;color:#3D6BFF!important;border-color:transparent!important}
+.nexora-mg-chart .mg-timeframe-grid button.selected{background:transparent;color:#3D6BFF;border-color:#3D6BFF}
