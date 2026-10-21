@@ -272,3 +272,22 @@ html[data-nx-theme="light"] .order-percent-track .percentage::-webkit-slider-thu
 /* Consistent desktop viewport gutters without shrinking the trading grid. */
 main{padding-inline:4px}
 @media(max-width:750px){main{padding-inline:3px}}
+
+/* Tight exchange layout: narrow seams and draggable panel boundaries. */
+.topbar{border-bottom:0!important}
+.marketbar{margin-block:2px!important}
+@media(min-width:1201px){
+ .workspace.nx-resizable-workspace{position:relative;display:grid;grid-template-columns:minmax(0,var(--nx-chart-col)) minmax(0,var(--nx-book-col)) minmax(0,var(--nx-trade-col));grid-template-rows:var(--nx-chart-row) minmax(190px,auto);column-gap:2px!important;row-gap:2px!important;align-items:stretch}
+ .nx-resizable-workspace>.chart{grid-column:1;grid-row:1;height:auto;min-height:0}
+ .nx-resizable-workspace>.orderbook{grid-column:2;grid-row:1;height:auto;min-height:0}
+ .nx-resizable-workspace>.tradepanel{grid-column:3;grid-row:1;height:auto;min-height:0}
+ .nx-resizable-workspace>.orders{grid-column:1/4;grid-row:2;height:auto;min-height:190px}
+ .nx-resizable-workspace>.nx-resize-handle{position:absolute;z-index:15;display:flex;align-items:center;justify-content:center;touch-action:none;background:transparent}
+ .nx-resizable-workspace>.nx-resize-chart-book,.nx-resizable-workspace>.nx-resize-book-trade{top:0;height:var(--nx-chart-row);width:10px;transform:translateX(-50%);cursor:col-resize}
+ .nx-resizable-workspace>.nx-resize-orders{left:0;width:100%;height:10px;transform:translateY(-50%);cursor:row-resize}
+ .nx-resizable-workspace>.nx-resize-handle span{display:block;background:#697386;opacity:0;border-radius:6px;transition:opacity .15s}
+ .nx-resizable-workspace>.nx-resize-chart-book span,.nx-resizable-workspace>.nx-resize-book-trade span{width:3px;height:50px}
+ .nx-resizable-workspace>.nx-resize-orders span{width:54px;height:3px}
+ .nx-resizable-workspace>.nx-resize-handle:hover span,.nx-resizable-workspace>.nx-resize-handle:active span{opacity:.95}
+}
+@media(max-width:1200px){.nx-resizable-workspace>.nx-resize-handle{display:none}}
