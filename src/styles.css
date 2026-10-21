@@ -273,51 +273,7 @@ html[data-nx-theme="light"] .order-percent-track .percentage::-webkit-slider-thu
 main{padding-inline:4px}
 @media(max-width:750px){main{padding-inline:3px}}
 
-/* Tight exchange layout: narrow seams and draggable panel boundaries. */
+/* Compact original fixed trading layout; no movable or floating panels. */
 .topbar{border-bottom:0!important}
 .marketbar{margin-block:2px!important}
-@media(min-width:1201px){
- .workspace.nx-resizable-workspace{position:relative;display:grid;grid-template-columns:minmax(0,var(--nx-chart-col)) minmax(0,var(--nx-book-col)) minmax(0,var(--nx-trade-col));grid-template-rows:var(--nx-chart-row) minmax(190px,auto);column-gap:2px!important;row-gap:2px!important;align-items:stretch}
- .nx-resizable-workspace>.chart{grid-column:1;grid-row:1;height:auto;min-height:0}
- .nx-resizable-workspace>.orderbook{grid-column:2;grid-row:1;height:auto;min-height:0}
- .nx-resizable-workspace>.tradepanel{grid-column:3;grid-row:1;height:auto;min-height:0}
- .nx-resizable-workspace>.orders{grid-column:1/4;grid-row:2;height:auto;min-height:190px}
- .nx-resizable-workspace>.nx-resize-handle{position:absolute;z-index:15;display:flex;align-items:center;justify-content:center;touch-action:none;background:transparent}
- .nx-resizable-workspace>.nx-resize-chart-book,.nx-resizable-workspace>.nx-resize-book-trade{top:0;height:var(--nx-chart-row);width:10px;transform:translateX(-50%);cursor:col-resize}
- .nx-resizable-workspace>.nx-resize-orders{left:0;width:100%;height:10px;transform:translateY(-50%);cursor:row-resize}
- .nx-resizable-workspace>.nx-resize-handle span{display:block;background:#697386;opacity:0;border-radius:6px;transition:opacity .15s}
- .nx-resizable-workspace>.nx-resize-chart-book span,.nx-resizable-workspace>.nx-resize-book-trade span{width:3px;height:50px}
- .nx-resizable-workspace>.nx-resize-orders span{width:54px;height:3px}
- .nx-resizable-workspace>.nx-resize-handle:hover span,.nx-resizable-workspace>.nx-resize-handle:active span{opacity:.95}
-}
-@media(max-width:1200px){.nx-resizable-workspace>.nx-resize-handle{display:none}}
-
-/* Dockable trading panels: grab the six-dot handle, drop over another panel. */
-@media(min-width:1201px){
- .nx-resizable-workspace>.nx-dock-panel{position:relative;min-width:0;min-height:0;overflow:hidden}
- .nx-resizable-workspace>.nx-slot-chart{grid-column:1;grid-row:1}
- .nx-resizable-workspace>.nx-slot-book{grid-column:2;grid-row:1}
- .nx-resizable-workspace>.nx-slot-trade{grid-column:3;grid-row:1}
- .nx-resizable-workspace>.nx-slot-orders{grid-column:1/4;grid-row:2}
- .nx-resizable-workspace>.nx-dock-panel>.panel{width:100%;height:100%;min-height:0}
- .nx-resizable-workspace>.nx-dock-panel.nx-drop-target{outline:2px solid var(--nx-blue,#3378FF);outline-offset:-3px}
- .nx-resizable-workspace .nx-dock-grip{position:absolute;right:7px;top:6px;z-index:30;display:grid;place-items:center;width:26px;height:27px;cursor:grab;user-select:none;color:var(--nx-muted,#9BA5B5);font-size:20px;border-radius:4px;opacity:.65}
- .nx-resizable-workspace .nx-dock-grip:hover{color:var(--nx-hover,#EAA343);background:var(--nx-elevated,#15191F);opacity:1}
- .nx-resizable-workspace .nx-dock-grip:active{cursor:grabbing}
-}
-@media(max-width:1200px){
- .nx-resizable-workspace>.nx-dock-panel{display:contents}
- .nx-resizable-workspace .nx-dock-grip{display:none}
-}
-
-/* Floating panel interaction matching the reference: independent, movable and resizable. */
-@media(min-width:1201px){
- .nx-resizable-workspace>.nx-orderbook-container{position:relative;min-width:0;min-height:0}
- .nx-resizable-workspace>.nx-orderbook-container.nx-orderbook-floating{position:absolute!important;grid-column:auto!important;grid-row:auto!important;z-index:50;min-width:245px;min-height:260px;max-width:calc(100% - 8px);max-height:calc(100% - 8px);resize:both;overflow:hidden;border:1px solid var(--nx-border,#29313D);box-shadow:0 12px 30px #000a}
- .nx-orderbook-container>.orderbook{width:100%;height:100%;min-height:0}
- .nx-orderbook-container .nx-float-bar{position:absolute;top:5px;right:5px;display:flex;gap:2px;z-index:55}
- .nx-orderbook-container .nx-float-bar button{min-width:23px;height:26px;padding:0 4px;background:var(--nx-elevated,#15191F);border:1px solid var(--nx-border,#29313D);border-radius:4px;color:var(--nx-muted,#9BA5B5);font-size:14px;cursor:grab}
- .nx-orderbook-container .nx-float-bar button:hover{color:var(--nx-hover,#EAA343)}
- .nx-orderbook-container.nx-orderbook-floating:after{content:"";position:absolute;right:2px;bottom:2px;border-right:2px solid var(--nx-blue,#3378FF);border-bottom:2px solid var(--nx-blue,#3378FF);width:10px;height:10px;pointer-events:none}
-}
-@media(max-width:1200px){.nx-orderbook-container{display:contents}.nx-orderbook-container>.nx-float-bar{display:none}}
+.workspace{gap:2px}
