@@ -99,3 +99,8 @@
 .nexora-mg-chart .mg-chart-type-popover .mg-chart-style-list>button{height:34px!important;min-height:34px!important;max-height:34px!important;padding:6px 10px!important;gap:12px!important;font-size:12px!important;line-height:20px!important}
 .nexora-mg-chart .mg-chart-type-popover .mg-style-icon{flex:0 0 22px!important;width:22px!important;height:22px!important;display:inline-flex;align-items:center;justify-content:center}
 .nexora-mg-chart .mg-chart-type-popover .mg-style-icon svg{display:block;width:20px;height:20px}
+
+/* Tight trading-terminal interval spacing, without reducing click targets vertically. */
+.nexora-mg-chart .mg-intervals{gap:0!important;padding-left:2px!important}
+.nexora-mg-chart .nexora-mg-toolbar .mg-intervals>button{padding:6px 5px!important;min-width:0!important}
+.nexora-mg-chart .nexora-mg-toolbar .mg-intervals>.mg-timeframe-arrow{padding-inline:5px!important;margin-left:1px}
