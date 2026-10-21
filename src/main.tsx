@@ -274,6 +274,19 @@ function ActiveMarket({pair,onSelect,pairs,source,tickers,pricesReady}:{pair:Spo
  const floatingEl=React.useRef<HTMLDivElement>(null);
  const floatDrag=React.useRef<{pointerId:number;x:number;y:number;left:number;top:number}|null>(null);
  React.useEffect(()=>{try{localStorage.setItem('nexora:spot-float-book:v1',JSON.stringify(floatBox))}catch{}},[floatBox]);
+ React.useEffect(()=>{
+  const el=floatingEl.current;if(!el||!floatBox.floating)return;
+  const resizeObserver=new ResizeObserver(()=>{
+   const width=Math.round(el.offsetWidth),height=Math.round(el.offsetHeight);
+   const current=floatRef.current;
+   if(Math.abs(width-current.width)>2||Math.abs(height-current.height)>2){
+    const next={...current,width,height};floatRef.current=next;
+    try{localStorage.setItem('nexora:spot-float-book:v1',JSON.stringify(next))}catch{}
+   }
+  });
+  resizeObserver.observe(el);
+  return()=>resizeObserver.disconnect();
+ },[floatBox.floating]);
  const startFloat=(e:React.PointerEvent<HTMLButtonElement>)=>{
   if(e.button!==0)return;e.preventDefault();e.stopPropagation();
   const container=workspaceRef.current;if(!container)return;
