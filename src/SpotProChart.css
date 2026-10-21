@@ -259,3 +259,9 @@
 .nexora-mg-chart .nx-sync-switch:hover{box-shadow:none;background:#62666b}
 .nexora-mg-chart .nx-sync-switch.is-on:hover{background:var(--nx-hover,#eaa343)}
 .nexora-mg-chart .nx-sync-switch:focus-visible{outline:2px solid var(--nx-hover,#eaa343);outline-offset:2px}
+
+/* Chart view tabs beside the multi-chart square; reference-style text-only controls. */
+.nexora-mg-chart .nexora-mg-toolbar .nx-chart-view-tabs{display:inline-flex;align-items:center;gap:13px;flex:0 0 auto;margin-left:8px;white-space:nowrap}
+.nexora-mg-chart .nexora-mg-toolbar .nx-chart-view-tabs button{padding:3px 0!important;margin:0!important;min-width:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;color:var(--nx-muted,#929AAA)!important;font-size:11px;font-weight:500;line-height:24px}
+.nexora-mg-chart .nexora-mg-toolbar .nx-chart-view-tabs button.active{color:var(--nx-hover,#EAA343)!important;font-weight:600}
+.nexora-mg-chart .nexora-mg-toolbar .nx-chart-view-tabs button:hover{color:var(--nx-hover,#EAA343)!important;background:transparent!important}
