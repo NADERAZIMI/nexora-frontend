@@ -136,3 +136,10 @@
 /* Match the chart canvas with the NEXORA site surface. */
 .nexora-mg-chart,.nexora-mg-chart .nexora-mg-render,.nexora-mg-chart .nexora-mg-stage{background:var(--nx-chart-bg,var(--nx-surface,#101014))}
 
+
+/* Pan and zoom controls with a clear native drag affordance. */
+.nexora-mg-chart .nx-chart-navigation{display:inline-flex;align-items:center;gap:1px;padding-inline:4px;border-inline:1px solid var(--nx-border,#29313D)}
+.nexora-mg-chart .nexora-mg-toolbar .nx-chart-navigation button{padding:3px 6px;min-width:23px;min-height:25px;font-size:17px;line-height:1;background:transparent}
+.nexora-mg-chart .nexora-mg-toolbar .nx-chart-navigation button:hover{color:var(--nx-hover,#EAA343);background:transparent}
+.nexora-mg-chart .nexora-mg-render canvas{touch-action:none;cursor:grab}
+.nexora-mg-chart .nexora-mg-render canvas:active{cursor:grabbing}
