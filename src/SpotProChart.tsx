@@ -161,7 +161,7 @@ export default function SpotProChart({pair,frame,livePrice}:{pair:SpotPair;frame
  const toggleStayDrawing=()=>{const next=!stayDrawing;chart.current?.setStayInDrawingMode(next);setStayDrawing(next)};
  return <div ref={root} className="nexora-mg-chart">
    <div className="nexora-mg-toolbar">
-    <span className="mg-market-label">{pair.base}/{pair.quote}</span>
+    <span className="mg-toolbar-title">Trading Chart</span>
     <div className="mg-intervals">{intervals.map(t=><button key={t} className={t===localFrame?'selected':''} type="button" title={'Switch to '+t} onClick={()=>{chart.current?.setTimeframe(t);setLocalFrame(t)}}>{t}</button>)}</div>
     <select aria-label="Chart type" value={kind} onChange={e=>{const k=e.target.value as ChartType;setKind(k);chart.current?.setChartType(k)}}><option value="candlestick">Candles</option><option value="heikin_ashi">Heikin Ashi</option><option value="bar">OHLC Bars</option><option value="line">Line</option><option value="line_markers">Line with Markers</option><option value="step_line">Step Line</option><option value="area">Area</option><option value="hlc_area">HLC Area</option><option value="baseline">Baseline</option><option value="columns">Columns</option><option value="high_low">High-Low</option><option value="hollow_candle">Hollow Candles</option></select>
     <button type="button" className={indicatorMenu?'selected':''} onClick={()=>{setIndicatorMenu(!indicatorMenu);setDrawMenu(false)}}>Indicators ({chosen.length}) ▾</button>
