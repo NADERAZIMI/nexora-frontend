@@ -194,3 +194,34 @@
  color:inherit!important;
  stroke:currentColor;
 }
+
+/* Multi-chart layouts: same engine in every cell, preserving the main chart instance. */
+.nexora-mg-chart .nx-multi-chart-area{position:relative;flex:1;display:grid;min-width:0;min-height:0;gap:2px;background:var(--nx-bg,#000)}
+.nexora-mg-chart .nx-multi-layout-1{grid-template-columns:minmax(0,1fr)}
+.nexora-mg-chart .nx-multi-layout-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.nexora-mg-chart .nx-multi-layout-3,.nexora-mg-chart .nx-multi-layout-4{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr))}
+.nexora-mg-chart .nx-multi-layout-3>.nx-multi-primary{grid-row:1/3}
+.nexora-mg-chart .nx-multi-layout-5{grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr))}
+.nexora-mg-chart .nx-multi-layout-5>.nx-multi-primary{grid-column:1/3}
+.nexora-mg-chart .nx-multi-chart-area>.nexora-mg-render{flex:auto;min-height:0}
+.nexora-mg-chart .nx-multi-cell{position:relative;min-width:0;min-height:0;overflow:hidden;background:var(--nx-chart-bg,#101014)}
+.nexora-mg-chart .nx-multi-chart-mount{position:absolute;inset:0}
+.nexora-mg-chart .nx-multi-label{position:absolute;z-index:3;top:6px;left:8px;font-size:10px;color:var(--nx-muted,#929AAA);pointer-events:none;opacity:.75}
+.nexora-mg-chart .nexora-mg-toolbar>.nx-chart-multi-trigger{position:relative!important;display:grid!important;place-items:center!important;flex:0 0 28px!important;width:28px!important;height:28px!important;min-width:28px!important;padding:0!important;background:transparent!important;border:0!important;box-shadow:none!important;border-radius:0!important;color:var(--nx-muted,#929AAA)}
+.nexora-mg-chart .nexora-mg-toolbar>.nx-chart-multi-trigger:hover{color:var(--nx-hover,#EAA343)!important;background:transparent!important}
+.nexora-mg-chart .nx-multi-layout-menu{position:absolute;z-index:120;top:37px;right:48px;width:220px;max-height:calc(100% - 45px);overflow-y:auto;padding:12px 10px;background:var(--nx-elevated,#25292d);border:1px solid var(--nx-border,#343943);border-radius:8px;box-shadow:0 12px 28px #0009;color:var(--nx-text,#f4f6fa)}
+.nexora-mg-chart .nx-multi-layout-title{padding:3px 4px 8px;font-size:11px;font-weight:600}
+.nexora-mg-chart .nx-multi-layout-menu .nx-multi-option{display:flex;align-items:center;gap:9px;width:100%;padding:5px 8px;background:transparent;border:0;color:var(--nx-muted,#929AAA);text-align:left;cursor:pointer}
+.nexora-mg-chart .nx-multi-layout-menu .nx-multi-option:hover{color:var(--nx-hover,#EAA343);background:transparent}
+.nexora-mg-chart .nx-multi-layout-menu .nx-multi-option.active{color:var(--nx-text,#f4f6fa)}
+.nexora-mg-chart .nx-mini-layout{width:58px;height:23px;display:grid;gap:2px;grid-template-columns:repeat(2,1fr)}
+.nexora-mg-chart .nx-mini-layout i{border:1px solid currentColor;border-radius:2px;opacity:.7}
+.nexora-mg-chart .nx-mini-layout-1{grid-template-columns:1fr}
+.nexora-mg-chart .nx-mini-layout-3 i:first-child{grid-row:span 2}
+.nexora-mg-chart .nx-mini-layout-5{grid-template-columns:repeat(3,1fr)}
+.nexora-mg-chart .nx-mini-layout-5 i:first-child{grid-column:span 2}
+.nexora-mg-chart .nx-multi-divider{margin-top:8px;border-top:1px solid var(--nx-border,#343943);padding-top:10px}
+.nexora-mg-chart .nx-multi-toggle{display:flex;justify-content:space-between;align-items:center;padding:6px 4px;font-size:11px}
+.nexora-mg-chart .nx-multi-toggle input{accent-color:var(--nx-hover,#EAA343)}
+.nexora-mg-chart .nx-multi-toggle input:disabled{opacity:.55}
+.nexora-mg-chart .nx-multi-layout-note{padding:9px 4px 2px;font-size:10px;line-height:1.5;color:var(--nx-muted,#929AAA)}
