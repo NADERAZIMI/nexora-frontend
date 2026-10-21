@@ -134,5 +134,5 @@
 .nexora-mg-chart .nexora-mg-rail>button.mg-rail-trash{border-top:1px solid #30343c;border-radius:0;margin-top:5px}
 
 /* Match the chart canvas with the NEXORA site surface. */
-.nexora-mg-chart,.nexora-mg-chart .nexora-mg-render,.nexora-mg-chart .nexora-mg-stage{background:#101014}
-html[data-nx-theme="light"] .nexora-mg-chart,html[data-nx-theme="light"] .nexora-mg-chart .nexora-mg-render,html[data-nx-theme="light"] .nexora-mg-chart .nexora-mg-stage{background:#FFFFFF}
+.nexora-mg-chart,.nexora-mg-chart .nexora-mg-render,.nexora-mg-chart .nexora-mg-stage{background:var(--nx-surface,#101014)}
+
