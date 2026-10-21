@@ -54,7 +54,7 @@
 .nexora-mg-chart .mg-timeframe-grid button.selected{background:transparent;color:#3D6BFF;border-color:#3D6BFF}
 
 /* Timeframe shortcuts: no boxes on hover, selected, focus or keyboard focus. */
-.nexora-mg-chart .mg-intervals{padding-left:10px;gap:5px}
+.nexora-mg-chart .mg-intervals{padding-left:3px;gap:5px}
 .nexora-mg-chart .mg-intervals button,
 .nexora-mg-chart .mg-intervals button.selected,
 .nexora-mg-chart .mg-intervals button:hover,
