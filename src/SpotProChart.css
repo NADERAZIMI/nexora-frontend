@@ -1,4 +1,4 @@
-.nexora-mg-chart{position:relative;display:flex;flex-direction:column;width:100%;height:100%;min-height:360px;background:var(--nx-surface,#101014);color:var(--nx-text,#F4F6FA);font:12px system-ui,sans-serif}.nexora-mg-toolbar{height:37px;flex:0 0 37px;display:flex;align-items:center;gap:5px;padding:0 8px;border-bottom:1px solid #252831;white-space:nowrap;overflow-x:auto}.nexora-mg-toolbar button,.nexora-mg-toolbar select,.nexora-mg-rail button{background:none;color:#9fa8bb;border:0;border-radius:4px;padding:6px 9px;cursor:pointer;font:inherit}.nexora-mg-toolbar button:hover,.nexora-mg-toolbar button.selected,.nexora-mg-rail button:hover,.nexora-mg-rail button.selected{color:#F4F6FA;background:#263a64}.nexora-mg-toolbar select{color:#F4F6FA;background:#161920;border:1px solid #30343c}.mg-market-label{font-weight:700;margin-right:8px;color:#F4F6FA}.mg-intervals{display:flex;align-items:center;gap:1px}.mg-intervals button:disabled{opacity:.52;cursor:default}.mg-intervals button.selected:disabled{opacity:1;color:#4788ff}.mg-toolbar-spacer{flex:1}.nexora-mg-stage{position:relative;flex:1;min-height:300px;display:flex;overflow:hidden}.nexora-mg-rail{width:38px;flex:0 0 38px;display:flex;flex-direction:column;align-items:stretch;gap:5px;border-right:1px solid #252831;padding:6px 2px;background:#15191f}.nexora-mg-rail button{font-size:17px;min-height:31px;padding:4px}.nexora-mg-render{position:relative;flex:1;min-width:0;min-height:300px;overflow:hidden}.nexora-mg-footer{height:22px;flex:0 0 22px;display:flex;align-items:center;justify-content:space-between;color:#808a9f;border-top:1px solid #252831;padding:0 9px;font-size:10px}.nexora-mg-popover{z-index:20;position:absolute;top:8px;left:46px;width:min(370px,calc(100% - 55px));max-height:min(540px,calc(100% - 18px));display:flex;flex-direction:column;background:#161b24;color:#e8ebf4;border:1px solid #3b4658;border-radius:7px;box-shadow:0 15px 40px #0009}.nexora-mg-popover header{padding:12px 14px;display:flex;justify-content:space-between;border-bottom:1px solid #303643}.nexora-mg-popover header button{cursor:pointer;border:0;background:none;color:#dfe6f3;font-size:18px}.nexora-mg-popover input{margin:9px;padding:8px 11px;background:#0d1015;border:1px solid #303643;border-radius:4px;color:#f0f3fa}.nexora-mg-options{overflow:auto;padding:4px 8px 12px}.nexora-mg-options h4{margin:10px 7px 4px;color:#778bb3;font-size:11px;font-weight:700;text-transform:uppercase}.nexora-mg-options button{width:100%;border:none;border-radius:4px;background:transparent;text-align:left;color:#dfe4ef;cursor:pointer;padding:8px 10px;display:flex;justify-content:space-between;font-size:12px}.nexora-mg-options button:hover,.nexora-mg-options button.selected{background:#203256;color:#fff}.nexora-mg-error{position:absolute;top:46px;right:8px;z-index:18;padding:13px;max-width:440px;background:#3a1922;color:#ffdfe5;border:1px solid #F05A70;border-radius:5px}.nexora-mg-error button{margin-left:10px;background:none;border:1px solid currentColor;color:inherit;border-radius:3px;cursor:pointer}@media(max-width:750px){.nexora-mg-toolbar{gap:3px}.nexora-mg-toolbar button{padding:5px}.nexora-mg-footer{font-size:9px}}
+.nexora-mg-chart{position:relative;display:flex;flex-direction:column;width:100%;height:100%;min-height:360px;background:var(--nx-surface,#101014);color:var(--nx-text,#F4F6FA);font:12px system-ui,sans-serif}.nexora-mg-toolbar{height:37px;flex:0 0 37px;display:flex;align-items:center;gap:5px;padding:0 8px;border-bottom:1px solid #252831;white-space:nowrap;overflow-x:auto}.nexora-mg-toolbar button,.nexora-mg-toolbar select,.nexora-mg-rail button{background:none;color:#9fa8bb;border:0;border-radius:4px;padding:6px 9px;cursor:pointer;font:inherit}.nexora-mg-toolbar button:hover,.nexora-mg-toolbar button.selected,.nexora-mg-rail button:hover,.nexora-mg-rail button.selected{color:#F4F6FA;background:#263a64}.nexora-mg-toolbar select{color:#F4F6FA;background:var(--nx-elevated,#161920);border:1px solid #30343c}.mg-market-label{font-weight:700;margin-right:8px;color:#F4F6FA}.mg-intervals{display:flex;align-items:center;gap:1px}.mg-intervals button:disabled{opacity:.52;cursor:default}.mg-intervals button.selected:disabled{opacity:1;color:#4788ff}.mg-toolbar-spacer{flex:1}.nexora-mg-stage{position:relative;flex:1;min-height:300px;display:flex;overflow:hidden}.nexora-mg-rail{width:38px;flex:0 0 38px;display:flex;flex-direction:column;align-items:stretch;gap:5px;border-right:1px solid #252831;padding:6px 2px;background:var(--nx-elevated,#15191f)}.nexora-mg-rail button{font-size:17px;min-height:31px;padding:4px}.nexora-mg-render{position:relative;flex:1;min-width:0;min-height:300px;overflow:hidden}.nexora-mg-footer{height:22px;flex:0 0 22px;display:flex;align-items:center;justify-content:space-between;color:#808a9f;border-top:1px solid #252831;padding:0 9px;font-size:10px}.nexora-mg-popover{z-index:20;position:absolute;top:8px;left:46px;width:min(370px,calc(100% - 55px));max-height:min(540px,calc(100% - 18px));display:flex;flex-direction:column;background:var(--nx-elevated,#161b24);color:#e8ebf4;border:1px solid #3b4658;border-radius:7px;box-shadow:0 15px 40px #0009}.nexora-mg-popover header{padding:12px 14px;display:flex;justify-content:space-between;border-bottom:1px solid #303643}.nexora-mg-popover header button{cursor:pointer;border:0;background:none;color:#dfe6f3;font-size:18px}.nexora-mg-popover input{margin:9px;padding:8px 11px;background:var(--nx-elevated,#0d1015);border:1px solid #303643;border-radius:4px;color:#f0f3fa}.nexora-mg-options{overflow:auto;padding:4px 8px 12px}.nexora-mg-options h4{margin:10px 7px 4px;color:#778bb3;font-size:11px;font-weight:700;text-transform:uppercase}.nexora-mg-options button{width:100%;border:none;border-radius:4px;background:transparent;text-align:left;color:#dfe4ef;cursor:pointer;padding:8px 10px;display:flex;justify-content:space-between;font-size:12px}.nexora-mg-options button:hover,.nexora-mg-options button.selected{background:#203256;color:#fff}.nexora-mg-error{position:absolute;top:46px;right:8px;z-index:18;padding:13px;max-width:440px;background:#3a1922;color:#ffdfe5;border:1px solid #F05A70;border-radius:5px}.nexora-mg-error button{margin-left:10px;background:none;border:1px solid currentColor;color:inherit;border-radius:3px;cursor:pointer}@media(max-width:750px){.nexora-mg-toolbar{gap:3px}.nexora-mg-toolbar button{padding:5px}.nexora-mg-footer{font-size:9px}}
 /* MG expanded controls — scoped to chart to protect the trading page */
 .nexora-mg-chart .mg-indicator-row{display:flex;align-items:center;gap:2px;min-height:32px}
 .nexora-mg-chart .mg-indicator-row>button:first-child,.nexora-mg-chart .mg-indicator-row>button:last-child{flex:0 0 32px;text-align:center;padding:7px 3px;color:#9fa8bb}
@@ -6,9 +6,9 @@
 .nexora-mg-chart .mg-settings-popover{z-index:24}
 .nexora-mg-chart .mg-settings-popover form{display:flex;flex-direction:column;gap:10px;padding:12px}
 .nexora-mg-chart .mg-settings-popover label{display:flex;justify-content:space-between;align-items:center;gap:16px}
-.nexora-mg-chart .mg-settings-popover input{max-width:110px;padding:6px;background:#101014;border:1px solid #30343c;border-radius:4px;color:#f4f6fa}
+.nexora-mg-chart .mg-settings-popover input{max-width:110px;padding:6px;background:var(--nx-elevated,#101014);border:1px solid #30343c;border-radius:4px;color:#f4f6fa}
 .nexora-mg-chart .mg-settings-popover form>button{background:#3d6bff;color:white;border:0;padding:8px;border-radius:4px;cursor:pointer}
-.nexora-mg-chart .nexora-mg-objects{position:absolute;right:0;top:0;bottom:0;width:min(320px,70%);z-index:22;background:#101014;border-left:1px solid #30343c;display:flex;flex-direction:column;box-shadow:-5px 0 20px #0005}
+.nexora-mg-chart .nexora-mg-objects{position:absolute;right:0;top:0;bottom:0;width:min(320px,70%);z-index:22;background:var(--nx-elevated,#101014);border-left:1px solid #30343c;display:flex;flex-direction:column;box-shadow:-5px 0 20px #0005}
 .nexora-mg-chart .nexora-mg-objects header{display:flex;align-items:center;justify-content:space-between;padding:12px;border-bottom:1px solid #30343c}
 .nexora-mg-chart .nexora-mg-objects .nexora-mg-options{overflow-y:auto;flex:1;padding:8px}
 .nexora-mg-chart .mg-object-row{display:flex;align-items:center;justify-content:space-between;gap:5px;padding:7px 4px;border-bottom:1px solid #252831}
@@ -18,7 +18,7 @@
 .nexora-mg-chart .mg-object-row button:hover{color:#f4f6fa;background:#263a64}
 
 .nexora-mg-chart .mg-sidebar-form{display:flex;gap:6px;padding:12px;border-bottom:1px solid #30343c}
-.nexora-mg-chart .mg-sidebar-form input{min-width:0;flex:1;background:#080808;border:1px solid #30343c;color:#f4f6fa;padding:8px;border-radius:4px}
+.nexora-mg-chart .mg-sidebar-form input{min-width:0;flex:1;background:var(--nx-elevated,#080808);border:1px solid #30343c;color:#f4f6fa;padding:8px;border-radius:4px}
 .nexora-mg-chart .mg-sidebar-form button{background:#3d6bff;color:#fff;border:0;border-radius:4px;padding:7px;cursor:pointer}
 
 /* Unified single-row chart toolbar: replaces the old Trading Chart strip. */
@@ -29,13 +29,13 @@
 
 /* Configurable timeframe picker (single chart toolbar) */
 .nexora-mg-chart .mg-timeframe-arrow{min-width:26px;font-size:14px;padding-inline:6px}
-.nexora-mg-chart .mg-timeframe-menu{position:absolute;top:4px;left:8px;z-index:35;width:min(330px,calc(100% - 16px));max-height:calc(100% - 12px);overflow-y:auto;background:#161b24;border:1px solid #343d4c;border-radius:7px;box-shadow:0 12px 36px #000a;color:#dce4f4;padding:12px 14px}
+.nexora-mg-chart .mg-timeframe-menu{position:absolute;top:4px;left:8px;z-index:35;width:min(330px,calc(100% - 16px));max-height:calc(100% - 12px);overflow-y:auto;background:var(--nx-elevated,#161b24);border:1px solid #343d4c;border-radius:7px;box-shadow:0 12px 36px #000a;color:#dce4f4;padding:12px 14px}
 .nexora-mg-chart .mg-timeframe-menu header{display:flex;align-items:center;justify-content:space-between;margin:0 0 10px;font-size:12px;color:#92a8cb}
 .nexora-mg-chart .mg-timeframe-menu header:not(:first-child){margin-top:18px}
 .nexora-mg-chart .mg-timeframe-menu header span{font-size:10px;color:#929aaa}
 .nexora-mg-chart .mg-pin-edit{background:transparent;border:0;color:#3d6bff;font-size:12px;cursor:pointer}
 .nexora-mg-chart .mg-timeframe-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
-.nexora-mg-chart .mg-timeframe-grid button{padding:7px 4px;border:1px solid #303846;border-radius:4px;background:#1b2029;color:#e8edf7;cursor:pointer;font-weight:600;font-size:12px}
+.nexora-mg-chart .mg-timeframe-grid button{padding:7px 4px;border:1px solid #303846;border-radius:4px;background:var(--nx-elevated,#1b2029);color:#e8edf7;cursor:pointer;font-weight:600;font-size:12px}
 .nexora-mg-chart .mg-timeframe-grid button.selected{background:#263b68;border-color:#3d6bff}
 .nexora-mg-chart .mg-timeframe-grid button:hover:not(:disabled){border-color:#5865f2;background:#27354a}
 .nexora-mg-chart .mg-timeframe-grid button:disabled{opacity:.32;cursor:not-allowed}
@@ -81,7 +81,7 @@
 .nexora-mg-chart .mg-chart-type-popover{left:clamp(48px,22%,290px);width:min(235px,calc(100% - 55px))}
 
 /* Narrow icon-led chart style popup aligned directly below the candle button. */
-.nexora-mg-chart .mg-chart-type-popover{position:absolute;left:calc(3px + min(8,8) * 35px);top:0;width:154px;min-width:154px;max-height:min(380px,calc(100% - 8px));overflow-y:auto;padding:4px;background:#24282e;border:1px solid #353a43;border-radius:7px;box-shadow:0 9px 24px #0009}
+.nexora-mg-chart .mg-chart-type-popover{position:absolute;left:calc(3px + min(8,8) * 35px);top:0;width:154px;min-width:154px;max-height:min(380px,calc(100% - 8px));overflow-y:auto;padding:4px;background:var(--nx-elevated,#24282e);border:1px solid #353a43;border-radius:7px;box-shadow:0 9px 24px #0009}
 .nexora-mg-chart .mg-chart-style-list{display:flex;flex-direction:column;gap:1px}
 .nexora-mg-chart .mg-chart-style-list button{display:flex;gap:10px;align-items:center;width:100%;min-height:28px;padding:6px 8px;background:transparent;color:#e5e8ef;border:0;border-radius:4px;text-align:left;font-size:11px;white-space:nowrap;cursor:pointer}
 .nexora-mg-chart .mg-chart-style-list button:hover{background:#343940;color:#EAA343}
@@ -106,7 +106,7 @@
 .nexora-mg-chart .nexora-mg-toolbar .mg-intervals>.mg-timeframe-arrow{padding-inline:5px!important;margin-left:1px}
 
 /* Drawing groups open beside the left drawing rail, never from the top bar. */
-.nexora-mg-chart .mg-rail-flyout{position:absolute;left:40px;top:6px;z-index:48;width:205px;max-height:calc(100% - 12px);display:flex;flex-direction:column;background:#1a1e26;border:1px solid #343b47;border-radius:6px;box-shadow:0 8px 26px #0008;overflow:hidden}
+.nexora-mg-chart .mg-rail-flyout{position:absolute;left:40px;top:6px;z-index:48;width:205px;max-height:calc(100% - 12px);display:flex;flex-direction:column;background:var(--nx-elevated,#1a1e26);border:1px solid #343b47;border-radius:6px;box-shadow:0 8px 26px #0008;overflow:hidden}
 .nexora-mg-chart .mg-rail-flyout header{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;font-weight:600;border-bottom:1px solid #313743}
 .nexora-mg-chart .mg-rail-flyout header button{background:transparent;color:var(--nx-muted);border:0;cursor:pointer;font-size:17px}
 .nexora-mg-chart .mg-rail-flyout-items{overflow-y:auto;padding:4px;min-height:0}
@@ -117,11 +117,11 @@
 /* All MG drawing tools remain discoverable from the left rail. */
 .nexora-mg-chart .nexora-mg-rail{overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:#353c4b transparent}
 .nexora-mg-chart .mg-rail-flyout{width:250px;max-height:calc(100% - 12px)}
-.nexora-mg-chart .mg-rail-search{margin:8px;padding:9px 10px;background:#0d1015;border:1px solid #343b47;border-radius:4px;color:#f4f6fa;outline:none}
+.nexora-mg-chart .mg-rail-search{margin:8px;padding:9px 10px;background:var(--nx-elevated,#0d1015);border:1px solid #343b47;border-radius:4px;color:#f4f6fa;outline:none}
 .nexora-mg-chart .mg-rail-search:focus{border-color:var(--nx-blue)}
 .nexora-mg-chart .mg-rail-flyout-items h4{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#8997b1;margin:12px 10px 5px}
 .nexora-mg-chart .mg-rail-actions{display:flex;gap:4px;padding:8px;border-top:1px solid #343b47}
-.nexora-mg-chart .mg-rail-actions button{flex:1;padding:7px 3px;color:#c4cbda;background:#242936;border-radius:4px;font-size:11px;cursor:pointer}
+.nexora-mg-chart .mg-rail-actions button{flex:1;padding:7px 3px;color:#c4cbda;background:var(--nx-elevated,#242936);border-radius:4px;font-size:11px;cursor:pointer}
 .nexora-mg-chart .mg-rail-actions button:hover{color:var(--nx-hover)}
 
 /* Professional always-visible drawing shortcuts. Full MG tool catalog remains in All Drawing Tools. */
