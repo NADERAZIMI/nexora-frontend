@@ -346,7 +346,7 @@ export default function SpotProChart({pair,frame,livePrice}:{pair:SpotPair;frame
     <button type="button" className={indicatorMenu?'selected mg-compact-icon':'mg-compact-icon'} aria-label="Indicators" title="Indicators" aria-expanded={indicatorMenu} onClick={()=>{setIndicatorMenu(v=>!v);setChartTypeMenu(false);setTimeframeMenu(false);setDrawMenu(false)}}><svg viewBox="0 0 24 24" aria-hidden="true" width="19" height="19" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M3 18h18M5 15l4-5 4 3 6-8"/><path d="M16 5h3v3"/></svg></button>
     
     <button type="button" className={vp?'selected':''} onClick={toggleVP}>Volume Profile</button>
-    <button type="button" className={magnet?'selected':''} onClick={toggleMagnet}>Magnet</button>
+
     <button type="button" className={stayDrawing?'selected':''} onClick={toggleStayDrawing}>Keep Tool</button>
     <button type="button" className={objectsOpen?'selected':''} onClick={()=>setObjectsOpen(v=>!v)}>Objects</button>
     <button type="button" className={alertsOpen?'selected':''} onClick={()=>setAlertsOpen(v=>!v)}>Alerts</button>
