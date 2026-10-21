@@ -151,3 +151,6 @@
 
 /* Pin fullscreen action to the visible plot stage, above the time-axis corner. */
 .nexora-mg-chart .nexora-mg-stage>.nx-chart-fullscreen{position:absolute!important;right:12px!important;bottom:36px!important;top:auto!important;left:auto!important;z-index:100!important;width:30px;height:30px;opacity:1!important;color:var(--nx-text,#F4F6FA);background:var(--nx-elevated,#15191F);box-shadow:0 1px 6px #0008;flex:none}
+
+/* The fullscreen icon belongs in the top chart toolbar, anchored to its right edge. */
+.nexora-mg-chart .nexora-mg-toolbar>.nx-chart-fullscreen{position:sticky!important;right:0!important;top:auto!important;bottom:auto!important;left:auto!important;z-index:30!important;flex:0 0 30px;margin-left:auto;width:30px;height:29px;min-width:30px;opacity:1!important;display:grid;place-items:center;background:var(--nx-elevated,#15191F);border:1px solid var(--nx-border,#29313D);color:var(--nx-text,#F4F6FA)}
