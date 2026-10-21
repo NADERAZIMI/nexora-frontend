@@ -372,7 +372,6 @@ export default function SpotProChart({pair,frame,livePrice,book}:{pair:SpotPair;
     <button type="button" className={compareOpen?'selected':''} onClick={()=>setCompareOpen(v=>!v)}>Compare</button>
     <div className="mg-toolbar-spacer"/>
 
-    <button type="button" onClick={()=>chart.current?.goToLive()} title="Go to live price">Live</button>
     <div className="nx-chart-view-tabs" role="tablist" aria-label="Chart view modes">{(['Standard','TradingView','Depth'] as const).map(view=><button key={view} type="button" role="tab" aria-selected={chartViewTab===view} className={chartViewTab===view?'active':''} onClick={()=>setChartViewTab(view)}>{view}</button>)}</div>
     <button type="button" className={'nx-chart-volume-profile'+(vp?' selected':'')} aria-pressed={vp} onClick={toggleVP}>Volume Profile</button>
     <button type="button" className="nx-chart-multi-trigger" aria-label="Chart layout" aria-expanded={multiMenu} title="Chart layout" onClick={()=>setMultiMenu(v=>!v)}><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.6"><rect x="4" y="4" width="16" height="16" rx="3"/></svg></button>
@@ -422,6 +421,7 @@ export default function SpotProChart({pair,frame,livePrice,book}:{pair:SpotPair;
      <button type="button" title="Zoom out of candles" aria-label="Zoom out" onClick={()=>chart.current?.zoomOut(1.25)}>−</button>
     </div></div>
     </div>
+    {chartViewTab!=='Depth'&&<button type="button" className="nx-chart-live-jump" aria-label="Return to live market" title="Go to live" onClick={()=>chart.current?.goToLive()}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 6l6 6-6 6M12 6l6 6-6 6"/></svg></button>}
     <div className="nx-depth-layer" style={{display:chartViewTab==='Depth'?'block':'none'}}><DepthChart book={book} symbol={pair.symbol}/></div>
     <div className={'nx-multi-chart-area nx-multi-layout-'+multiLayout} style={{display:chartViewTab==='Depth'?'none':undefined}}>
      <div className="nexora-mg-render nx-multi-primary" ref={holder}/>
