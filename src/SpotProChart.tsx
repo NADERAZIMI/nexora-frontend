@@ -7,7 +7,7 @@ import './SpotProChart.css';
 type BybitRow = [string,string,string,string,string,string,string,...unknown[]];
 const intervalMap: Record<string,string> = {'1m':'1','3m':'3','5m':'5','15m':'15','30m':'30','1H':'60','2H':'120','4H':'240','6H':'360','12H':'720','1D':'D','3D':'3D','1W':'W','1M':'M'};
 const intervals: Timeframe[] = ['1m','3m','5m','15m','30m','1H','2H','4H','6H','12H','1D','3D','1W','1M'];
-const defaultPinned:Timeframe[]=['1m','5m','15m','30m','1H'];
+const defaultPinned:Timeframe[]=['1m','5m','15m','30m','1H','4H'];
 const pinnedKey='nexora:mg-chart:pinned-timeframes';
 const loadPinned=():Timeframe[]=>{try{const raw=JSON.parse(localStorage.getItem(pinnedKey)||'null');return Array.isArray(raw)&&raw.length>0?raw.filter((v:unknown,i:number)=>typeof v==='string'&&intervals.includes(v as Timeframe)&&raw.indexOf(v)===i).slice(0,8):defaultPinned}catch{return defaultPinned}};
 const indicatorList: {key:string;label:string;indicator:Indicator}[] = [
