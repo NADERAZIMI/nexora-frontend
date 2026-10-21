@@ -309,3 +309,15 @@ main{padding-inline:4px}
  .nx-resizable-workspace>.nx-dock-panel{display:contents}
  .nx-resizable-workspace .nx-dock-grip{display:none}
 }
+
+/* Floating panel interaction matching the reference: independent, movable and resizable. */
+@media(min-width:1201px){
+ .nx-resizable-workspace>.nx-orderbook-container{position:relative;min-width:0;min-height:0}
+ .nx-resizable-workspace>.nx-orderbook-container.nx-orderbook-floating{position:absolute!important;grid-column:auto!important;grid-row:auto!important;z-index:50;min-width:245px;min-height:260px;max-width:calc(100% - 8px);max-height:calc(100% - 8px);resize:both;overflow:hidden;border:1px solid var(--nx-border,#29313D);box-shadow:0 12px 30px #000a}
+ .nx-orderbook-container>.orderbook{width:100%;height:100%;min-height:0}
+ .nx-orderbook-container .nx-float-bar{position:absolute;top:5px;right:5px;display:flex;gap:2px;z-index:55}
+ .nx-orderbook-container .nx-float-bar button{min-width:23px;height:26px;padding:0 4px;background:var(--nx-elevated,#15191F);border:1px solid var(--nx-border,#29313D);border-radius:4px;color:var(--nx-muted,#9BA5B5);font-size:14px;cursor:grab}
+ .nx-orderbook-container .nx-float-bar button:hover{color:var(--nx-hover,#EAA343)}
+ .nx-orderbook-container.nx-orderbook-floating:after{content:"";position:absolute;right:2px;bottom:2px;border-right:2px solid var(--nx-blue,#3378FF);border-bottom:2px solid var(--nx-blue,#3378FF);width:10px;height:10px;pointer-events:none}
+}
+@media(max-width:1200px){.nx-orderbook-container{display:contents}.nx-orderbook-container>.nx-float-bar{display:none}}
