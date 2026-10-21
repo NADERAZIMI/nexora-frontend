@@ -26,5 +26,5 @@ html[data-nx-customized="true"] .panel,html[data-nx-customized="true"] .marketba
 html[data-nx-customized="true"] .primary{background:var(--nx-blue)}
 html[data-nx-customized="true"] .market-up{color:var(--nx-positive)}
 html[data-nx-customized="true"] .market-down{color:var(--nx-negative)}
-html[data-nx-customized="true"] .workspace{gap:clamp(3px,var(--nx-user-density,8px),18px)}
+html[data-nx-customized="true"] .workspace{gap:2px}
 html[data-nx-customized="true"] .chart{min-height:var(--nx-user-chart-height,600px)}
