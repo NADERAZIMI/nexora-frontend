@@ -229,6 +229,7 @@ export default function SpotProChart({pair,frame,livePrice}:{pair:SpotPair;frame
   try{const n=Number(localStorage.getItem(multiLayoutKey));return n>=1&&n<=5?n as MultiLayout:1}catch{return 1}
  });
  const [multiMenu,setMultiMenu]=useState(false);
+ const [chartViewTab,setChartViewTab]=useState<'Standard'|'TradingView'|'Depth'>('TradingView');
  const [syncInterval,setSyncInterval]=useState(true);
  const changeMulti=(count:MultiLayout)=>{setMultiLayout(count);setMultiMenu(false);try{localStorage.setItem(multiLayoutKey,String(count))}catch{}};
  const holder=useRef<HTMLDivElement>(null);
@@ -381,6 +382,7 @@ export default function SpotProChart({pair,frame,livePrice}:{pair:SpotPair;frame
      <button type="button" title="Zoom out of candles" aria-label="Zoom out" onClick={()=>chart.current?.zoomOut(1.25)}>−</button>
     </div>
     <button type="button" onClick={()=>chart.current?.goToLive()} title="Go to live price">Live</button>
+    <div className="nx-chart-view-tabs" role="tablist" aria-label="Chart view modes">{(['Standard','TradingView','Depth'] as const).map(view=><button key={view} type="button" role="tab" aria-selected={chartViewTab===view} className={chartViewTab===view?'active':''} onClick={()=>setChartViewTab(view)}>{view}</button>)}</div>
     <button type="button" className="nx-chart-multi-trigger" aria-label="Chart layout" aria-expanded={multiMenu} title="Chart layout" onClick={()=>setMultiMenu(v=>!v)}><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.6"><rect x="4" y="4" width="16" height="16" rx="3"/></svg></button>
     <button type="button" className="nx-chart-screenshot" aria-label="Take chart screenshot" title="Screenshot" onClick={()=>chart.current?.exportPNG('NEXORA-'+pair.symbol+'.png')}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 7h3l2-2h6l2 2h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1Z"/><circle cx="12" cy="13" r="3.4"/></svg></button>
     <button type="button" className="nx-chart-fullscreen" aria-label="Toggle chart fullscreen" title="Fullscreen chart" onClick={toggleFullscreen}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 3H3v6M3 3l7 7M15 21h6v-6m0 6-7-7"/></svg></button>
