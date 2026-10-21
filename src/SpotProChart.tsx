@@ -11,7 +11,7 @@ const defaultPinned:Timeframe[]=['1m','5m','15m','30m','1H','4H'];
 const chartFont='"Inter",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif';
 const nxTheme=(light:boolean)=>({... (light?lightTheme:darkTheme),fontFamily:chartFont});
 const pinnedKey='nexora:mg-chart:pinned-timeframes';
-const loadPinned=():Timeframe[]=>{try{const raw=JSON.parse(localStorage.getItem(pinnedKey)||'null');return Array.isArray(raw)&&raw.length>0?raw.filter((v:unknown,i:number)=>typeof v==='string'&&intervals.includes(v as Timeframe)&&raw.indexOf(v)===i).slice(0,8):defaultPinned}catch{return defaultPinned}};
+const loadPinned=():Timeframe[]=>{try{const raw=JSON.parse(localStorage.getItem(pinnedKey)||'null');if(Array.isArray(raw)&&raw.length===5&&raw.every((v:unknown,i:number)=>v===defaultPinned[i])){localStorage.setItem(pinnedKey,JSON.stringify(defaultPinned));return defaultPinned}return Array.isArray(raw)&&raw.length>0?raw.filter((v:unknown,i:number)=>typeof v==='string'&&intervals.includes(v as Timeframe)&&raw.indexOf(v)===i).slice(0,8):defaultPinned}catch{return defaultPinned}};
 const indicatorList: {key:string;label:string;indicator:Indicator}[] = [
  {key:'SMA',label:'Simple Moving Average',indicator:sma},{key:'EMA',label:'Exponential Moving Average',indicator:ema},
  {key:'BB',label:'Bollinger Bands',indicator:bollingerBands},{key:'VWAP',label:'VWAP',indicator:vwap},
