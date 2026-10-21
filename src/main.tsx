@@ -240,8 +240,30 @@ function ActiveMarket({pair,onSelect,pairs,source,tickers,pricesReady}:{pair:Spo
   document.body.style.cursor=target==='height'?'row-resize':'col-resize';
   document.body.style.userSelect='none';
  };
+ type PanelId='chart'|'book'|'trade'|'orders';
+ const defaultSlots:Record<PanelId,PanelId>={chart:'chart',book:'book',trade:'trade',orders:'orders'};
+ const [slots,setSlots]=React.useState<Record<PanelId,PanelId>>(()=>{
+  try{const saved=JSON.parse(localStorage.getItem('nexora:spot-dock-layout:v1')||'null') as Record<PanelId,PanelId>;
+   const ids=Object.keys(defaultSlots) as PanelId[];
+   if(saved&&ids.every(id=>ids.includes(saved[id]))&&new Set(ids.map(id=>saved[id])).size===4)return saved;
+  }catch{}return {...defaultSlots};
+ });
+ const dragPanel=React.useRef<PanelId|null>(null);
+ const [dropTarget,setDropTarget]=React.useState<PanelId|null>(null);
+ const swapPanels=(target:PanelId)=>{
+  const source=dragPanel.current;dragPanel.current=null;setDropTarget(null);
+  if(!source||source===target)return;
+  setSlots(current=>{const next={...current,[source]:current[target],[target]:current[source]};
+   try{localStorage.setItem('nexora:spot-dock-layout:v1',JSON.stringify(next))}catch{}
+   return next;
+  });
+ };
+ const dock=(id:PanelId,content:React.ReactNode)=> <div key={id} className={'nx-dock-panel nx-slot-'+slots[id]+(dropTarget===id?' nx-drop-target':'')} onDragOver={event=>{if(dragPanel.current){event.preventDefault();event.dataTransfer.dropEffect='move';setDropTarget(id)}}} onDragLeave={()=>setDropTarget(v=>v===id?null:v)} onDrop={event=>{event.preventDefault();swapPanels(id)}}>
+  <div className="nx-dock-grip" role="button" tabIndex={0} draggable aria-label={'Drag '+id+' panel to another panel'} title="Drag to swap panel positions" onDragStart={event=>{dragPanel.current=id;event.dataTransfer.effectAllowed='move';event.dataTransfer.setData('text/plain',id)}} onDragEnd={()=>{dragPanel.current=null;setDropTarget(null)}}>⠿</div>
+  {content}
+ </div>;
  const chartWidth=100-layout.book-layout.trade;
- return <main><MarketBar pair={pair} onSelect={onSelect} pairs={pairs} source={source} tickers={tickers} pricesReady={pricesReady} book={book} livePrice={livePrice}/><div ref={workspaceRef} className="workspace nx-resizable-workspace" style={{'--nx-chart-col':chartWidth+'fr','--nx-book-col':layout.book+'fr','--nx-trade-col':layout.trade+'fr','--nx-chart-row':layout.height+'px'} as React.CSSProperties}><ChartPanel pair={pair} livePrice={livePrice}/><OrderBook pair={pair} book={book} livePrice={livePrice}/><TradePanel pair={pair}/><Orders/>
+ return <main><MarketBar pair={pair} onSelect={onSelect} pairs={pairs} source={source} tickers={tickers} pricesReady={pricesReady} book={book} livePrice={livePrice}/><div ref={workspaceRef} className="workspace nx-resizable-workspace" style={{'--nx-chart-col':chartWidth+'fr','--nx-book-col':layout.book+'fr','--nx-trade-col':layout.trade+'fr','--nx-chart-row':layout.height+'px'} as React.CSSProperties}>{dock('chart',<ChartPanel pair={pair} livePrice={livePrice}/>)}{dock('book',<OrderBook pair={pair} book={book} livePrice={livePrice}/>)}{dock('trade',<TradePanel pair={pair}/>)}{dock('orders',<Orders/>)}
  <div className="nx-resize-handle nx-resize-chart-book" role="separator" aria-label="Resize chart and order book" aria-orientation="vertical" title="Drag to resize chart and order book" style={{left:chartWidth+'%'}} onPointerDown={e=>startDrag(e,'book')}><span/></div>
  <div className="nx-resize-handle nx-resize-book-trade" role="separator" aria-label="Resize order book and trade panel" aria-orientation="vertical" title="Drag to resize order book and trade panel" style={{left:(100-layout.trade)+'%'}} onPointerDown={e=>startDrag(e,'trade')}><span/></div>
  <div className="nx-resize-handle nx-resize-orders" role="separator" aria-label="Resize chart and orders section" aria-orientation="horizontal" title="Drag to resize chart and orders" style={{top:layout.height+'px'}} onPointerDown={e=>startDrag(e,'height')}><span/></div>
