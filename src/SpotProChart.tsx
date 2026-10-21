@@ -105,6 +105,13 @@ export default function SpotProChart({pair,frame,livePrice}:{pair:SpotPair;frame
  const [magnet,setMagnet]=useState(false);
  const [stayDrawing,setStayDrawing]=useState(false);
  const [drawVersion,setDrawVersion]=useState(0);
+ const root=useRef<HTMLDivElement>(null);
+ const [allDrawingsLocked,setAllDrawingsLocked]=useState(false);
+ const [allDrawingsHidden,setAllDrawingsHidden]=useState(false);
+ const [drawingColor,setDrawingColor]=useState('#3D6BFF');
+ const [drawingWidth,setDrawingWidth]=useState(2);
+ const [selectedDrawing,setSelectedDrawing]=useState<string|null>(null);
+ const [priceScale,setPriceScale]=useState<'linear'|'logarithmic'|'percentage'|'indexed'>('linear');
  const [localFrame,setLocalFrame]=useState<Timeframe>(intervals.find(t=>t.toLowerCase()===frame.toLowerCase())||'1H');
  const vpRef=useRef(false);
  const paramRef=useRef<Record<string,Record<string,number>>>({});
@@ -147,8 +154,12 @@ export default function SpotProChart({pair,frame,livePrice}:{pair:SpotPair;frame
  const addCompare=async()=>{const symbol=compareSymbol.trim().toUpperCase();if(!/^[A-Z0-9]{2,32}$/.test(symbol)||symbol===pair.symbol){setError('Enter another valid market symbol');return}try{await chart.current?.addCompare(symbol);setCompared(v=>v.includes(symbol)?v:[...v,symbol]);setCompareSymbol('')}catch(e){setError('Symbol comparison failed: '+String(e))}};
  const removeCompare=(symbol:string)=>{chart.current?.removeCompare(symbol);setCompared(v=>v.filter(x=>x!==symbol))};
  const toggleMagnet=()=>{const next=!magnet;chart.current?.setMagnetMode(next);setMagnet(next)};
+ const toggleAllLock=()=>{const next=!allDrawingsLocked;if(next)chart.current?.lockAllDrawings();else chart.current?.unlockAllDrawings();setAllDrawingsLocked(next);setDrawVersion(v=>v+1);save()};
+ const toggleAllHidden=()=>{const next=!allDrawingsHidden;if(next)chart.current?.hideAllDrawings();else chart.current?.showAllDrawings();setAllDrawingsHidden(next);setDrawVersion(v=>v+1);save()};
+ const changeDrawingAppearance=(field:'color'|'lineWidth',value:string|number)=>{if(!selectedDrawing)return;try{chart.current?.updateDrawing(selectedDrawing,{[field]:value});setDrawVersion(v=>v+1);save()}catch(e){setError(String(e))}};
+ const toggleFullscreen=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await root.current?.requestFullscreen()}catch(e){setError(String(e))}};
  const toggleStayDrawing=()=>{const next=!stayDrawing;chart.current?.setStayInDrawingMode(next);setStayDrawing(next)};
- return <div className="nexora-mg-chart">
+ return <div ref={root} className="nexora-mg-chart">
    <div className="nexora-mg-toolbar">
     <span className="mg-market-label">{pair.base}/{pair.quote}</span>
     <div className="mg-intervals">{intervals.map(t=><button key={t} className={t===localFrame?'selected':''} type="button" title={'Switch to '+t} onClick={()=>{chart.current?.setTimeframe(t);setLocalFrame(t)}}>{t}</button>)}</div>
@@ -160,8 +171,12 @@ export default function SpotProChart({pair,frame,livePrice}:{pair:SpotPair;frame
     <button type="button" className={objectsOpen?'selected':''} onClick={()=>setObjectsOpen(v=>!v)}>Objects</button>
     <button type="button" className={alertsOpen?'selected':''} onClick={()=>setAlertsOpen(v=>!v)}>Alerts</button>
     <button type="button" className={compareOpen?'selected':''} onClick={()=>setCompareOpen(v=>!v)}>Compare</button>
+    <select aria-label="Price scale" value={priceScale} onChange={e=>{const mode=e.target.value as typeof priceScale;try{chart.current?.setPriceScaleMode(mode);setPriceScale(mode)}catch(err){setError(String(err))}}}><option value="linear">Linear</option><option value="logarithmic">Log</option><option value="percentage">Percent</option><option value="indexed">Indexed</option></select>
+    <button type="button" onClick={toggleAllLock}>{allDrawingsLocked?'Unlock All':'Lock All'}</button>
+    <button type="button" onClick={toggleAllHidden}>{allDrawingsHidden?'Show All':'Hide All'}</button>
     <div className="mg-toolbar-spacer"/>
     <button type="button" onClick={()=>chart.current?.goToLive()} title="Go to live price">Live</button>
+    <button type="button" onClick={toggleFullscreen}>Fullscreen</button>
     <button type="button" onClick={()=>chart.current?.exportPNG('NEXORA-'+pair.symbol+'.png')} title="Save chart image">Screenshot</button>
     <button type="button" onClick={()=>{if(window.confirm('Clear all drawings for '+pair.symbol+'?')){chart.current?.clearDrawings();save()}}} title="Remove drawings">Clear Drawings</button>
    </div>
@@ -170,7 +185,7 @@ export default function SpotProChart({pair,frame,livePrice}:{pair:SpotPair;frame
     <div className="nexora-mg-render" ref={holder}/>
     {alertsOpen&&<section className="nexora-mg-objects"><header><strong>Price Alerts</strong><button onClick={()=>setAlertsOpen(false)}>×</button></header><div className="mg-sidebar-form"><input aria-label="Alert price" type="number" min="0" step="any" placeholder="Alert price" value={alertPrice} onChange={e=>setAlertPrice(e.target.value)}/><button onClick={addAlert}>Add alert</button></div><div className="nexora-mg-options">{alerts.map(a=><div key={a.id} className="mg-object-row"><span>{a.price}</span><button onClick={()=>removeAlert(a.id)}>Remove</button></div>)}</div></section>}
     {compareOpen&&<section className="nexora-mg-objects"><header><strong>Compare Markets</strong><button onClick={()=>setCompareOpen(false)}>×</button></header><div className="mg-sidebar-form"><input aria-label="Compare market symbol" placeholder="ETHUSDT" value={compareSymbol} onChange={e=>setCompareSymbol(e.target.value)}/><button onClick={addCompare}>Compare</button></div><div className="nexora-mg-options">{compared.map(symbol=><div key={symbol} className="mg-object-row"><span>{symbol}</span><button onClick={()=>removeCompare(symbol)}>Remove</button></div>)}</div></section>}
-    {objectsOpen&&<section className="nexora-mg-objects"><header><strong>Objects ({items.length})</strong><button onClick={()=>setObjectsOpen(false)}>×</button></header><div className="nexora-mg-options">{items.length===0?<p>No drawings yet</p>:items.map((d,index)=><div className="mg-object-row" key={d.id||index}><span>{d.toolName||'Drawing'} #{index+1}</span><div><button title="Show/hide" onClick={()=>drawingAction(d.id,'visible')}>◉</button><button title="Lock/unlock" onClick={()=>drawingAction(d.id,'lock')}>♧</button><button title="Bring forward" onClick={()=>drawingAction(d.id,'front')}>↑</button><button title="Send backward" onClick={()=>drawingAction(d.id,'back')}>↓</button><button title="Delete" onClick={()=>drawingAction(d.id,'remove')}>×</button></div></div>)}</div></section>}
+    {objectsOpen&&<section className="nexora-mg-objects"><header><strong>Objects ({items.length})</strong><button onClick={()=>setObjectsOpen(false)}>×</button></header>{selectedDrawing&&<div className="mg-sidebar-form mg-drawing-style"><label>Color <input type="color" value={drawingColor} onChange={e=>{setDrawingColor(e.target.value);changeDrawingAppearance('color',e.target.value)}}/></label><label>Width <input type="number" min="1" max="12" value={drawingWidth} onChange={e=>{const n=Number(e.target.value);setDrawingWidth(n);changeDrawingAppearance('lineWidth',n)}}/></label></div>}<div className="nexora-mg-options">{items.length===0?<p>No drawings yet</p>:items.map((d,index)=><div className="mg-object-row" key={d.id||index}><button className={selectedDrawing===d.id?'selected':''} title="Select drawing" onClick={()=>setSelectedDrawing(d.id)}>{d.toolName||'Drawing'} #{index+1}</button><div><button title="Show/hide" onClick={()=>drawingAction(d.id,'visible')}>◉</button><button title="Lock/unlock" onClick={()=>drawingAction(d.id,'lock')}>♧</button><button title="Bring forward" onClick={()=>drawingAction(d.id,'front')}>↑</button><button title="Send backward" onClick={()=>drawingAction(d.id,'back')}>↓</button><button title="Delete" onClick={()=>drawingAction(d.id,'remove')}>×</button></div></div>)}</div></section>}
     {error&&<div className="nexora-mg-error" role="alert">{error}<button onClick={()=>setError(null)}>Dismiss</button></div>}
     {indicatorMenu&&<section className="nexora-mg-popover mg-indicator-popover"><header><strong>Indicators</strong><button onClick={()=>setIndicatorMenu(false)}>×</button></header><input value={indSearch} placeholder="Search indicators..." onChange={e=>setIndSearch(e.target.value)}/><div className="nexora-mg-options">{indicatorList.filter(i=>i.label.toLowerCase().includes(indSearch.toLowerCase())||i.key.toLowerCase().includes(indSearch.toLowerCase())).sort((a,b)=>Number(favorites.includes(b.key))-Number(favorites.includes(a.key))).map(i=><div className="mg-indicator-row" key={i.key}><button title="Favorite" onClick={()=>toggleFavorite(i.key)}>{favorites.includes(i.key)?'★':'☆'}</button><button className={chosen.includes(i.key)?'selected':''} onClick={()=>toggleIndicator(i.key)}><span>{i.label}</span><span>{chosen.includes(i.key)?'✓':'+'}</span></button><button title="Settings" onClick={()=>setSettingsOpen(i.key)}>⚙</button></div>)}</div></section>}
     {settingsOpen&&<section className="nexora-mg-popover mg-settings-popover"><header><strong>{indicatorList.find(i=>i.key===settingsOpen)?.label} Settings</strong><button onClick={()=>setSettingsOpen(null)}>×</button></header><form onSubmit={e=>{e.preventDefault();const fd=new FormData(e.currentTarget);const values:Record<string,number>={};for(const [k,v] of fd){const n=Number(v);if(Number.isFinite(n))values[k]=n}applyParams(settingsOpen,values)}}>{Object.entries(params[settingsOpen]||{period:settingsOpen==='EMA'?50:14}).map(([k,v])=><label key={k}>{k}<input name={k} type="number" step="any" defaultValue={v} required/></label>)}<button type="submit">Apply</button></form></section>}
