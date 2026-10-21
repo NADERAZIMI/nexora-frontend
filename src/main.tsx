@@ -107,7 +107,7 @@ function TokenInfoPanel({pair}:{pair:SpotPair}){
  </div>;
 }
 const tabs=['Chart','Info','Data','Feed','Trade Analysis'] as const;
-function ChartPanel({pair,livePrice}:{pair:SpotPair;livePrice:number|null}){const [tab,setTab]=useState<(typeof tabs)[number]>('Chart');return <section className="panel chart"><div className="tabs">{tabs.map(x=><button key={x} onClick={()=>setTab(x)} className={tab===x?'active':''}>{x}</button>)}</div>{tab==='Feed'?<FeedPanel symbol={pair.symbol}/>:tab==='Data'?<DataPanel symbol={pair.symbol}/>:tab==='Info'?<TokenInfoPanel pair={pair}/>:tab==='Chart'?<><div className="chart-area"><SpotProChart pair={pair} frame="1h" livePrice={livePrice}/></div></>:<div className="waiting">{tab} panel · React component ready for live data</div>}</section>}
+function ChartPanel({pair,livePrice,book}:{pair:SpotPair;livePrice:number|null;book:BookState}){const [tab,setTab]=useState<(typeof tabs)[number]>('Chart');return <section className="panel chart"><div className="tabs">{tabs.map(x=><button key={x} onClick={()=>setTab(x)} className={tab===x?'active':''}>{x}</button>)}</div>{tab==='Feed'?<FeedPanel symbol={pair.symbol}/>:tab==='Data'?<DataPanel symbol={pair.symbol}/>:tab==='Info'?<TokenInfoPanel pair={pair}/>:tab==='Chart'?<><div className="chart-area"><SpotProChart pair={pair} frame="1h" livePrice={livePrice} book={book}/></div></>:<div className="waiting">{tab} panel · React component ready for live data</div>}</section>}
 function OrderBook({pair,book,livePrice}:{pair:SpotPair;book:BookState;livePrice:number|null}){
  const [mode,setMode]=useState('Order Book');
  const [stepMultiplier,setStepMultiplier]=useState(1);
@@ -168,7 +168,7 @@ function Orders(){const [tab,setTab]=useState('Open Orders (0)');return <section
 function ActiveMarket({pair,onSelect,pairs,source,tickers,pricesReady}:{pair:SpotPair;onSelect:(pair:SpotPair)=>void;pairs:SpotPair[];source:'loading'|'live'|'fallback';tickers:Record<string,MarketTicker>;pricesReady:boolean}){
  const book=useBybitSpotBook(pair.symbol);
  const livePrice=book.connected?(book.trades[0]?.price??book.ticker?.lastPrice??null):null;
- return <main><MarketBar pair={pair} onSelect={onSelect} pairs={pairs} source={source} tickers={tickers} pricesReady={pricesReady} book={book} livePrice={livePrice}/><div className="workspace"><ChartPanel pair={pair} livePrice={livePrice}/><OrderBook pair={pair} book={book} livePrice={livePrice}/><TradePanel pair={pair}/><Orders/></div></main>;
+ return <main><MarketBar pair={pair} onSelect={onSelect} pairs={pairs} source={source} tickers={tickers} pricesReady={pricesReady} book={book} livePrice={livePrice}/><div className="workspace"><ChartPanel pair={pair} livePrice={livePrice} book={book}/><OrderBook pair={pair} book={book} livePrice={livePrice}/><TradePanel pair={pair}/><Orders/></div></main>;
 }
 function App(){const {pairs,source}=useSpotMarkets();const {tickers,ready:pricesReady}=useSpotTickers(pairs);const [pair,setPair]=useState<SpotPair>({symbol:'BTCUSDT',base:'BTC',quote:'USDT'});const [page,setPage]=useState<Page>(()=>window.location.pathname.startsWith('/dashboard')?'dashboard':window.location.pathname.startsWith('/markets')?'markets':'trade');const [theme,setTheme]=useState<Theme>(()=>{try{return localStorage.getItem('nexora-theme')==='light'?'light':'dark'}catch{return 'dark'}});
  const toggleTheme=()=>setTheme(t=>{const next=t==='dark'?'light':'dark';try{localStorage.setItem('nexora-theme',next)}catch{}return next});
