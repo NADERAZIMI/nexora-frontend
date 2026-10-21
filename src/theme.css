@@ -13,3 +13,18 @@ html[data-nx-theme="light"] .brand strong{color:var(--nx-text)}
 html[data-nx-theme="light"] .brand .brand-x{color:var(--nx-blue)}
 html[data-nx-theme="light"] .marketbar,html[data-nx-theme="light"] .panel,html[data-nx-theme="light"] .orders,html[data-nx-theme="light"] footer{background:var(--nx-surface)}
 html[data-nx-theme="light"] .markets-page{background:var(--nx-bg)}
+
+/* User dashboard appearance tokens; defaults leave the original site unchanged. */
+.nx-dashboard-entry{flex:0 0 auto;color:var(--nx-text);white-space:nowrap;font-size:12px;font-weight:650;padding:8px 10px;border:1px solid transparent;border-radius:var(--nx-user-radius,4px)}
+.nx-dashboard-entry span{color:var(--nx-blue);font-size:16px;margin-left:5px}
+.nx-dashboard-entry:hover,.nx-dashboard-entry.selected{color:var(--nx-blue);border-color:var(--nx-border)}
+html[data-nx-customized="true"] body{font-family:var(--nx-user-font,'Inter',sans-serif);font-size:var(--nx-user-font-size,12px)}
+html[data-nx-customized="true"] button,html[data-nx-customized="true"] input,html[data-nx-customized="true"] select{font-family:var(--nx-user-font,'Inter',sans-serif)}
+html[data-nx-customized="true"] .topbar,html[data-nx-customized="true"] .marketbar,html[data-nx-customized="true"] .panel,html[data-nx-customized="true"] .orders{background:var(--nx-surface);border-color:var(--nx-border);color:var(--nx-text)}
+html[data-nx-customized="true"] .topbar{gap:var(--nx-user-density,8px)}
+html[data-nx-customized="true"] .panel,html[data-nx-customized="true"] .marketbar,html[data-nx-customized="true"] .outline,html[data-nx-customized="true"] .primary{border-radius:var(--nx-user-radius,4px)}
+html[data-nx-customized="true"] .primary{background:var(--nx-blue)}
+html[data-nx-customized="true"] .market-up{color:var(--nx-positive)}
+html[data-nx-customized="true"] .market-down{color:var(--nx-negative)}
+html[data-nx-customized="true"] .workspace{gap:clamp(3px,var(--nx-user-density,8px),18px)}
+html[data-nx-customized="true"] .chart{min-height:var(--nx-user-chart-height,600px)}
