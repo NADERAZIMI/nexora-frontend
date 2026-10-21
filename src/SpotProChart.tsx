@@ -388,13 +388,15 @@ export default function SpotProChart({pair,frame,livePrice}:{pair:SpotPair;frame
        </div>
     {multiMenu&&<div className="nx-multi-layout-menu" role="dialog" aria-label="Multi chart layout">
       <div className="nx-multi-layout-title">Chart layout</div>
-      {[1,2,3,4,5].map(n=><button type="button" className={'nx-multi-option'+(multiLayout===n?' active':'')} key={n} onClick={()=>changeMulti(n as MultiLayout)}><span className="nx-multi-index">{n}</span><span className={'nx-mini-layout nx-mini-layout-'+n}>{Array.from({length:n},(_,i)=><i key={i}/>)}</span></button>)}
+      <div className="nx-multi-layout-choices">
+       {[1,2,3,4,5].map(n=><button type="button" className={'nx-multi-option'+(multiLayout===n?' active':'')} key={n} aria-label={n+' chart layout'} aria-pressed={multiLayout===n} onClick={()=>changeMulti(n as MultiLayout)}><span className="nx-multi-index">{n}</span><span className={'nx-mini-layout nx-mini-layout-'+n}>{Array.from({length:n},(_,i)=><i key={i}/>)}</span></button>)}
+      </div>
       <div className="nx-multi-layout-title nx-multi-divider">Sync chart settings</div>
-      <label className="nx-multi-toggle"><span>Symbol</span><input type="checkbox" checked readOnly title="The selected symbol is shared by all charts"/></label>
-      <label className="nx-multi-toggle"><span>Interval</span><input type="checkbox" checked={syncInterval} onChange={e=>setSyncInterval(e.target.checked)}/></label>
-      <label className="nx-multi-toggle"><span>Crosshair</span><input type="checkbox" disabled title="Crosshair synchronization is not supported by the current chart API"/></label>
-      <label className="nx-multi-toggle"><span>Time</span><input type="checkbox" disabled title="Time synchronization is not supported by the current chart API"/></label>
-      <label className="nx-multi-toggle"><span>Date Range</span><input type="checkbox" disabled title="Date range synchronization is not supported by the current chart API"/></label>
+      <div className="nx-multi-toggle"><span>Symbol</span><button type="button" className="nx-sync-switch is-on" role="switch" aria-checked={true} aria-label="Sync symbol" title="All charts follow the selected market" disabled><i/></button></div>
+      <div className="nx-multi-toggle"><span>Interval</span><button type="button" className={'nx-sync-switch'+(syncInterval?' is-on':'')} role="switch" aria-checked={syncInterval} aria-label="Sync interval" onClick={()=>setSyncInterval(v=>!v)}><i/></button></div>
+      <div className="nx-multi-toggle"><span>Crosshair</span><button type="button" className="nx-sync-switch" role="switch" aria-checked={false} aria-label="Sync crosshair" title="Not supported by the chart engine yet" disabled><i/></button></div>
+      <div className="nx-multi-toggle"><span>Time</span><button type="button" className="nx-sync-switch" role="switch" aria-checked={false} aria-label="Sync time" title="Not supported by the chart engine yet" disabled><i/></button></div>
+      <div className="nx-multi-toggle"><span>Date Range</span><button type="button" className="nx-sync-switch" role="switch" aria-checked={false} aria-label="Sync date range" title="Not supported by the chart engine yet" disabled><i/></button></div>
      </div>}
    <div className="nexora-mg-stage">
     {timeframeMenu&&<section className="mg-timeframe-menu" role="dialog" aria-label="Timeframe selection"><header><strong>Pinned ({pinned.length}/10)</strong><button className="mg-pin-edit" type="button" onClick={()=>setEditPinned(v=>!v)}>{editPinned?'Done':'Edit'}</button></header><div className="mg-timeframe-grid">{pinned.map(t=><button type="button" key={t} className={t===localFrame?'selected':''} onClick={()=>editPinned?togglePinned(t):changeTimeframe(t)}>{t}{editPinned?' ×':''}</button>)}</div><header><strong>Available</strong><span>{pinned.length>=10?'Maximum 10 pinned':''}</span></header><div className="mg-timeframe-grid">{intervals.filter(t=>!pinned.includes(t)).map(t=><button type="button" key={t} onClick={()=>editPinned?togglePinned(t):changeTimeframe(t)} disabled={editPinned&&pinned.length>=10}>{t}{editPinned?' +':''}</button>)}</div>{editPinned&&<p className="mg-pin-hint">Choose up to 10 shortcuts. Your selection is saved automatically.</p>}</section>}
