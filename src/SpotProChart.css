@@ -104,3 +104,12 @@
 .nexora-mg-chart .mg-intervals{gap:0!important;padding-left:2px!important}
 .nexora-mg-chart .nexora-mg-toolbar .mg-intervals>button{padding:6px 5px!important;min-width:0!important}
 .nexora-mg-chart .nexora-mg-toolbar .mg-intervals>.mg-timeframe-arrow{padding-inline:5px!important;margin-left:1px}
+
+/* Drawing groups open beside the left drawing rail, never from the top bar. */
+.nexora-mg-chart .mg-rail-flyout{position:absolute;left:40px;top:6px;z-index:48;width:205px;max-height:calc(100% - 12px);display:flex;flex-direction:column;background:#1a1e26;border:1px solid #343b47;border-radius:6px;box-shadow:0 8px 26px #0008;overflow:hidden}
+.nexora-mg-chart .mg-rail-flyout header{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;font-weight:600;border-bottom:1px solid #313743}
+.nexora-mg-chart .mg-rail-flyout header button{background:transparent;color:var(--nx-muted);border:0;cursor:pointer;font-size:17px}
+.nexora-mg-chart .mg-rail-flyout-items{overflow-y:auto;padding:4px;min-height:0}
+.nexora-mg-chart .mg-rail-flyout-items button{display:block;width:100%;padding:9px 10px;border:0;border-radius:4px;text-align:left;background:transparent;color:var(--nx-text);cursor:pointer}
+.nexora-mg-chart .mg-rail-flyout-items button:hover{color:var(--nx-hover);background:#2c323e}
+.nexora-mg-chart .mg-rail-flyout-items button.selected{color:var(--nx-blue)}
