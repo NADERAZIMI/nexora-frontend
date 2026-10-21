@@ -294,7 +294,7 @@ export default function SpotProChart({pair,frame,livePrice,book}:{pair:SpotPair;
   if(!anyOpen)return;
   const dismiss=()=>{setTimeframeMenu(false);setChartTypeMenu(false);setIndicatorMenu(false);setDrawMenu(false);setDrawingGroup(null);setSettingsOpen(null);setObjectsOpen(false);setAlertsOpen(false);setCompareOpen(false)};
   const outside=(event:PointerEvent)=>{const target=event.target;if(!(target instanceof Node))return;const host=root.current;if(!host)return;
-   const insideMenu=Array.from(host.querySelectorAll('.mg-timeframe-menu,.nexora-mg-popover,.nexora-mg-objects,.mg-rail-flyout')).some(el=>el.contains(target));
+   const insideMenu=Array.from(host.querySelectorAll('.mg-timeframe-menu,.nexora-mg-popover,.nexora-mg-objects,.mg-rail-flyout,.nx-alert-panel')).some(el=>el.contains(target));
    const trigger=Array.from(host.querySelectorAll('.mg-timeframe-arrow,.mg-compact-icon,.nexora-mg-toolbar button,.nexora-mg-rail button')).some(el=>el.contains(target));
    if(!insideMenu&&!trigger)dismiss();
   };
