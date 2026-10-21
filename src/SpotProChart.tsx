@@ -111,7 +111,7 @@ export default function SpotProChart({pair,frame,livePrice}:{pair:SpotPair;frame
  const [drawingColor,setDrawingColor]=useState('#3D6BFF');
  const [drawingWidth,setDrawingWidth]=useState(2);
  const [selectedDrawing,setSelectedDrawing]=useState<string|null>(null);
- const [priceScale,setPriceScale]=useState<'linear'|'logarithmic'|'percentage'|'indexed'>('linear');
+ const [priceScale,setPriceScale]=useState<'linear'|'logarithmic'|'percentage'>('linear');
  const [localFrame,setLocalFrame]=useState<Timeframe>(intervals.find(t=>t.toLowerCase()===frame.toLowerCase())||'1H');
  const vpRef=useRef(false);
  const paramRef=useRef<Record<string,Record<string,number>>>({});
@@ -171,7 +171,7 @@ export default function SpotProChart({pair,frame,livePrice}:{pair:SpotPair;frame
     <button type="button" className={objectsOpen?'selected':''} onClick={()=>setObjectsOpen(v=>!v)}>Objects</button>
     <button type="button" className={alertsOpen?'selected':''} onClick={()=>setAlertsOpen(v=>!v)}>Alerts</button>
     <button type="button" className={compareOpen?'selected':''} onClick={()=>setCompareOpen(v=>!v)}>Compare</button>
-    <select aria-label="Price scale" value={priceScale} onChange={e=>{const mode=e.target.value as typeof priceScale;try{chart.current?.setPriceScaleMode(mode);setPriceScale(mode)}catch(err){setError(String(err))}}}><option value="linear">Linear</option><option value="logarithmic">Log</option><option value="percentage">Percent</option><option value="indexed">Indexed</option></select>
+    <select aria-label="Price scale" value={priceScale} onChange={e=>{const mode=e.target.value as typeof priceScale;try{chart.current?.setPriceScale(mode);setPriceScale(mode)}catch(err){setError(String(err))}}}><option value="linear">Linear</option><option value="logarithmic">Log</option><option value="percentage">Percent</option></select>
     <button type="button" onClick={toggleAllLock}>{allDrawingsLocked?'Unlock All':'Lock All'}</button>
     <button type="button" onClick={toggleAllHidden}>{allDrawingsHidden?'Show All':'Hide All'}</button>
     <div className="mg-toolbar-spacer"/>
