@@ -154,3 +154,7 @@
 
 /* The fullscreen icon belongs in the top chart toolbar, anchored to its right edge. */
 .nexora-mg-chart .nexora-mg-toolbar>.nx-chart-fullscreen{position:sticky!important;right:0!important;top:auto!important;bottom:auto!important;left:auto!important;z-index:30!important;flex:0 0 30px;margin-left:auto;width:30px;height:29px;min-width:30px;opacity:1!important;display:grid;place-items:center;background:var(--nx-elevated,#15191F);border:1px solid var(--nx-border,#29313D);color:var(--nx-text,#F4F6FA)}
+
+/* Bare fullscreen icon at the far right of the upper chart toolbar. */
+.nexora-mg-chart .nexora-mg-toolbar>.nx-chart-fullscreen{position:sticky!important;right:0!important;left:auto!important;top:auto!important;bottom:auto!important;z-index:40!important;flex:0 0 28px!important;margin-left:auto!important;width:28px!important;height:30px!important;min-width:28px!important;padding:4px!important;display:grid!important;place-items:center!important;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;color:var(--nx-muted,#929AAA)!important;opacity:1!important}
+.nexora-mg-chart .nexora-mg-toolbar>.nx-chart-fullscreen:hover{background:transparent!important;color:var(--nx-text,#F4F6FA)!important}
