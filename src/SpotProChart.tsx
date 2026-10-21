@@ -12,7 +12,7 @@ const timeframeKey='nexora:mg-chart:active-timeframe';
 const loadTimeframe=():Timeframe=>{try{const value=localStorage.getItem(timeframeKey);return intervals.includes(value as Timeframe)?value as Timeframe:'5m'}catch{return '5m'}};
 const sortTimes=(values:Timeframe[])=>[...values].sort((a,b)=>intervals.indexOf(a)-intervals.indexOf(b));
 const chartFont='"Inter",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif';
-const nxTheme=(light:boolean)=>({... (light?lightTheme:darkTheme),bg:light?'#FFFFFF':'#101014',fontFamily:chartFont});
+const nxTheme=(light:boolean)=>({... (light?lightTheme:darkTheme),bg:getComputedStyle(document.documentElement).getPropertyValue('--nx-surface').trim()||(light?'#FFFFFF':'#101014'),fontFamily:chartFont});
 const pinnedKey='nexora:mg-chart:pinned-timeframes';
 const pinnedLayoutVersionKey='nexora:mg-chart:pinned-layout-version';
 const loadPinned=():Timeframe[]=>{
@@ -306,8 +306,10 @@ export default function SpotProChart({pair,frame,livePrice}:{pair:SpotPair;frame
   if(saved?.volumeProfile)next.setVolumeProfile(true);
   if(saved?.drawings?.length){try{next.loadDrawings(saved.drawings)}catch(e){console.warn('[NEXORA] Drawing restore failed',e)}}
   for(const event of ['drawingAdded','drawingRemoved','drawingModified','drawingSelected'] as const)next.on(event,()=>setDrawVersion(v=>v+1));
-  const observer=new MutationObserver(()=>next.setTheme(nxTheme(document.documentElement.dataset.nxTheme==='light')));
-  observer.observe(document.documentElement,{attributes:true,attributeFilter:['data-nx-theme']});
+  const updateChartTheme=()=>next.setTheme(nxTheme(document.documentElement.dataset.nxTheme==='light'));
+  const observer=new MutationObserver(updateChartTheme);
+  window.addEventListener('nexora:design-change',updateChartTheme);
+  observer.observe(document.documentElement,{attributes:true,attributeFilter:['data-nx-theme','style']});
   const timer=window.setInterval(()=>{try{localStorage.setItem(key,JSON.stringify({drawings:next.getDrawings(),indicators:[...instanceIds.current.keys()],volumeProfile:vpRef.current,params:paramRef.current}))}catch{/* storage inaccessible */}},3000);
   return ()=>{disposed=true;window.clearInterval(timer);observer.disconnect();try{localStorage.setItem(key,JSON.stringify({drawings:next.getDrawings(),indicators:[...instanceIds.current.keys()],volumeProfile:vpRef.current,params:paramRef.current}))}catch{/* ignore */}next.destroy();if(chart.current===next)chart.current=null;instanceIds.current.clear()};
  },[pair.symbol,frame,kind==='renko']);
