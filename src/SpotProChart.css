@@ -286,3 +286,24 @@
 /* Reference-style right edge jump to live: floats on plot, not the toolbar. */
 .nexora-mg-chart .nx-chart-live-jump{position:absolute;right:73px;bottom:67px;z-index:26;display:grid;place-items:center;width:27px;height:27px;padding:0;border:0;border-radius:5px;background:#303238;color:#c8cbd1;box-shadow:0 2px 7px #0007;cursor:pointer;opacity:.8;transition:opacity .15s,color .15s}
 .nexora-mg-chart .nx-chart-live-jump:hover{opacity:1;color:var(--nx-hover,#EAA343);background:#303238}
+
+/* Interaction contract: orange on hover, brand blue for selected/on, without hover boxes. */
+.nexora-mg-chart .nexora-mg-toolbar button:not(:disabled):hover,
+.nexora-mg-chart .nexora-mg-rail>button:not(:disabled):hover,
+.nexora-mg-chart .nx-chart-edge-navigation button:not(:disabled):hover,
+.nexora-mg-chart .nx-multi-option:hover,
+.nexora-mg-chart .mg-chart-style-list button:hover,
+.nexora-mg-chart .mg-rail-flyout-items button:hover{color:var(--nx-hover,#EAA343)!important;background:transparent!important;box-shadow:none!important}
+.nexora-mg-chart .nexora-mg-toolbar button.selected:not(:hover),
+.nexora-mg-chart .nexora-mg-toolbar button.active:not(:hover),
+.nexora-mg-chart .nexora-mg-toolbar button[aria-selected="true"]:not(:hover),
+.nexora-mg-chart .nexora-mg-rail>button.selected:not(:hover),
+.nexora-mg-chart .mg-chart-style-list button.selected:not(:hover),
+.nexora-mg-chart .mg-rail-flyout-items button.selected:not(:hover),
+.nexora-mg-chart .nx-multi-option.active:not(:hover){color:var(--nx-blue,#3D6BFF)!important}
+.nexora-mg-chart .nexora-mg-toolbar .nx-chart-view-tabs button.active:not(:hover),
+.nexora-mg-chart .nexora-mg-toolbar>.nx-chart-volume-profile.selected:not(:hover){color:var(--nx-blue,#3D6BFF)!important}
+.nexora-mg-chart .nx-multi-layout-menu .nx-multi-option.active:not(:hover),
+.nexora-mg-chart .nx-multi-layout-menu .nx-multi-option.active:not(:hover) .nx-mini-layout i{color:var(--nx-blue,#3D6BFF)!important;border-color:var(--nx-blue,#3D6BFF)!important}
+.nexora-mg-chart .nx-sync-switch.is-on:not(:hover){background:var(--nx-blue,#3D6BFF)!important}
+.nexora-mg-chart .nx-sync-switch.is-on:hover{background:var(--nx-hover,#EAA343)!important}
