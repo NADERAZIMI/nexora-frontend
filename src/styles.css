@@ -268,3 +268,7 @@ html[data-nx-theme="light"] .order-percent-track .percentage::-webkit-slider-thu
 
 /* At preset percentages the native range thumb is the single visible dot. */
 .order-percent-track .order-percent-dot.at-thumb{opacity:0;pointer-events:none}
+
+/* Consistent desktop viewport gutters without shrinking the trading grid. */
+main{padding-inline:clamp(12px,1.25vw,24px)}
+@media(max-width:750px){main{padding-inline:10px}}
