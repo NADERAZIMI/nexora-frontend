@@ -35,6 +35,7 @@ const drawingGroups: {label:string;tools:[string,string][]}[] = [
  {label:'Trading & Measure',tools:[['long-short','Long/Short Position'],['price-range','Price Range'],['date-range','Date Range'],['date-price-range','Date + Price Range'],['forecast','Forecast'],['fixed-range-vp','Fixed Range Volume Profile'],['anchored-vwap','Anchored VWAP']]}
 ];
 function StyleIcon({kind}:{kind:ChartType}){switch(kind){case 'bar':return <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" strokeLinecap="round"><path d="M5 4v16M10 7v10M15 3v18M20 7v10"/><path d="M3 8h4m1 5h4m1-5h4m1 5h4"/></svg>;case 'candlestick':return <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" strokeLinecap="round"><path d="M6 2v20M12 2v20M18 2v20"/><rect x="3.5" y="7" width="5" height="8" rx=".5"/><rect x="9.5" y="4" width="5" height="11" rx=".5"/><rect x="15.5" y="10" width="5" height="7" rx=".5"/></svg>;case 'hollow_candle':return <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" strokeLinecap="round"><path d="M6 2v20M12 2v20M18 2v20"/><rect x="3.5" y="7" width="5" height="8" rx=".5"/><rect x="9.5" y="4" width="5" height="11" rx=".5"/><rect x="15.5" y="10" width="5" height="7" rx=".5"/></svg>;case 'heikin_ashi':return <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" strokeLinecap="round"><path d="M6 2v20M12 2v20M18 2v20"/><rect x="3.5" y="7" width="5" height="8" rx=".5"/><rect x="9.5" y="4" width="5" height="11" rx=".5"/><rect x="15.5" y="10" width="5" height="7" rx=".5"/></svg>;case 'line':return <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" strokeLinecap="round"><path d="M2 17l5-5 4 2 5-8 6 2"/></svg>;case 'area':return <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" strokeLinecap="round"><path d="M2 17l5-5 4 2 5-8 6 2v12H2z"/></svg>;case 'baseline':return <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" strokeLinecap="round"><path d="M2 12h20M2 17l5-5 4 2 5-8 6 2"/></svg>;case 'line_markers':return <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" strokeLinecap="round"><path d="M2 17l5-5 4 2 5-8 6 2"/><circle cx="7" cy="12" r="1.5"/><circle cx="16" cy="6" r="1.5"/></svg>;case 'step_line':return <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" strokeLinecap="round"><path d="M2 18h6V9h7V5h7"/></svg>;case 'hlc_area':return <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" strokeLinecap="round"><path d="M2 20V11l5-3 5 5 5-9 5 3v13z"/></svg>;case 'columns':return <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" strokeLinecap="round"><path d="M3 21V11h4v10M10 21V4h4v17M17 21V9h4v12"/></svg>;case 'high_low':return <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" strokeLinecap="round"><path d="M7 3v18m10-18v18M4 7h6M14 16h6"/></svg>;default:return null}}
+function RenkoIcon(){return <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M2 18l5-5 5 5 5-5 5 5M2 11l5-5 5 5 5-5 5 5"/></svg>}
 function parseRow(raw:unknown):Bar|null{
  if(!Array.isArray(raw)||raw.length<6)return null;
  const time=Number(raw[0])/1000,open=Number(raw[1]),high=Number(raw[2]),low=Number(raw[3]),close=Number(raw[4]),volume=Number(raw[5]);
@@ -84,6 +85,48 @@ class BybitMGDatafeed implements Datafeed{
  }
  async searchSymbols(query:string){return this.symbol.includes(query.toUpperCase())?[{symbol:this.symbol,name:this.symbol,exchange:'Bybit',type:'spot' as const,pricePrecision:8,qtyPrecision:8,minMove:0.00000001}]:[]}
 }
+// A fixed-size Renko view derived from real spot closes. No synthetic market prices.
+class RenkoDatafeed implements Datafeed {
+ private box=0;
+ private lastClose=0;
+ private lastTime=0;
+ private lastSourceTime=0;
+ private trend=0;
+ constructor(private source:BybitMGDatafeed){}
+ private accept(bar:Bar):Bar[]{
+  if(!this.box){this.box=Math.max(bar.close*.005,1e-10);this.lastClose=bar.close;this.lastSourceTime=bar.time;this.lastTime=bar.time;return []}
+  const out:Bar[]=[];
+  const movement=bar.close-this.lastClose;
+  const direction=Math.sign(movement);
+  if(!direction)return out;
+  const threshold=this.trend&&direction!==this.trend?2:1;
+  const steps=Math.min(500,Math.floor(Math.abs(movement)/this.box));
+  if(steps<threshold)return out;
+  for(let n=0;n<steps;n++){
+   if(n===0&&threshold===2){this.lastClose+=direction*this.box;continue}
+   const open=this.lastClose,close=open+direction*this.box;
+   this.lastTime=Math.max(this.lastTime+1,bar.time+n);
+   out.push({time:this.lastTime,open,high:Math.max(open,close),low:Math.min(open,close),close,volume:bar.volume/Math.max(steps,1)});
+   this.lastClose=close;this.trend=direction;
+  }
+  this.lastSourceTime=bar.time;
+  return out;
+ }
+ async getBars(options:Parameters<Datafeed['getBars']>[0]):Promise<Bar[]>{
+  this.box=0;this.lastClose=0;this.lastTime=0;this.trend=0;this.lastSourceTime=0;
+  const raw=await this.source.getBars(options);
+  const bricks=raw.flatMap(bar=>this.accept(bar));
+  return bricks.length?bricks:[];
+ }
+ subscribe(options:Parameters<Datafeed['subscribe']>[0]){
+  return this.source.subscribe({...options,onTick:()=>{},onBar:bar=>{
+   if(bar.time<this.lastSourceTime)return;
+   const bricks=this.accept(bar);
+   bricks.forEach(options.onBar);
+  }});
+ }
+ searchSymbols(query:string){return this.source.searchSymbols(query)}
+}
 const readStored=(key:string)=>{try{return JSON.parse(localStorage.getItem(key)||'null') as {drawings?:object[];indicators?:string[];volumeProfile?:boolean}|null}catch{return null}};
 export default function SpotProChart({pair,frame,livePrice}:{pair:SpotPair;frame:string;livePrice:number|null}){
  const holder=useRef<HTMLDivElement>(null);
@@ -97,7 +140,7 @@ export default function SpotProChart({pair,frame,livePrice}:{pair:SpotPair;frame
  const [activeTools,setActiveTools]=useState<string|null>(null);
  const [chosen,setChosen]=useState<string[]>(['SMA']);
  const [vp,setVp]=useState(false);
- const [kind,setKind]=useState<ChartType>('candlestick');
+ const [kind,setKind]=useState<ChartType|'renko'>('candlestick');
  const [drawSearch,setDrawSearch]=useState('');
  const [indSearch,setIndSearch]=useState('');
  const [objectsOpen,setObjectsOpen]=useState(false);
@@ -169,7 +212,7 @@ export default function SpotProChart({pair,frame,livePrice}:{pair:SpotPair;frame
   const extra=saved as typeof saved & {params?:Record<string,Record<string,number>>;favorites?:string[]};
   paramRef.current=extra?.params||{};setParams(paramRef.current);
   try{setFavorites(JSON.parse(localStorage.getItem('nexora:mg-favorites')||'[]'))}catch{setFavorites([])}
-  const next=new Chart({container:node,symbol:pair.symbol,timeframe:(intervals.find(t=>t.toLowerCase()===frame.toLowerCase())||'1H'),datafeed:new BybitMGDatafeed(pair.symbol),theme:nxTheme(document.documentElement.dataset.nxTheme==='light'),renderer:'webgl',features:{volume:true},trading:{showPlusButton:false,showContextMenu:false,draggableOrderLines:false}});
+  const next=new Chart({container:node,symbol:pair.symbol,timeframe:(intervals.find(t=>t.toLowerCase()===frame.toLowerCase())||'1H'),datafeed:kind==='renko'?new RenkoDatafeed(new BybitMGDatafeed(pair.symbol)):new BybitMGDatafeed(pair.symbol),theme:nxTheme(document.documentElement.dataset.nxTheme==='light'),chartType:kind==='renko'?'candlestick':kind,renderer:'webgl',features:{volume:true},trading:{showPlusButton:false,showContextMenu:false,draggableOrderLines:false}});
   if(disposed){next.destroy();return}
   chart.current=next;
   instanceIds.current.clear();
@@ -182,7 +225,14 @@ export default function SpotProChart({pair,frame,livePrice}:{pair:SpotPair;frame
   observer.observe(document.documentElement,{attributes:true,attributeFilter:['data-nx-theme']});
   const timer=window.setInterval(()=>{try{localStorage.setItem(key,JSON.stringify({drawings:next.getDrawings(),indicators:[...instanceIds.current.keys()],volumeProfile:vpRef.current,params:paramRef.current}))}catch{/* storage inaccessible */}},3000);
   return ()=>{disposed=true;window.clearInterval(timer);observer.disconnect();try{localStorage.setItem(key,JSON.stringify({drawings:next.getDrawings(),indicators:[...instanceIds.current.keys()],volumeProfile:vpRef.current,params:paramRef.current}))}catch{/* ignore */}next.destroy();if(chart.current===next)chart.current=null;instanceIds.current.clear()};
- },[pair.symbol,frame]);
+ },[pair.symbol,frame,kind==='renko']);
+ const setChartStyle=(type:ChartType|'renko')=>{
+  try{
+   setKind(type);
+   if(type!=='renko')chart.current?.setChartType(type);
+   setChartTypeMenu(false);
+  }catch(e){setError(String(e))}
+ };
  const toggleIndicator=(k:string)=>{const c=chart.current,entry=indicatorList.find(i=>i.key===k);if(!c||!entry)return;try{const ids=instanceIds.current;if(ids.has(k)){c.removeIndicator(ids.get(k)!);ids.delete(k)}else ids.set(k,c.addIndicator(entry.indicator,paramRef.current[k]));setChosen([...ids.keys()]);}catch(e){setError('Indicator could not be added: '+String(e))}};
  const chooseTool=(name:string|null)=>{try{chart.current?.setDrawingTool(name);setActiveTools(name);setDrawMenu(false)}catch(e){setError('Drawing tool failed: '+String(e))}};
  const toggleVP=()=>{const n=!vp;chart.current?.setVolumeProfile(n);vpRef.current=n;setVp(n)};
@@ -222,7 +272,7 @@ export default function SpotProChart({pair,frame,livePrice}:{pair:SpotPair;frame
     <button type="button" onClick={toggleFullscreen}>Fullscreen</button>
     <button type="button" onClick={()=>chart.current?.exportPNG('NEXORA-'+pair.symbol+'.png')} title="Save chart image">Screenshot</button>
     <button type="button" onClick={()=>{if(window.confirm('Clear all drawings for '+pair.symbol+'?')){chart.current?.clearDrawings();save()}}} title="Remove drawings">Clear Drawings</button>
-    {chartTypeMenu&&<section className="nexora-mg-popover mg-chart-type-popover" style={{left:chartPopupLeft}} role="menu" aria-label="Chart styles"><div className="mg-chart-style-list">{([{id:'bar',label:'Bars',icon:''},{id:'candlestick',label:'Candles',icon:''},{id:'hollow_candle',label:'Hollow Candles',icon:''},{id:'heikin_ashi',label:'Heikin Ashi',icon:''},{id:'line',label:'Line',icon:''},{id:'area',label:'Area',icon:''},{id:'baseline',label:'Baseline',icon:''},{id:'line_markers',label:'Line with Markers',icon:''},{id:'step_line',label:'Step Line',icon:''},{id:'hlc_area',label:'HLC Area',icon:''},{id:'columns',label:'Columns',icon:''},{id:'high_low',label:'High-Low',icon:''}] as {id:ChartType;label:string;icon:string}[]).map(item=><button type="button" role="menuitemradio" aria-checked={kind===item.id} key={item.id} className={kind===item.id?'selected':''} onClick={()=>{try{chart.current?.setChartType(item.id);setKind(item.id);setChartTypeMenu(false)}catch(e){setError(String(e))}}}><span className="mg-style-icon" aria-hidden="true"><StyleIcon kind={item.id}/></span><span>{item.label}</span></button>)}</div></section>}
+    {chartTypeMenu&&<section className="nexora-mg-popover mg-chart-type-popover" style={{left:chartPopupLeft}} role="menu" aria-label="Chart styles"><div className="mg-chart-style-list">{([{id:'bar',label:'Bars',icon:''},{id:'candlestick',label:'Candles',icon:''},{id:'hollow_candle',label:'Hollow Candles',icon:''},{id:'heikin_ashi',label:'Heikin Ashi',icon:''},{id:'line',label:'Line',icon:''},{id:'area',label:'Area',icon:''},{id:'baseline',label:'Baseline',icon:''},{id:'line_markers',label:'Line with Markers',icon:''},{id:'step_line',label:'Step Line',icon:''},{id:'hlc_area',label:'HLC Area',icon:''},{id:'columns',label:'Columns',icon:''},{id:'high_low',label:'High-Low',icon:''},{id:'renko',label:'Renko',icon:''}] as {id:ChartType|'renko';label:string;icon:string}[]).map(item=><button type="button" role="menuitemradio" aria-checked={kind===item.id} key={item.id} className={kind===item.id?'selected':''} onClick={()=>{try{setChartStyle(item.id)}catch(e){setError(String(e))}}}><span className="mg-style-icon" aria-hidden="true">{item.id==='renko'?<RenkoIcon/>:<StyleIcon kind={item.id}/>}</span><span>{item.label}</span></button>)}</div></section>}
        </div>
    <div className="nexora-mg-stage">
     {timeframeMenu&&<section className="mg-timeframe-menu" role="dialog" aria-label="Timeframe selection"><header><strong>Pinned ({pinned.length}/8)</strong><button className="mg-pin-edit" type="button" onClick={()=>setEditPinned(v=>!v)}>{editPinned?'Done':'Edit'}</button></header><div className="mg-timeframe-grid">{pinned.map(t=><button type="button" key={t} className={t===localFrame?'selected':''} onClick={()=>editPinned?togglePinned(t):changeTimeframe(t)}>{t}{editPinned?' ×':''}</button>)}</div><header><strong>Available</strong><span>{pinned.length>=8?'Maximum 8 pinned':''}</span></header><div className="mg-timeframe-grid">{intervals.filter(t=>!pinned.includes(t)).map(t=><button type="button" key={t} onClick={()=>editPinned?togglePinned(t):changeTimeframe(t)} disabled={editPinned&&pinned.length>=8}>{t}{editPinned?' +':''}</button>)}</div>{editPinned&&<p className="mg-pin-hint">Choose up to 8 shortcuts. Your selection is saved automatically.</p>}</section>}
