@@ -262,8 +262,46 @@ function ActiveMarket({pair,onSelect,pairs,source,tickers,pricesReady}:{pair:Spo
   <div className="nx-dock-grip" role="button" tabIndex={0} draggable aria-label={'Drag '+id+' panel to another panel'} title="Drag to swap panel positions" onDragStart={event=>{dragPanel.current=id;event.dataTransfer.effectAllowed='move';event.dataTransfer.setData('text/plain',id)}} onDragEnd={()=>{dragPanel.current=null;setDropTarget(null)}}>⠿</div>
   {content}
  </div>;
+ // Bybit-style independent floating Order Book, draggable and resizable without swapping panels.
+ type FloatBox={floating:boolean;left:number;top:number;width:number;height:number};
+ const [floatBox,setFloatBox]=React.useState<FloatBox>(()=>{
+  try{const v=JSON.parse(localStorage.getItem('nexora:spot-float-book:v1')||'null') as FloatBox|null;
+   if(v&&typeof v.floating==='boolean'&&[v.left,v.top,v.width,v.height].every(Number.isFinite))return v;
+  }catch{}
+  return {floating:false,left:0,top:0,width:320,height:500};
+ });
+ const floatRef=React.useRef(floatBox);floatRef.current=floatBox;
+ const floatingEl=React.useRef<HTMLDivElement>(null);
+ const floatDrag=React.useRef<{pointerId:number;x:number;y:number;left:number;top:number}|null>(null);
+ React.useEffect(()=>{try{localStorage.setItem('nexora:spot-float-book:v1',JSON.stringify(floatBox))}catch{}},[floatBox]);
+ const startFloat=(e:React.PointerEvent<HTMLButtonElement>)=>{
+  if(e.button!==0)return;e.preventDefault();e.stopPropagation();
+  const container=workspaceRef.current;if(!container)return;
+  const bounds=container.getBoundingClientRect();
+  const origin=floatBox.floating?floatBox:{...floatBox,floating:true,left:Math.max(8,bounds.width-layout.book/100*bounds.width-340),top:20,height:Math.min(layout.height-35,520)};
+  setFloatBox(origin);
+  floatDrag.current={pointerId:e.pointerId,x:e.clientX,y:e.clientY,left:origin.left,top:origin.top};
+  e.currentTarget.setPointerCapture(e.pointerId);
+ };
+ const moveFloat=(e:React.PointerEvent<HTMLButtonElement>)=>{
+  const start=floatDrag.current,host=workspaceRef.current,el=floatingEl.current;
+  if(!start||start.pointerId!==e.pointerId||!host||!el)return;
+  const nextLeft=Math.max(0,Math.min(host.clientWidth-80,start.left+e.clientX-start.x));
+  const nextTop=Math.max(0,Math.min(host.clientHeight-60,start.top+e.clientY-start.y));
+  el.style.left=nextLeft+'px';el.style.top=nextTop+'px';
+ };
+ const endFloat=(e:React.PointerEvent<HTMLButtonElement>)=>{
+  if(!floatDrag.current||floatDrag.current.pointerId!==e.pointerId)return;
+  floatDrag.current=null;
+  const el=floatingEl.current;if(!el)return;
+  setFloatBox(v=>({...v,left:parseFloat(el.style.left)||0,top:parseFloat(el.style.top)||0}));
+ };
+ const resetFloating=()=>setFloatBox(v=>({...v,floating:false}));
  const chartWidth=100-layout.book-layout.trade;
- return <main><MarketBar pair={pair} onSelect={onSelect} pairs={pairs} source={source} tickers={tickers} pricesReady={pricesReady} book={book} livePrice={livePrice}/><div ref={workspaceRef} className="workspace nx-resizable-workspace" style={{'--nx-chart-col':chartWidth+'fr','--nx-book-col':layout.book+'fr','--nx-trade-col':layout.trade+'fr','--nx-chart-row':layout.height+'px'} as React.CSSProperties}>{dock('chart',<ChartPanel pair={pair} livePrice={livePrice}/>)}{dock('book',<OrderBook pair={pair} book={book} livePrice={livePrice}/>)}{dock('trade',<TradePanel pair={pair}/>)}{dock('orders',<Orders/>)}
+ return <main><MarketBar pair={pair} onSelect={onSelect} pairs={pairs} source={source} tickers={tickers} pricesReady={pricesReady} book={book} livePrice={livePrice}/><div ref={workspaceRef} className="workspace nx-resizable-workspace" style={{'--nx-chart-col':chartWidth+'fr','--nx-book-col':layout.book+'fr','--nx-trade-col':layout.trade+'fr','--nx-chart-row':layout.height+'px'} as React.CSSProperties}>{dock('chart',<ChartPanel pair={pair} livePrice={livePrice}/>)}<div ref={floatingEl} className={'nx-dock-panel nx-orderbook-container '+(floatBox.floating?'nx-orderbook-floating':'nx-slot-'+slots.book)} style={floatBox.floating?{left:floatBox.left,top:floatBox.top,width:floatBox.width,height:floatBox.height}:undefined}>
+ <div className="nx-float-bar"><button type="button" title="Drag Order Book anywhere" aria-label="Drag Order Book" onPointerDown={startFloat} onPointerMove={moveFloat} onPointerUp={endFloat} onPointerCancel={endFloat}>⠿</button>{floatBox.floating&&<button type="button" title="Dock Order Book back to grid" onClick={resetFloating}>Dock ↙</button>}</div>
+ <OrderBook pair={pair} book={book} livePrice={livePrice}/>
+ </div>{dock('trade',<TradePanel pair={pair}/>)}{dock('orders',<Orders/>)}
  <div className="nx-resize-handle nx-resize-chart-book" role="separator" aria-label="Resize chart and order book" aria-orientation="vertical" title="Drag to resize chart and order book" style={{left:chartWidth+'%'}} onPointerDown={e=>startDrag(e,'book')}><span/></div>
  <div className="nx-resize-handle nx-resize-book-trade" role="separator" aria-label="Resize order book and trade panel" aria-orientation="vertical" title="Drag to resize order book and trade panel" style={{left:(100-layout.trade)+'%'}} onPointerDown={e=>startDrag(e,'trade')}><span/></div>
  <div className="nx-resize-handle nx-resize-orders" role="separator" aria-label="Resize chart and orders section" aria-orientation="horizontal" title="Drag to resize chart and orders" style={{top:layout.height+'px'}} onPointerDown={e=>startDrag(e,'height')}><span/></div>
